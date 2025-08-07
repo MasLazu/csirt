@@ -1,92 +1,56 @@
-# MeUi - Modular Authentication & Authorization System
+# MeUi API
 
-A modern .NET 9 web API built with clean architecture principles, featuring modular authentication, role-based authorization, and comprehensive user management capabilities.
-
-## Overview
-
-MeUi is a comprehensive backend system designed for scalable applications with robust authentication and authorization features. Built using FastEndpoints, Entity Framework Core, and PostgreSQL, it provides a solid foundation for enterprise-grade web applications with clean separation of concerns.
+A modern .NET 9 Web API built with Clean Architecture principles, featuring JWT authentication, PostgreSQL database integration, and FastEndpoints for high-performance API development.
 
 ## Architecture
 
-The project follows a modular monolith architecture with clear separation of concerns:
+This project follows Clean Architecture principles with clear separation of concerns:
 
-### Core Modules
+- **MeUi.Api** - Web API layer with endpoints and middleware
+- **MeUi.Application** - Business logic and application services
+- **MeUi.Domain** - Core domain entities and business rules
+- **MeUi.Infrastructure** - Data access, external services, and infrastructure concerns
 
-- **MeUi.Shared** - Common infrastructure, domain models, and application contracts
-- **MeUi.Authentication** - Authentication services with multiple providers
-  - **Core** - Base authentication infrastructure and JWT handling
-  - **Password** - Traditional username/password authentication
-- **MeUi.Authorization** - Authorization and permission management
-  - **Core** - Base authorization infrastructure
-  - **Rbac** - Role-based access control implementation
-- **MeUi.Entry** - Main application entry point and API configuration
+## Tech Stack
 
-### Layer Structure
-
-Each module follows clean architecture principles with Public/Private separation:
-
-- **Public** - External contracts, extensions, and shared components
-- **Private** - Internal implementation
-  - **Domain** - Business entities and domain logic
-  - **Application** - Use cases, command/query handlers, and business rules
-  - **Infrastructure** - Data access and external services
-  - **Endpoints** - API endpoints and request/response handling
+- **.NET 9** - Latest .NET framework
+- **FastEndpoints** - High-performance alternative to MVC controllers
+- **MediatR** - CQRS and mediator pattern implementation
+- **Entity Framework Core** - ORM for database operations
+- **PostgreSQL** - Primary database
+- **JWT Authentication** - Secure token-based authentication
+- **BCrypt** - Password hashing
+- **Serilog** - Structured logging
+- **FluentValidation** - Input validation
+- **Mapster** - Object mapping
+- **Swagger/OpenAPI** - API documentation
 
 ## Features
 
-- **JWT Authentication** - Secure token-based authentication with refresh token support
-- **Password Authentication** - Traditional username/password login with secure hashing
-- **Role-based Authorization (RBAC)** - Comprehensive role and permission management
-- **Command Query Responsibility Segregation (CQRS)** - Separate command and query handlers
-- **Repository Pattern** - Clean data access abstraction with Unit of Work
-- **Specification Pattern** - Flexible query building and pagination support
-- **RESTful API** - FastEndpoints-based high-performance API
-- **Swagger Documentation** - Auto-generated API documentation with OpenAPI 3.0
-- **Database Migrations** - Entity Framework Core with PostgreSQL support
-- **Structured Logging** - Serilog with console and file output, daily log rotation
-- **CORS Support** - Configurable cross-origin resource sharing
-- **Clean Architecture** - Domain-driven design with clear separation of concerns
+- **Authentication & Authorization**
 
-## Technology Stack
+  - JWT token-based authentication
+  - Refresh token support
+  - Secure password hashing with BCrypt
+  - Cookie-based refresh token storage
 
-### Core Framework
+- **API Design**
 
-- **.NET 9** - Latest .NET framework with improved performance
-- **FastEndpoints 7.0.1** - High-performance, minimal API framework
-- **C# 12** - Latest language features with nullable reference types
+  - RESTful API endpoints
+  - FastEndpoints for optimal performance
+  - Comprehensive error handling
+  - CORS support for frontend integration
 
-### Data & Persistence
+- **Data Management**
 
-- **Entity Framework Core 9.0.7** - Modern ORM with advanced querying
-- **PostgreSQL** - Robust relational database with Npgsql provider
-- **Repository Pattern** - Clean data access abstraction
-- **Unit of Work Pattern** - Transaction management
+  - PostgreSQL database integration
+  - Entity Framework Core with migrations
+  - Database seeding for initial data
 
-### Authentication & Security
-
-- **JWT Bearer Authentication** - Stateless token-based security
-- **Microsoft.AspNetCore.Authentication.JwtBearer 9.0.7** - JWT middleware
-- **Password Hashing** - Secure credential storage
-- **CORS** - Cross-origin resource sharing support
-
-### Architecture Patterns
-
-- **CQRS** - Command Query Responsibility Segregation
-- **Specification Pattern** - Flexible query building
-- **Clean Architecture** - Domain-driven design principles
-- **Modular Monolith** - Organized, maintainable codebase
-
-### Logging & Monitoring
-
-- **Serilog 4.3.0** - Structured logging framework
-- **Console & File Sinks** - Multiple output targets
-- **Daily Log Rotation** - Automated log management
-
-### Documentation & Development
-
-- **Swagger/OpenAPI 3.0** - Interactive API documentation
-- **FastEndpoints.Swagger 7.0.1** - Auto-generated documentation
-- **Code Generation** - FastEndpoints.Generator for improved performance
+- **Logging & Monitoring**
+  - Structured logging with Serilog
+  - File and console logging
+  - Configurable log levels
 
 ## Getting Started
 
@@ -98,247 +62,134 @@ Each module follows clean architecture principles with Public/Private separation
 
 ### Configuration
 
-1. **Database Configuration**
-   Update `appsettings.Development.json` with your PostgreSQL connection details:
+1. Update the database connection string in `appsettings.json`:
 
-   ```json
-   {
-     "Postgresql": {
-       "Host": "your-postgres-host",
-       "Port": "5432",
-       "Username": "your-username",
-       "Password": "your-password",
-       "Database": "your-database"
-     }
-   }
-   ```
+```json
+{
+  "Postgresql": {
+    "Host": "your-postgres-host",
+    "Port": "5432",
+    "Username": "your-username",
+    "Password": "your-password",
+    "Database": "your-database"
+  }
+}
+```
 
-2. **JWT Configuration**
-   Configure JWT settings in `appsettings.json`:
-   ```json
-   {
-     "Jwt": {
-       "Secret": "your-super-secret-jwt-key-with-at-least-32-characters",
-       "Issuer": "YourApp.Issuer",
-       "Audience": "YourApp.Audience",
-       "AccessTokenExpirationMinutes": 15,
-       "RefreshTokenExpirationDays": 7
-     }
-   }
-   ```
+2. Configure JWT settings:
 
-### Installation & Setup
+```json
+{
+  "Jwt": {
+    "Key": "your-super-secret-jwt-key-that-is-at-least-32-characters-long",
+    "Issuer": "MeUi.UnifiedApi",
+    "Audience": "MeUi.Users",
+    "AccessTokenExpirationMinutes": 60,
+    "RefreshTokenExpirationDays": 7
+  }
+}
+```
 
-1. **Clone the repository**
+3. Set up CORS origins for your frontend:
 
-   ```bash
-   git clone <repository-url>
-   cd MeUi
-   ```
+```json
+{
+  "Cors": {
+    "AllowedOrigins": ["http://localhost:3000", "https://localhost:3001"]
+  }
+}
+```
 
-2. **Restore dependencies**
+### Running the Application
+
+1. **Restore dependencies:**
 
    ```bash
    dotnet restore
    ```
 
-3. **Run database migrations**
+2. **Run database migrations:**
 
    ```bash
-   dotnet ef database update --project src/MeUi.Entry
+   dotnet ef database update --project src/MeUi.Infrastructure --startup-project src/MeUi.Api
    ```
 
-4. **Build the solution**
+3. **Start the application:**
 
    ```bash
-   dotnet build
+   dotnet run --project src/MeUi.Api
    ```
 
-5. **Run the application**
-   ```bash
-   dotnet run --project src/MeUi.Entry
-   ```
+4. **Access the API:**
+   - API: `https://localhost:7239` or `http://localhost:5000`
+   - Swagger UI: `https://localhost:7239/swagger`
 
-The API will be available at `https://localhost:5001` (or the port specified in launchSettings.json).
+## API Endpoints
 
-## API Documentation
+### Authentication
 
-Once the application is running, you can access:
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/refresh` - Refresh access token
+- `POST /api/v1/auth/logout` - User logout
 
-- **Swagger UI**: `https://localhost:5001/swagger`
-- **OpenAPI Spec**: `https://localhost:5001/swagger/v1/swagger.json`
+### Users
 
-## Default Credentials
-
-The system includes a default super admin user:
-
-- **Email**: admin@mataelang.com
-- **Password**: SuperAdmin123!
+- User management endpoints (implementation varies)
 
 ## Project Structure
 
 ```
 src/
-├── MeUi.Entry/                     # Main application entry point
-│   ├── Extensions/                 # Service registration extensions
-│   ├── Middlewares/               # Custom middleware components
-│   └── Program.cs                 # Application startup
-├── MeUi.Shared/                   # Shared components
-│   ├── MeUi.Shared.Application/   # Shared application logic (CQRS, specifications)
-│   ├── MeUi.Shared.ApplicationContract/ # Shared contracts and DTOs
-│   ├── MeUi.Shared.Domain/        # Shared domain models and entities
-│   ├── MeUi.Shared.Endpoint/      # Shared endpoint utilities
-│   └── MeUi.Shared.Infrastructure/ # Shared infrastructure (EF, repositories)
-├── MeUi.Authentication/           # Authentication module
-│   ├── MeUi.Authentication.Core/  # Core authentication infrastructure
-│   │   ├── Private/               # Internal implementation
-│   │   │   ├── Application/       # Command/query handlers
-│   │   │   ├── Domain/           # Authentication domain models
-│   │   │   ├── Infrastructure/   # Data access and external services
-│   │   │   └── Endpoint/         # Authentication endpoints
-│   │   └── Public/               # External contracts and extensions
-│   │       ├── ApplicationContract/ # Authentication contracts
-│   │       ├── Extension/        # Service registration
-│   │       └── Shared/           # Shared authentication components
-│   └── MeUi.Authentication.Password/ # Password authentication
-│       ├── Private/              # Internal implementation
-│       │   ├── Application/      # Password-specific handlers
-│       │   ├── Domain/          # Password domain logic
-│       │   ├── Infrastructure/  # Password data access
-│       │   └── Endpoints/       # Password authentication endpoints
-│       └── Public/              # External contracts and extensions
-└── MeUi.Authorization/           # Authorization module
-    ├── MeUi.Authorization.Core/  # Core authorization infrastructure
-    │   ├── Private/              # Internal implementation
-    │   └── Public/               # External contracts and extensions
-    └── MeUi.Authorization.Rbac/  # Role-based access control
-        ├── Private/              # RBAC implementation
-        │   ├── Application/      # Role/permission handlers
-        │   ├── Domain/          # RBAC domain models
-        │   ├── Infrastructure/  # RBAC data access
-        │   └── Endpoint/        # RBAC endpoints
-        └── Public/              # RBAC contracts and extensions
+├── MeUi.Api/                 # Web API layer
+│   ├── Endpoints/            # FastEndpoints definitions
+│   ├── Middlewares/          # Custom middleware
+│   ├── Models/               # API models and responses
+│   └── Program.cs            # Application entry point
+├── MeUi.Application/         # Application layer
+│   ├── Features/             # Feature-based organization
+│   ├── Interfaces/           # Application interfaces
+│   └── Models/               # Application models
+├── MeUi.Domain/              # Domain layer
+│   └── Entities/             # Domain entities
+└── MeUi.Infrastructure/      # Infrastructure layer
+    ├── Data/                 # Database context and configurations
+    └── Services/             # Infrastructure services
 ```
 
 ## Development
 
-### Adding New Modules
+### Adding New Features
 
-1. Create the module structure following the established pattern:
-
-   ```
-   ModuleName/
-   ├── Private/
-   │   ├── Application/     # Command/Query handlers
-   │   ├── Domain/         # Domain entities and logic
-   │   ├── Infrastructure/ # Data access implementation
-   │   └── Endpoint/       # API endpoints
-   └── Public/
-       ├── ApplicationContract/ # DTOs and contracts
-       └── Extension/          # Service registration
-   ```
-
-2. Add project references to the solution file
-3. Create extension methods for service registration
-4. Register services in `Program.cs`
-5. Add database context and migrations if needed
+1. **Domain Layer**: Define entities in `MeUi.Domain/Entities/`
+2. **Application Layer**: Create commands/queries in `MeUi.Application/Features/`
+3. **Infrastructure Layer**: Implement repositories and services
+4. **API Layer**: Create endpoints in `MeUi.Api/Endpoints/`
 
 ### Database Migrations
 
 ```bash
 # Add new migration
-dotnet ef migrations add MigrationName --project src/MeUi.Entry
+dotnet ef migrations add MigrationName --project src/MeUi.Infrastructure --startup-project src/MeUi.Api
 
 # Update database
-dotnet ef database update --project src/MeUi.Entry
-
-# Remove last migration (if not applied)
-dotnet ef migrations remove --project src/MeUi.Entry
-
-# Generate SQL script
-dotnet ef migrations script --project src/MeUi.Entry
+dotnet ef database update --project src/MeUi.Infrastructure --startup-project src/MeUi.Api
 ```
 
-### Code Patterns
+## Security
 
-#### Command/Query Handlers
+- Passwords are hashed using BCrypt
+- JWT tokens for stateless authentication
+- Refresh tokens stored as HTTP-only cookies
+- CORS configured for specific origins
+- Global exception handling to prevent information leakage
 
-```csharp
-// Command Handler
-public class CreateUserCommandHandler : BaseCommandHandler<CreateUserCommand, CreateUserResponse>
-{
-    public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken ct)
-    {
-        // Implementation
-    }
-}
+## Logging
 
-// Query Handler
-public class GetUsersQueryHandler : BaseQueryHandler<GetUsersQuery, GetUsersResponse>
-{
-    public async Task<GetUsersResponse> Handle(GetUsersQuery request, CancellationToken ct)
-    {
-        // Implementation
-    }
-}
-```
+Logs are written to both console and files:
 
-#### Specifications
-
-```csharp
-public class UserPaginationSpecification : BasePaginationSpecification<User>
-{
-    public UserPaginationSpecification(int page, int pageSize, string? searchTerm = null)
-        : base(page, pageSize)
-    {
-        if (!string.IsNullOrEmpty(searchTerm))
-        {
-            AddCriteria(u => u.Email.Contains(searchTerm) || u.FirstName.Contains(searchTerm));
-        }
-    }
-}
-```
-
-### Logging
-
-The application uses Serilog for structured logging:
-
-- **Console output** - Formatted for development readability
-- **File logging** - Daily rotation with 7-day retention
-- **Structured data** - JSON properties for better querying
-- **Configurable levels** - Per-namespace log level control
-
-#### Log Levels Configuration
-
-```json
-{
-  "Serilog": {
-    "MinimumLevel": {
-      "Default": "Information",
-      "Override": {
-        "Microsoft": "Warning",
-        "System": "Warning",
-        "Microsoft.EntityFrameworkCore": "Information"
-      }
-    }
-  }
-}
-```
-
-### Testing
-
-The project structure supports easy unit testing:
-
-```bash
-# Run all tests
-dotnet test
-
-# Run tests with coverage
-dotnet test --collect:"XPlat Code Coverage"
-
-# Run specific test project
-dotnet test tests/MeUi.Authentication.Tests/
-```
+- Console: Formatted for development
+- Files: Located in `logs/` directory with daily rotation
+- Configurable log levels via `appsettings.json`
 
 ## Contributing
 
@@ -350,8 +201,4 @@ dotnet test tests/MeUi.Authentication.Tests/
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For questions and support, please open an issue in the repository or contact the development team.
+This project is licensed under the MIT License.
