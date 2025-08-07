@@ -20,6 +20,7 @@ try
     builder.Services
         .AddApplication()
         .AddInfrastructure(builder.Configuration)
+        .AddMongoDb(builder.Configuration)
         .AddFastEndpoints()
         .AddAuthenticationJwtBearer(s =>
         {
@@ -58,6 +59,10 @@ try
         using var scope = app.Services.CreateScope();
         var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
         await seeder.SeedAsync();
+
+        // Seed MongoDB data
+        var mongoSeeder = scope.ServiceProvider.GetRequiredService<MeUi.Infrastructure.Data.Seeders.MongoDbSeeder>();
+        await mongoSeeder.SeedAsync();
     }
 
     Log.Information("MeUi API application configured successfully");
