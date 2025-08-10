@@ -23,9 +23,7 @@ public class GetRolesPaginatedQueryHandler : IRequestHandler<GetRolesPaginatedQu
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            predicate = r => r.Name.Contains(request.Search) ||
-                           r.Code.Contains(request.Search) ||
-                           r.Description.Contains(request.Search);
+            predicate = r => r.Name.Contains(request.Search) || r.Description.Contains(request.Search);
         }
 
         (IEnumerable<Role> roles, int totalItems) = await _roleRepository.GetPaginatedAsync(

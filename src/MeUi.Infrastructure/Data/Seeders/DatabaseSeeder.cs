@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using MeUi.Application.Interfaces;
 using MeUi.Domain.Entities;
+using MeUi.Infrastructure.Data;
 using System.Reflection;
 
 namespace MeUi.Infrastructure.Data.Seeders;
@@ -16,10 +18,10 @@ public class DatabaseSeeder
     private readonly IRepository<PageGroup> _pageGroupRepository;
     private readonly IRepository<Page> _pageRepository;
     private readonly IRepository<Permission> _permissionRepository;
-    private readonly IRepository<PagePermission> _pagePermissionRepository;
     private readonly IRepository<UserLoginMethod> _userLoginMethodRepository;
     private readonly IRepository<Password> _passwordRepository;
     private readonly IRepository<UserRole> _userRoleRepository;
+    private readonly ApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
     private readonly IPasswordHasher _passwordHasher;
@@ -38,6 +40,11 @@ public class DatabaseSeeder
         IRepository<UserLoginMethod> userLoginMethodRepository,
         IRepository<Password> passwordRepository,
         IRepository<UserRole> userRoleRepository,
+        IRepository<Tenant> tenantRepository,
+        IRepository<TenantUser> tenantUserRepository,
+        ApplicationDbContext context,
+        IRepository<TenantUserLoginMethod> tenantUserLoginMethodRepository,
+        IRepository<TenantUserPassword> tenantUserPasswordRepository,
         IUnitOfWork unitOfWork,
         IConfiguration configuration,
         IPasswordHasher passwordHasher,
@@ -51,10 +58,10 @@ public class DatabaseSeeder
         _pageGroupRepository = pageGroupRepository;
         _pageRepository = pageRepository;
         _permissionRepository = permissionRepository;
-        _pagePermissionRepository = pagePermissionRepository;
         _userLoginMethodRepository = userLoginMethodRepository;
         _passwordRepository = passwordRepository;
         _userRoleRepository = userRoleRepository;
+        _context = context;
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _passwordHasher = passwordHasher;
@@ -65,12 +72,13 @@ public class DatabaseSeeder
     {
         try
         {
-            await _unitOfWork.BeginTransactionAsync(ct);
-
             await SeedLoginMethodsAsync(ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
             await SeedPermissionsAsync(ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            await SeedTenantPermissionsAsync(ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
             await SeedSuperRolesAsync(ct);
@@ -85,14 +93,11 @@ public class DatabaseSeeder
             await SeedSuperUserAsync(ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
-            await _unitOfWork.CommitTransactionAsync(ct);
-
             _logger.LogInformation("Database seeding completed successfully");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred during database seeding");
-            await _unitOfWork.RollbackTransactionAsync(ct);
             throw;
         }
     }
@@ -106,7 +111,7 @@ public class DatabaseSeeder
 
         foreach (var method in loginMethods)
         {
-            var existing = await _loginMethodRepository.FirstOrDefaultAsync(x => x.Code == method.Code, ct);
+            LoginMethod? existing = await _loginMethodRepository.FirstOrDefaultAsync(x => x.Code == method.Code, ct);
             if (existing == null)
             {
                 await _loginMethodRepository.AddAsync(new LoginMethod
@@ -126,16 +131,16 @@ public class DatabaseSeeder
     {
         var role = new Role
         {
-            Code = "SUPER_ADMIN",
+            Id = Guid.Parse("01989299-2c61-71a0-92b9-5a7700dd263e"),
             Name = "Super Administrator",
             Description = "Full system access"
         };
 
-        var existing = await _roleRepository.FirstOrDefaultAsync(x => x.Code == role.Code, ct);
+        Role? existing = await _roleRepository.FirstOrDefaultAsync(x => x.Id == role.Id, ct);
         if (existing == null)
         {
             await _roleRepository.AddAsync(role, ct);
-            _logger.LogInformation("Seeded role: {Code}", role.Code);
+            _logger.LogInformation("Seeded role: {Code}", role.Name);
         }
     }
 
@@ -150,7 +155,7 @@ public class DatabaseSeeder
             return;
         }
 
-        var existingUser = await _userRepository.FirstOrDefaultAsync(x => x.Email == superUserEmail, ct);
+        User? existingUser = await _userRepository.FirstOrDefaultAsync(x => x.Email == superUserEmail, ct);
         if (existingUser == null)
         {
             var superUser = new User
@@ -164,7 +169,7 @@ public class DatabaseSeeder
             await _userRepository.AddAsync(superUser, ct);
             _logger.LogInformation("Seeded super user: {Email}", superUserEmail);
 
-            var passwordLoginMethod = await _loginMethodRepository.FirstOrDefaultAsync(x => x.Code == "PASSWORD", ct);
+            LoginMethod? passwordLoginMethod = await _loginMethodRepository.FirstOrDefaultAsync(x => x.Code == "PASSWORD", ct);
             if (passwordLoginMethod == null)
             {
                 _logger.LogError("PASSWORD login method not found. Cannot create super user login credentials.");
@@ -174,27 +179,35 @@ public class DatabaseSeeder
             var userLoginMethod = new UserLoginMethod
             {
                 UserId = superUser.Id,
-                LoginMethodId = passwordLoginMethod.Id,
                 LoginMethodCode = passwordLoginMethod.Code
             };
 
             await _userLoginMethodRepository.AddAsync(userLoginMethod, ct);
             _logger.LogInformation("Created password login method for super user");
 
-            var hashedPassword = _passwordHasher.HashPassword(superUserPassword);
+            string hashedPassword = _passwordHasher.HashPassword(superUserPassword);
             var passwordRecord = new Password
             {
-                UserLoginMethodId = userLoginMethod.Id,
                 PasswordHash = hashedPassword
             };
 
             await _passwordRepository.AddAsync(passwordRecord, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
             _logger.LogInformation("Created password hash for super user");
 
-            var superAdminRole = await _roleRepository.FirstOrDefaultAsync(x => x.Code == "SUPER_ADMIN", ct);
+            var userPassword = new UserPassword
+            {
+                PasswordId = passwordRecord.Id,
+                UserLoginMethodId = userLoginMethod.Id
+            };
+
+            await _context.UserPasswords.AddAsync(userPassword, ct);
+            _logger.LogInformation("Created user password association for super user");
+
+            Role? superAdminRole = await _roleRepository.FirstOrDefaultAsync(x => x.Id == Guid.Parse("01989299-2c61-71a0-92b9-5a7700dd263e"), ct);
             if (superAdminRole != null)
             {
-                var existingUserRole = await _userRoleRepository.FirstOrDefaultAsync(
+                UserRole? existingUserRole = await _userRoleRepository.FirstOrDefaultAsync(
                     ur => ur.UserId == superUser.Id && ur.RoleId == superAdminRole.Id, ct);
 
                 if (existingUserRole == null)
@@ -233,7 +246,7 @@ public class DatabaseSeeder
 
         foreach (var group in pageGroups)
         {
-            var existing = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == group.Code, ct);
+            PageGroup? existing = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == group.Code, ct);
             if (existing == null)
             {
                 await _pageGroupRepository.AddAsync(new PageGroup
@@ -250,12 +263,11 @@ public class DatabaseSeeder
 
     private async Task SeedPagesAsync(CancellationToken ct)
     {
-        // Get page groups for foreign key references
-        var dashboardGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "DASHBOARD", ct);
-        var userMgmtGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "USER_MANAGEMENT", ct);
-        var authGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "AUTHORIZATION", ct);
-        var systemGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "SYSTEM", ct);
-        var reportsGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "REPORTS", ct);
+        PageGroup? dashboardGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "DASHBOARD", ct);
+        PageGroup? userMgmtGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "USER_MANAGEMENT", ct);
+        PageGroup? authGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "AUTHORIZATION", ct);
+        PageGroup? systemGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "SYSTEM", ct);
+        PageGroup? reportsGroup = await _pageGroupRepository.FirstOrDefaultAsync(x => x.Code == "REPORTS", ct);
 
         var pages = new[]
         {
@@ -287,7 +299,7 @@ public class DatabaseSeeder
 
         foreach (var page in pages)
         {
-            var existing = await _pageRepository.FirstOrDefaultAsync(x => x.Code == page.Code, ct);
+            Page? existing = await _pageRepository.FirstOrDefaultAsync(x => x.Code == page.Code, ct);
             if (existing == null)
             {
                 await _pageRepository.AddAsync(new Page
@@ -313,7 +325,7 @@ public class DatabaseSeeder
 
         var permissionProviders = new List<Type>();
 
-        foreach (var assembly in assemblies)
+        foreach (Assembly? assembly in assemblies)
         {
             try
             {
@@ -336,16 +348,16 @@ public class DatabaseSeeder
 
         var discoveredPermissions = new HashSet<string>();
 
-        foreach (var providerType in permissionProviders)
+        foreach (Type providerType in permissionProviders)
         {
             try
             {
-                var permissionMethod = providerType.GetMethod("Permission",
+                MethodInfo? permissionMethod = providerType.GetMethod("Permission",
                     BindingFlags.Public | BindingFlags.Static);
 
                 if (permissionMethod != null)
                 {
-                    var permission = permissionMethod.Invoke(null, null) as string;
+                    string? permission = permissionMethod.Invoke(null, null) as string;
                     if (!string.IsNullOrEmpty(permission))
                     {
                         discoveredPermissions.Add(permission);
@@ -367,9 +379,9 @@ public class DatabaseSeeder
         var uniqueResources = new HashSet<string>();
         var uniqueActions = new HashSet<string>();
 
-        foreach (var permissionString in discoveredPermissions)
+        foreach (string permissionString in discoveredPermissions)
         {
-            var parts = permissionString.Split(':', 2);
+            string[] parts = permissionString.Split(':', 2);
             if (parts.Length != 2)
             {
                 _logger.LogWarning("Invalid permission format: {Permission}. Expected format: 'action:resource'",
@@ -377,8 +389,8 @@ public class DatabaseSeeder
                 continue;
             }
 
-            var actionCode = parts[0].Trim().ToUpperInvariant();
-            var resourceCode = parts[1].Trim().ToUpperInvariant();
+            string actionCode = parts[0].Trim().ToUpperInvariant();
+            string resourceCode = parts[1].Trim().ToUpperInvariant();
 
             parsedPermissions.Add((actionCode, resourceCode));
             uniqueResources.Add(resourceCode);
@@ -386,9 +398,9 @@ public class DatabaseSeeder
         }
 
         // Create resources first
-        foreach (var resourceCode in uniqueResources)
+        foreach (string resourceCode in uniqueResources)
         {
-            var existing = await _resourceRepository.FirstOrDefaultAsync(r => r.Code == resourceCode, ct);
+            Resource? existing = await _resourceRepository.FirstOrDefaultAsync(r => r.Code == resourceCode, ct);
             if (existing == null)
             {
                 var resource = new Resource
@@ -403,9 +415,9 @@ public class DatabaseSeeder
         }
 
         // Create actions
-        foreach (var actionCode in uniqueActions)
+        foreach (string actionCode in uniqueActions)
         {
-            var existing = await _actionRepository.FirstOrDefaultAsync(a => a.Code == actionCode, ct);
+            Domain.Entities.Action? existing = await _actionRepository.FirstOrDefaultAsync(a => a.Code == actionCode, ct);
             if (existing == null)
             {
                 var action = new Domain.Entities.Action
@@ -420,9 +432,9 @@ public class DatabaseSeeder
         }
 
         // Create permissions
-        foreach (var (actionCode, resourceCode) in parsedPermissions)
+        foreach ((string actionCode, string resourceCode) in parsedPermissions)
         {
-            var existing = await _permissionRepository.FirstOrDefaultAsync(
+            Permission? existing = await _permissionRepository.FirstOrDefaultAsync(
                 p => p.ResourceCode == resourceCode && p.ActionCode == actionCode, ct);
 
             if (existing == null)
@@ -440,12 +452,151 @@ public class DatabaseSeeder
         _logger.LogInformation("Permission seeding completed");
     }
 
+    private async Task SeedTenantPermissionsAsync(CancellationToken ct)
+    {
+        _logger.LogInformation("Starting tenant permission seeding from ITenantPermissionProvider implementations");
+
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
+            .ToList();
+
+        var tenantPermissionProviders = new List<Type>();
+
+        foreach (Assembly? assembly in assemblies)
+        {
+            try
+            {
+                var types = assembly.GetTypes()
+                    .Where(t => t.IsClass && !t.IsAbstract &&
+                               t.GetInterfaces().Any(i => i == typeof(ITenantPermissionProvider)))
+                    .ToList();
+
+                tenantPermissionProviders.AddRange(types);
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                _logger.LogWarning("Could not load types from assembly {AssemblyName}: {Error}",
+                    assembly.FullName, ex.Message);
+                continue;
+            }
+        }
+
+        _logger.LogInformation("Found {Count} tenant permission provider classes", tenantPermissionProviders.Count);
+
+        var discoveredTenantPermissions = new HashSet<string>();
+
+        foreach (Type providerType in tenantPermissionProviders)
+        {
+            try
+            {
+                PropertyInfo? permissionProperty = providerType.GetProperty("Permission",
+                    BindingFlags.Public | BindingFlags.Static);
+
+                if (permissionProperty != null)
+                {
+                    string? permission = permissionProperty.GetValue(null) as string;
+                    if (!string.IsNullOrEmpty(permission))
+                    {
+                        discoveredTenantPermissions.Add(permission);
+                        _logger.LogDebug("Discovered tenant permission: {Permission} from {ProviderType}",
+                            permission, providerType.Name);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error extracting tenant permission from {ProviderType}", providerType.Name);
+            }
+        }
+
+        _logger.LogInformation("Discovered {Count} unique tenant permissions", discoveredTenantPermissions.Count);
+
+        // Parse and collect unique resources and actions for tenant permissions
+        var parsedTenantPermissions = new List<(string ActionCode, string ResourceCode)>();
+        var uniqueTenantResources = new HashSet<string>();
+        var uniqueTenantActions = new HashSet<string>();
+
+        foreach (string permissionString in discoveredTenantPermissions)
+        {
+            string[] parts = permissionString.Split(':', 2);
+            if (parts.Length != 2)
+            {
+                _logger.LogWarning("Invalid tenant permission format: {Permission}. Expected format: 'action:resource'",
+                    permissionString);
+                continue;
+            }
+
+            string actionCode = parts[0].Trim().ToUpperInvariant();
+            string resourceCode = parts[1].Trim().ToUpperInvariant();
+
+            parsedTenantPermissions.Add((actionCode, resourceCode));
+            uniqueTenantResources.Add(resourceCode);
+            uniqueTenantActions.Add(actionCode);
+        }
+
+        // Create tenant resources first
+        foreach (string resourceCode in uniqueTenantResources)
+        {
+            Resource? existing = await _resourceRepository.FirstOrDefaultAsync(r => r.Code == resourceCode, ct);
+            if (existing == null)
+            {
+                var resource = new Resource
+                {
+                    Code = resourceCode,
+                    Name = ToTitleCase(resourceCode.Replace("_", " ")),
+                    Description = $"Resource for {resourceCode.ToLowerInvariant()}"
+                };
+                await _resourceRepository.AddAsync(resource, ct);
+                _logger.LogInformation("Created tenant resource: {ResourceCode}", resourceCode);
+            }
+        }
+
+        // Create tenant actions
+        foreach (string actionCode in uniqueTenantActions)
+        {
+            Domain.Entities.Action? existing = await _actionRepository.FirstOrDefaultAsync(a => a.Code == actionCode, ct);
+            if (existing == null)
+            {
+                var action = new Domain.Entities.Action
+                {
+                    Code = actionCode,
+                    Name = ToTitleCase(actionCode.Replace("_", " ")),
+                    Description = $"Action for {actionCode.ToLowerInvariant()}"
+                };
+                await _actionRepository.AddAsync(action, ct);
+                _logger.LogInformation("Created tenant action: {ActionCode}", actionCode);
+            }
+        }
+
+        // Create tenant permissions
+        foreach ((string actionCode, string resourceCode) in parsedTenantPermissions)
+        {
+            Permission? existing = await _permissionRepository.FirstOrDefaultAsync(
+                p => p.ResourceCode == resourceCode && p.ActionCode == actionCode, ct);
+
+            if (existing == null)
+            {
+                var permission = new Permission
+                {
+                    ResourceCode = resourceCode,
+                    ActionCode = actionCode
+                };
+                await _permissionRepository.AddAsync(permission, ct);
+                _logger.LogInformation("Created tenant permission: {ActionCode}:{ResourceCode}", actionCode, resourceCode);
+            }
+        }
+
+        _logger.LogInformation("Tenant permission seeding completed");
+    }
+
     private static string ToTitleCase(string input)
     {
         if (string.IsNullOrEmpty(input))
+        {
             return input;
+        }
 
-        var words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string[] words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         for (int i = 0; i < words.Length; i++)
         {
             if (words[i].Length > 0)

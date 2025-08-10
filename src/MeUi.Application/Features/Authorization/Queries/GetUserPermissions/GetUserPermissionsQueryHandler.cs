@@ -9,7 +9,6 @@ namespace MeUi.Application.Features.Authorization.Queries.GetUserPermissions;
 
 public class GetUserPermissionsQueryHandler : IRequestHandler<GetUserPermissionsQuery, IEnumerable<PermissionDto>>
 {
-    private readonly IRepository<User> _userRepository;
     private readonly IRepository<UserRole> _userRoleRepository;
     private readonly IRepository<RolePermission> _rolePermissionRepository;
     private readonly IRepository<Permission> _permissionRepository;
@@ -17,14 +16,12 @@ public class GetUserPermissionsQueryHandler : IRequestHandler<GetUserPermissions
     private readonly IRepository<Domain.Entities.Action> _actionRepository;
 
     public GetUserPermissionsQueryHandler(
-        IRepository<User> userRepository,
         IRepository<UserRole> userRoleRepository,
         IRepository<RolePermission> rolePermissionRepository,
         IRepository<Permission> permissionRepository,
         IRepository<Resource> resourceRepository,
         IRepository<Domain.Entities.Action> actionRepository)
     {
-        _userRepository = userRepository;
         _userRoleRepository = userRoleRepository;
         _rolePermissionRepository = rolePermissionRepository;
         _permissionRepository = permissionRepository;
@@ -34,22 +31,20 @@ public class GetUserPermissionsQueryHandler : IRequestHandler<GetUserPermissions
 
     public async Task<IEnumerable<PermissionDto>> Handle(GetUserPermissionsQuery request, CancellationToken ct)
     {
-        User? user = await _userRepository.GetByIdAsync(request.UserId, ct)
-            ?? throw new NotFoundException($"User with ID {request.UserId} not found");
+        IEnumerable<Guid> userRoleIds = await _userRoleRepository.FindAsync(
+            ur => ur.UserId == request.UserId, ur => ur.RoleId, ct);
 
-        IEnumerable<UserRole> userRoles = await _userRoleRepository.FindAsync(ur => ur.UserId == request.UserId, ct);
-        var roleIds = userRoles.Select(ur => ur.RoleId).ToList();
+        IEnumerable<Guid> userPermissions = await _rolePermissionRepository.FindAsync(
+            rp => userRoleIds.Contains(rp.RoleId), rp => rp.PermissionId, ct);
 
-        IEnumerable<RolePermission> rolePermissions = await _rolePermissionRepository.FindAsync(rp => roleIds.Contains(rp.RoleId), ct);
-        var permissionIds = rolePermissions.Select(rp => rp.PermissionId).ToHashSet();
+        IEnumerable<Permission> permissions = await _permissionRepository.FindAsync(
+            p => userPermissions.Contains(p.Id), ct: ct);
 
-        IEnumerable<Permission> permissions = await _permissionRepository.FindAsync(p => permissionIds.Contains(p.Id), ct);
+        IEnumerable<Resource> resources = await _resourceRepository.FindAsync(
+            r => permissions.Select(p => p.ResourceCode).Contains(r.Code), ct: ct);
 
-        var resourceCodes = permissions.Select(p => p.ResourceCode).ToHashSet();
-        var actionCodes = permissions.Select(p => p.ActionCode).ToHashSet();
-
-        IEnumerable<Resource> resources = await _resourceRepository.FindAsync(r => resourceCodes.Contains(r.Code), ct);
-        IEnumerable<Domain.Entities.Action> actions = await _actionRepository.FindAsync(a => actionCodes.Contains(a.Code), ct);
+        IEnumerable<Domain.Entities.Action> actions = await _actionRepository.FindAsync(
+            a => permissions.Select(p => p.ActionCode).Contains(a.Code), ct: ct);
 
         foreach (Permission permission in permissions)
         {

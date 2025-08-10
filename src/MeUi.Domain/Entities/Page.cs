@@ -10,4 +10,5 @@ public class Page : BaseEntity
 
     public PageGroup? PageGroup { get; set; }
     public ICollection<PagePermission> PagePermissions { get; set; } = new HashSet<PagePermission>();
+    public ICollection<PageTenantPermission> PageTenantPermissions { get; set; } = new HashSet<PageTenantPermission>();
 }

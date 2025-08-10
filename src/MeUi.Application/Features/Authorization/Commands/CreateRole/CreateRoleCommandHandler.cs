@@ -20,17 +20,8 @@ public class CreateRoleCommandHandler : IRequestHandler<CreateRoleCommand, Guid>
 
     public async Task<Guid> Handle(CreateRoleCommand request, CancellationToken ct)
     {
-        Role existingRole = await _roleRepository.FirstOrDefaultAsync(r => r.Code == request.Code, ct) ??
-            throw new ConflictException($"Role with code '{request.Code}' already exists.");
-
-        if (existingRole != null)
-        {
-            throw new ConflictException($"Role with code '{request.Code}' already exists.");
-        }
-
         var role = new Role
         {
-            Code = request.Code,
             Name = request.Name,
             Description = request.Description
         };

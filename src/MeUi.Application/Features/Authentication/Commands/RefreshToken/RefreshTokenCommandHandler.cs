@@ -12,17 +12,20 @@ namespace MeUi.Application.Features.Authentication.Commands.RefreshToken;
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, TokenResponse>
 {
     private readonly IRepository<RefreshTokenEntity> _refreshTokenRepository;
+    private readonly IRepository<UserRefreshToken> _userRefreshTokenRepository;
     private readonly IRepository<User> _userRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
 
     public RefreshTokenCommandHandler(
         IRepository<RefreshTokenEntity> refreshTokenRepository,
+        IRepository<UserRefreshToken> userRefreshTokenRepository,
         IRepository<User> userRepository,
         IJwtTokenService jwtTokenService,
         IUnitOfWork unitOfWork)
     {
         _refreshTokenRepository = refreshTokenRepository;
+        _userRefreshTokenRepository = userRefreshTokenRepository;
         _userRepository = userRepository;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
@@ -44,7 +47,12 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, T
             throw new UnauthorizedException("Refresh token has been revoked.");
         }
 
-        User user = await _userRepository.GetByIdAsync(refreshTokenEntity.UserId, ct) ??
+        // Find the user through the pivot table
+        UserRefreshToken userRefreshToken = await _userRefreshTokenRepository.FirstOrDefaultAsync(
+            urt => urt.RefreshTokenId == refreshTokenEntity.Id, ct) ??
+            throw new UnauthorizedException("Invalid refresh token association.");
+
+        User user = await _userRepository.GetByIdAsync(userRefreshToken.UserId, ct) ??
             throw new UnauthorizedException("User not found.");
 
         if (user.IsSuspended)
@@ -61,11 +69,19 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, T
         var newRefreshTokenEntity = new RefreshTokenEntity
         {
             Token = newRefreshToken,
-            UserId = user.Id,
             ExpiresAt = DateTime.UtcNow.AddDays(7)
         };
 
         await _refreshTokenRepository.AddAsync(newRefreshTokenEntity, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        var newUserRefreshToken = new UserRefreshToken
+        {
+            UserId = user.Id,
+            RefreshTokenId = newRefreshTokenEntity.Id
+        };
+
+        await _userRefreshTokenRepository.AddAsync(newUserRefreshToken, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
         UserInfo userInfo = user.Adapt<UserInfo>();

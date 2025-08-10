@@ -3,75 +3,42 @@ using MeUi.Application.Features.ThreatIntelligence.Models;
 
 namespace MeUi.Application.Features.ThreatIntelligence.Queries.GetThreatIntelligence;
 
-public record GetThreatIntelligenceQuery : IRequest<IEnumerable<ThreatIntelligenceDto>>
+public record GetThreatIntelligenceQuery : IRequest<ThreatIntelligenceListDto>
 {
-    /// <summary>
-    /// Filter by Autonomous System Number (ASN)
-    /// </summary>
-    public string? Asn { get; init; }
-
-    /// <summary>
-    /// Filter by source IP address
-    /// </summary>
-    public string? SourceAddress { get; init; }
-
-    /// <summary>
-    /// Filter by destination IP address
-    /// </summary>
-    public string? DestinationAddress { get; init; }
-
-    /// <summary>
-    /// Filter by source country code
-    /// </summary>
-    public string? SourceCountry { get; init; }
-
-    /// <summary>
-    /// Filter by destination country code
-    /// </summary>
-    public string? DestinationCountry { get; init; }
-
-    /// <summary>
-    /// Filter by threat category
-    /// </summary>
-    public string? Category { get; init; }
-
-    /// <summary>
-    /// Filter by network protocol (TCP, UDP, etc.)
-    /// </summary>
-    public string? Protocol { get; init; }
-
-    /// <summary>
-    /// Filter by source port number
-    /// </summary>
-    public int? SourcePort { get; init; }
-
-    /// <summary>
-    /// Filter by destination port number
-    /// </summary>
-    public int? DestinationPort { get; init; }
-
-    /// <summary>
-    /// Filter by malware family name
-    /// </summary>
-    public string? MalwareFamily { get; init; }
-
-    /// <summary>
-    /// Filter records from this date onwards (inclusive)
-    /// </summary>
     public DateTime? StartDate { get; init; }
-
-    /// <summary>
-    /// Filter records up to this date (inclusive)
-    /// </summary>
     public DateTime? EndDate { get; init; }
-
-    /// <summary>
-    /// Field to sort results by
-    /// </summary>
-    public string? SortBy { get; init; }
-
-    /// <summary>
-    /// Sort in descending order (default: true)
-    /// </summary>
+    public string? Category { get; init; }
+    public string? SourceCountry { get; init; }
+    public string? Asn { get; init; }
+    public string? SourceAddress { get; init; }
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+    public string SortBy { get; init; } = "timestamp";
     public bool SortDescending { get; init; } = true;
+}
+
+public class ThreatIntelligenceListDto
+{
+    public IEnumerable<ThreatIntelligenceItemDto> Items { get; set; } = new List<ThreatIntelligenceItemDto>();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages { get; set; }
+}
+
+public class ThreatIntelligenceItemDto
+{
+    public Guid Id { get; set; }
+    public DateTime Timestamp { get; set; }
+    public string SourceAddress { get; set; } = string.Empty;
+    public string? DestinationAddress { get; set; }
+    public string Asn { get; set; } = string.Empty;
+    public string AsnDescription { get; set; } = string.Empty;
+    public string? SourceCountry { get; set; }
+    public string? DestinationCountry { get; set; }
+    public string Category { get; set; } = string.Empty;
+    public int? SourcePort { get; set; }
+    public int? DestinationPort { get; set; }
+    public string? Protocol { get; set; }
+    public string? MalwareFamily { get; set; }
 }

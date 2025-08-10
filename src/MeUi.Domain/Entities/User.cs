@@ -8,6 +8,6 @@ public class User : BaseEntity
     public bool IsSuspended { get; set; } = false;
 
     public ICollection<UserLoginMethod> UserLoginMethods { get; set; } = [];
-    public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+    public ICollection<UserRefreshToken> UserRefreshTokens { get; set; } = [];
     public ICollection<UserRole> UserRoles { get; set; } = [];
 }

@@ -10,38 +10,19 @@ public class UserLoginMethodConfiguration : IEntityTypeConfiguration<UserLoginMe
     {
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.UserId)
-            .IsRequired();
+        builder.Property(x => x.UserId).IsRequired();
+        builder.Property(x => x.LoginMethodCode).IsRequired().HasMaxLength(50);
+        builder.Property(x => x.CreatedAt).IsRequired();
 
-        builder.Property(x => x.LoginMethodId)
-            .IsRequired();
-
-        builder.Property(x => x.LoginMethodCode)
-            .IsRequired()
-            .HasMaxLength(50);
-
-        builder.Property(x => x.CreatedAt)
-            .IsRequired();
-
-        builder.Property(x => x.UpdatedAt);
-
-        builder.Property(x => x.DeletedAt);
-
-        // Indexes
-        builder.HasIndex(x => new { x.UserId, x.LoginMethodCode })
-            .IsUnique();
-
+        builder.HasIndex(x => new { x.UserId, x.LoginMethodCode }).IsUnique();
         builder.HasIndex(x => x.DeletedAt);
 
-        // Relationships
         builder.HasOne(x => x.User)
             .WithMany(x => x.UserLoginMethods)
-            .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(x => x.UserId);
 
         builder.HasOne(x => x.LoginMethod)
             .WithMany(x => x.UserLoginMethods)
-            .HasForeignKey(x => x.LoginMethodId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(x => x.LoginMethodCode);
     }
 }

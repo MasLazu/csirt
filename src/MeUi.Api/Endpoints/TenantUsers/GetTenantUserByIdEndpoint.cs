@@ -1,0 +1,24 @@
+using MeUi.Api.Endpoints;
+using MeUi.Application.Features.TenantUsers.Models;
+using MeUi.Application.Features.TenantUsers.Queries.GetTenantUserById;
+using MeUi.Application.Interfaces;
+
+namespace MeUi.Api.Endpoints.TenantUsers;
+
+public class GetTenantUserByIdEndpoint : BaseEndpoint<GetTenantUserByIdQuery, TenantUserDto>, ITenantPermissionProvider
+{
+    public static string Permission => "READ:TENANT_USER";
+
+    public override void ConfigureEndpoint()
+    {
+        Get("api/v1/tenant-users/{Id}");
+        Description(x => x.WithTags("Tenant Users").WithSummary("Get tenant user by ID"));
+        // TODO: Add authorization for tenant admin or super admin only
+    }
+
+    public override async Task HandleAsync(GetTenantUserByIdQuery req, CancellationToken ct)
+    {
+        var result = await Mediator.Send(req, ct);
+        await SendSuccessAsync(result, "Tenant user retrieved successfully", ct);
+    }
+}

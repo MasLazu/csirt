@@ -13,8 +13,10 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
 {
     private readonly IRepository<User> _userRepository;
     private readonly IRepository<UserLoginMethod> _userLoginMethodRepository;
-    private readonly IRepository<Password> _passwordRepository;
+    private readonly IRepository<UserPassword> _userPasswordRepository;
     private readonly IRepository<RefreshTokenEntity> _refreshTokenRepository;
+    private readonly IRepository<UserRefreshToken> _userRefreshTokenRepository;
+    private readonly IRepository<Password> _passwordRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
@@ -22,16 +24,18 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
     public LoginCommandHandler(
         IRepository<User> userRepository,
         IRepository<UserLoginMethod> userLoginMethodRepository,
-        IRepository<Password> passwordRepository,
+        IRepository<UserPassword> userPasswordRepository,
         IRepository<RefreshTokenEntity> refreshTokenRepository,
+        IRepository<UserRefreshToken> userRefreshTokenRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _userLoginMethodRepository = userLoginMethodRepository;
-        _passwordRepository = passwordRepository;
+        _userPasswordRepository = userPasswordRepository;
         _refreshTokenRepository = refreshTokenRepository;
+        _userRefreshTokenRepository = userRefreshTokenRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
@@ -47,14 +51,30 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
             throw new UnauthorizedException("User account is suspended.");
         }
 
-        UserLoginMethod userLoginMethod = await _userLoginMethodRepository.FirstOrDefaultAsync(
+        Guid? userLoginMethodId = await _userLoginMethodRepository.FirstOrDefaultAsync(
             ulm => ulm.UserId == user.Id && ulm.LoginMethodCode == "PASSWORD",
-            ct) ?? throw new UnauthorizedException("Password authentication not available for this user.");
+            ulm => ulm.Id,
+            ct);
 
-        Password passwordRecord = await _passwordRepository.FirstOrDefaultAsync(p => p.UserLoginMethodId == userLoginMethod.Id, ct) ??
-            throw new UnauthorizedException("Invalid credentials.");
+        if (userLoginMethodId == null)
+        {
+            throw new UnauthorizedException("Password authentication not available for this user.");
+        }
 
-        if (!_passwordHasher.VerifyPassword(request.Password, passwordRecord.PasswordHash))
+        Guid? userPasswordId = await _userPasswordRepository.FirstOrDefaultAsync(
+            up => up.UserLoginMethodId == userLoginMethodId,
+            up => up.PasswordId,
+            ct);
+
+        if (userPasswordId == null)
+        {
+            throw new UnauthorizedException("Password not set for this user.");
+        }
+
+        Password? userPassword = await _passwordRepository.GetByIdAsync(userPasswordId.Value, ct) ??
+            throw new UnauthorizedException("Password not found for this user.");
+
+        if (!_passwordHasher.VerifyPassword(request.Password, userPassword.PasswordHash))
         {
             throw new UnauthorizedException("Invalid credentials.");
         }
@@ -65,11 +85,19 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
         var refreshTokenEntity = new RefreshTokenEntity
         {
             Token = refreshToken,
-            UserId = user.Id,
             ExpiresAt = DateTime.UtcNow.AddDays(7)
         };
 
         await _refreshTokenRepository.AddAsync(refreshTokenEntity, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        var userRefreshToken = new UserRefreshToken
+        {
+            UserId = user.Id,
+            RefreshTokenId = refreshTokenEntity.Id
+        };
+
+        await _userRefreshTokenRepository.AddAsync(userRefreshToken, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
         UserInfo userInfo = user.Adapt<UserInfo>();

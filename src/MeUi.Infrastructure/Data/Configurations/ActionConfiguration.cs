@@ -4,9 +4,9 @@ using MeUi.Domain.Entities;
 
 namespace MeUi.Infrastructure.Data.Configurations;
 
-public class ActionConfiguration : IEntityTypeConfiguration<MeUi.Domain.Entities.Action>
+public class ActionConfiguration : IEntityTypeConfiguration<Domain.Entities.Action>
 {
-    public void Configure(EntityTypeBuilder<MeUi.Domain.Entities.Action> builder)
+    public void Configure(EntityTypeBuilder<Domain.Entities.Action> builder)
     {
         builder.HasKey(x => x.Id);
 
@@ -24,21 +24,18 @@ public class ActionConfiguration : IEntityTypeConfiguration<MeUi.Domain.Entities
         builder.Property(x => x.CreatedAt)
             .IsRequired();
 
-        builder.Property(x => x.UpdatedAt);
-
-        builder.Property(x => x.DeletedAt);
-
-        // Indexes
-        builder.HasIndex(x => x.Code)
-            .IsUnique();
+        builder.HasIndex(x => x.Code);
 
         builder.HasIndex(x => x.DeletedAt);
 
-        // Relationships
         builder.HasMany(x => x.Permissions)
             .WithOne(x => x.Action)
             .HasForeignKey(x => x.ActionCode)
-            .HasPrincipalKey(x => x.Code)
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasPrincipalKey(x => x.Code);
+
+        builder.HasMany(x => x.TenantPermissions)
+            .WithOne(x => x.Action)
+            .HasForeignKey(x => x.ActionCode)
+            .HasPrincipalKey(x => x.Code);
     }
 }

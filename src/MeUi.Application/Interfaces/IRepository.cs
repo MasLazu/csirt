@@ -26,4 +26,24 @@ public interface IRepository<T> where T : BaseEntity
         int take = 10,
         CancellationToken ct = default);
     IQueryable<T> Query();
+
+    // Select overloads for existing methods
+    Task<TResult?> GetByIdAsync<TResult>(Guid id, Expression<Func<T, TResult>> selector, CancellationToken ct = default);
+    Task<IEnumerable<TResult>> GetAllAsync<TResult>(Expression<Func<T, TResult>> selector, CancellationToken ct = default);
+    Task<IEnumerable<TResult>> FindAsync<TResult>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
+        CancellationToken ct = default);
+    Task<TResult?> FirstOrDefaultAsync<TResult>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
+        CancellationToken ct = default);
+    Task<(IEnumerable<TResult> Items, int TotalCount)> GetPaginatedAsync<TResult>(
+        Expression<Func<T, TResult>> selector,
+        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, object>>? orderBy = null,
+        bool orderByDescending = false,
+        int skip = 0,
+        int take = 10,
+        CancellationToken ct = default);
 }

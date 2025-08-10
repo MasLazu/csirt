@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MeUi.Application.Interfaces;
 using System.Linq.Expressions;
 using MeUi.Domain.Entities;
+using Npgsql;
 
 namespace MeUi.Infrastructure.Data.Repositories;
 
@@ -146,5 +147,81 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
     public virtual IQueryable<T> Query()
     {
         return _dbSet.Where(x => x.DeletedAt == null);
+    }
+
+    // Select overloads for existing methods
+    public virtual async Task<TResult?> GetByIdAsync<TResult>(Guid id, Expression<Func<T, TResult>> selector, CancellationToken ct = default)
+    {
+        return await _dbSet
+            .Where(x => x.Id == id && x.DeletedAt == null)
+            .Select(selector)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public virtual async Task<IEnumerable<TResult>> GetAllAsync<TResult>(Expression<Func<T, TResult>> selector, CancellationToken ct = default)
+    {
+        return await _dbSet
+            .Where(x => x.DeletedAt == null)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(selector)
+            .ToListAsync(ct);
+    }
+
+    public virtual async Task<IEnumerable<TResult>> FindAsync<TResult>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
+        CancellationToken ct = default)
+    {
+        return await _dbSet
+            .Where(x => x.DeletedAt == null)
+            .Where(predicate)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(selector)
+            .ToListAsync(ct);
+    }
+
+    public virtual async Task<TResult?> FirstOrDefaultAsync<TResult>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
+        CancellationToken ct = default)
+    {
+        return await _dbSet
+            .Where(x => x.DeletedAt == null)
+            .Where(predicate)
+            .Select(selector)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public virtual async Task<(IEnumerable<TResult> Items, int TotalCount)> GetPaginatedAsync<TResult>(
+        Expression<Func<T, TResult>> selector,
+        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, object>>? orderBy = null,
+        bool orderByDescending = false,
+        int skip = 0,
+        int take = 10,
+        CancellationToken ct = default)
+    {
+        IQueryable<T> query = _dbSet.Where(x => x.DeletedAt == null);
+
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+
+        int totalCount = await query.CountAsync(ct);
+
+        query = orderBy != null
+            ? orderByDescending
+                ? query.OrderByDescending(orderBy)
+                : query.OrderBy(orderBy)
+            : query.OrderByDescending(x => x.CreatedAt);
+
+        List<TResult> items = await query
+            .Skip(skip)
+            .Take(take)
+            .Select(selector)
+            .ToListAsync(ct);
+
+        return (items, totalCount);
     }
 }

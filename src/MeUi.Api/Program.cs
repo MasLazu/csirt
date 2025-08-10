@@ -20,29 +20,22 @@ try
     builder.Services
         .AddApplication()
         .AddInfrastructure(builder.Configuration)
-        .AddMongoDb(builder.Configuration)
         .AddFastEndpoints()
-        .AddAuthenticationJwtBearer(s =>
-        {
-            s.SigningKey = builder.Configuration["Jwt:Key"] ?? "The secret used to sign tokens";
-        })
+        .AddAuthenticationJwtBearer(s => s.SigningKey = builder.Configuration["Jwt:Key"] ?? "The secret used to sign tokens")
         .AddAuthorization()
         .SwaggerDocument();
 
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails();
 
-    builder.Services.AddCors(options =>
-    {
-        options.AddDefaultPolicy(policy =>
+    builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
         {
-            var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+            string[] allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
             policy.WithOrigins(allowedOrigins)
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-        });
-    });
+        }));
 
     Log.Information("Starting MeUi API application");
 
@@ -56,13 +49,9 @@ try
        .UseSwaggerGen();
 
     {
-        using var scope = app.Services.CreateScope();
-        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        using IServiceScope scope = app.Services.CreateScope();
+        DatabaseSeeder seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
         await seeder.SeedAsync();
-
-        // Seed MongoDB data
-        var mongoSeeder = scope.ServiceProvider.GetRequiredService<MeUi.Infrastructure.Data.Seeders.MongoDbSeeder>();
-        await mongoSeeder.SeedAsync();
     }
 
     Log.Information("MeUi API application configured successfully");

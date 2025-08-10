@@ -1,0 +1,48 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "DATABASE_URI",
+        "crystaldba/postgres-mcp",
+        "--access-mode=restricted"
+      ],
+      "env": {
+        "DATABASE_URI": "postgresql://postgres:FazizHomelab4212@10.0.0.107:5432/csrit"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "list_schemas",
+        "list_objects",
+        "execute_sql",
+        "get_object_details"
+      ]
+    },
+    "MongoDB": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mongodb-mcp-server",
+        "--connectionString",
+        "mongodb://100.115.172.63:27017",
+        "--readOnly"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "list-databases",
+        "list-collections",
+        "collection-schema",
+        "find",
+        "count"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}

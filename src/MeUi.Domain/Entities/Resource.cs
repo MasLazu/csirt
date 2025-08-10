@@ -7,4 +7,5 @@ public class Resource : BaseEntity
     public string Description { get; set; } = string.Empty;
 
     public ICollection<Permission> Permissions { get; set; } = [];
+    public ICollection<TenantPermission> TenantPermissions { get; set; } = [];
 }

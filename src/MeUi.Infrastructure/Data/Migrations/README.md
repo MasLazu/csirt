@@ -1,128 +1,85 @@
-# Database Migrations and Seeding
+# Database Migrations
 
-This document explains how to work with database migrations and seeding in the MeUi unified application.
+This directory contains Entity Framework Core migrations for the MeUi application.
 
-## Overview
+## Migration History
 
-The application uses Entity Framework Core migrations to manage database schema changes and includes an automatic seeding system for initial data.
+### 20250806085949_InitialUnifiedMigration
 
-## Migration Commands
+Initial migration containing user authentication and authorization entities.
 
-All migration commands should be run from the solution root directory.
+### 20250806101453_AddPageEntitiesFixed
 
-### Create a New Migration
+Added page and page group entities for UI navigation.
+
+### 20250807063433_FixPagePermissionsTable
+
+Fixed page permissions table relationships.
+
+### 20250808000000_AddTimescaleDBSchema
+
+**TimescaleDB Migration for Threat Intelligence Data**
+
+This migration introduces the TimescaleDB schema for storing threat intelligence data with the following components:
+
+#### Lookup Tables
+
+- `asn_info` - ASN information lookup table
+- `countries` - Country codes and names
+- `protocols` - Network protocols (TCP, UDP, etc.)
+- `malware_families` - Malware family classifications
+
+#### Main Table
+
+- `threat_intelligence` - Main hypertable for time-series threat data
+
+#### Key Features
+
+1. **TimescaleDB Hypertable**: The `threat_intelligence` table is converted to a hypertable partitioned by timestamp with 1-day intervals
+2. **Optimized Indexes**: Multiple indexes for time-series queries, IP address lookups, and composite queries
+3. **Continuous Aggregates**: Pre-computed hourly and daily summaries for performance
+4. **Compression Policy**: Automatic compression for data older than 7 days
+5. **Retention Policy**: Automatic cleanup of data older than 2 years
+6. **Foreign Key Relationships**: Normalized data structure with proper referential integrity
+
+#### Performance Optimizations
+
+- Hash indexes for IP address lookups
+- Composite indexes for common query patterns
+- Time-series specific indexes with descending timestamp ordering
+- Filtered indexes for optional fields
+
+#### TimescaleDB-Specific Features
+
+- Hypertable partitioning by timestamp
+- Continuous aggregates for hourly and daily summaries
+- Compression policies for storage optimization
+- Retention policies for data lifecycle management
+
+## Running Migrations
+
+To apply migrations to your database:
 
 ```bash
-dotnet ef migrations add <MigrationName> --project src-refactor/MeUi.Infrastructure --startup-project src-refactor/MeUi.Api --output-dir Data/Migrations
+dotnet ef database update --project src/MeUi.Infrastructure --startup-project src/MeUi.Api
 ```
 
-### Apply Migrations to Database
+To generate a new migration:
 
 ```bash
-dotnet ef database update --project src-refactor/MeUi.Infrastructure --startup-project src-refactor/MeUi.Api
+dotnet ef migrations add MigrationName --project src/MeUi.Infrastructure --startup-project src/MeUi.Api
 ```
 
-### List All Migrations
+## TimescaleDB Requirements
 
-```bash
-dotnet ef migrations list --project src-refactor/MeUi.Infrastructure --startup-project src-refactor/MeUi.Api
-```
+The TimescaleDB migration requires:
 
-### Remove Last Migration (if not applied to database)
+1. PostgreSQL database with TimescaleDB extension installed
+2. Proper permissions to create extensions and hypertables
+3. TimescaleDB version 2.0 or higher
 
-```bash
-dotnet ef migrations remove --project src-refactor/MeUi.Infrastructure --startup-project src-refactor/MeUi.Api
-```
+## Notes
 
-## Database Schema
-
-The unified database includes the following main tables:
-
-### Authentication Tables
-
-- **Users** - User accounts
-- **LoginMethods** - Available authentication methods (Password, OAuth, etc.)
-- **UserLoginMethods** - Links users to their authentication methods
-- **Passwords** - Password hashes for password-based authentication
-- **RefreshTokens** - JWT refresh tokens
-
-### Authorization Tables
-
-- **Roles** - User roles (SuperAdmin, Admin, User, Guest)
-- **UserRoles** - Links users to their roles
-- **Resources** - System resources that can be protected
-- **Actions** - Actions that can be performed on resources
-- **Permissions** - Combinations of actions and resources
-- **RolePermissions** - Links roles to their permissions
-
-## Automatic Database Initialization
-
-The application automatically:
-
-1. **Applies pending migrations** on startup
-2. **Seeds initial data** including:
-   - Login methods (Password, OAuth, Two Factor)
-   - Default roles (SuperAdmin, Admin, User, Guest)
-   - System resources and actions (discovered from code)
-   - Super user account (from configuration)
-
-## Configuration
-
-Database connection is configured in `appsettings.json`:
-
-```json
-{
-  "Postgresql": {
-    "Host": "postgresql.mfaziz.cloud",
-    "Port": "5432",
-    "Username": "postgres",
-    "Password": "FazizHomelab4212",
-    "Database": "csrit"
-  },
-  "SuperUser": {
-    "Email": "admin@meui.com",
-    "Username": "superadmin",
-    "Password": "SuperAdmin123!",
-    "FirstName": "Super",
-    "LastName": "Admin"
-  }
-}
-```
-
-## Development Workflow
-
-1. **Make entity changes** in the Domain layer
-2. **Create migration** using the command above
-3. **Review generated migration** for correctness
-4. **Apply migration** to your development database
-5. **Test the changes** thoroughly
-6. **Commit migration files** to version control
-
-## Production Deployment
-
-The application will automatically apply migrations and seed data on startup. Ensure:
-
-1. Database credentials are properly configured
-2. Database server is accessible
-3. Application has necessary permissions to create/modify database objects
-
-## Troubleshooting
-
-### Migration Fails
-
-- Check database connectivity
-- Verify credentials in configuration
-- Ensure database exists
-- Check for conflicting schema changes
-
-### Seeding Fails
-
-- Check application logs for specific errors
-- Verify configuration values (especially SuperUser settings)
-- Ensure required reference data is not missing
-
-### PostgreSQL Syntax Issues
-
-- Ensure migration uses PostgreSQL-compatible syntax
-- Check for SQL Server specific syntax (brackets instead of quotes)
-- Verify data types are PostgreSQL compatible
+- The TimescaleDB migration includes custom SQL for hypertable creation and policies
+- Ensure TimescaleDB extension is available before running the migration
+- The migration is designed to be reversible, but rolling back will lose TimescaleDB-specific optimizations

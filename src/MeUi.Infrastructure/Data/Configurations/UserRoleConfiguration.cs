@@ -10,25 +10,19 @@ public class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
     {
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.UserId)
-            .IsRequired();
+        builder.Property(x => x.UserId).IsRequired();
+        builder.Property(x => x.RoleId).IsRequired();
+        builder.Property(x => x.CreatedAt).IsRequired();
 
-        builder.Property(x => x.RoleId)
-            .IsRequired();
-
-        builder.Property(x => x.CreatedAt)
-            .IsRequired();
-
-        builder.Property(x => x.UpdatedAt);
-
-        builder.Property(x => x.DeletedAt);
-
-        // Indexes
-        builder.HasIndex(x => new { x.UserId, x.RoleId })
-            .IsUnique();
-
+        builder.HasIndex(x => new { x.UserId, x.RoleId }).IsUnique();
         builder.HasIndex(x => x.DeletedAt);
 
-        // Relationships are already configured in User and Role configurations
+        builder.HasOne(x => x.User)
+            .WithMany(u => u.UserRoles)
+            .HasForeignKey(x => x.UserId);
+
+        builder.HasOne(x => x.Role)
+            .WithMany(r => r.UserRoles)
+            .HasForeignKey(x => x.RoleId);
     }
 }

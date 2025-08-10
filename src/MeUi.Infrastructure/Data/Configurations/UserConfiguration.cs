@@ -10,44 +10,24 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Username)
-            .HasMaxLength(100);
-
-        builder.Property(x => x.Email)
-            .HasMaxLength(255);
-
-        builder.Property(x => x.Name)
-            .IsRequired()
-            .HasMaxLength(255);
-
-        builder.Property(x => x.IsSuspended)
-            .HasDefaultValue(false);
-
-        builder.Property(x => x.CreatedAt)
-            .IsRequired();
-
+        builder.Property(x => x.Username).HasMaxLength(100);
+        builder.Property(x => x.Email).HasMaxLength(255);
+        builder.Property(x => x.Name).IsRequired().HasMaxLength(255);
+        builder.Property(x => x.IsSuspended).HasDefaultValue(false);
+        builder.Property(x => x.CreatedAt).IsRequired();
         builder.Property(x => x.UpdatedAt);
-
         builder.Property(x => x.DeletedAt);
 
-        // Indexes
-        builder.HasIndex(x => x.Username)
-            .IsUnique()
-            .HasFilter("[Username] IS NOT NULL");
-
-        builder.HasIndex(x => x.Email)
-            .IsUnique()
-            .HasFilter("[Email] IS NOT NULL");
-
+        builder.HasIndex(x => x.Username).IsUnique().HasFilter("Username IS NOT NULL");
+        builder.HasIndex(x => x.Email).IsUnique().HasFilter("Email IS NOT NULL");
         builder.HasIndex(x => x.DeletedAt);
 
-        // Relationships
         builder.HasMany(x => x.UserLoginMethods)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(x => x.RefreshTokens)
+        builder.HasMany(x => x.UserRefreshTokens)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
