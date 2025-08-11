@@ -22,22 +22,24 @@ public class GlobalExceptionHandler : IExceptionHandler
     {
         httpContext.Response.ContentType = "application/json";
 
-        ErrorResponse response = exception switch
+        (ErrorResponse response, int statusCode) = exception switch
         {
-            FastEndpoints.ValidationFailureException ex => new ErrorResponse(
+            FastEndpoints.ValidationFailureException ex => (new ErrorResponse(
                 message: "One or more validation errors occurred.",
                 errorCode: "VALIDATION_ERROR",
                 errors: ex.Failures?
                     .GroupBy(e => e.PropertyName)
                     .ToDictionary(
                         g => g.Key,
-                        g => g.Select(e => e.ErrorMessage).ToArray())),
-            Application.Exceptions.ApplicationException ex => new ErrorResponse(
+                        g => g.Select(e => e.ErrorMessage).ToArray())), (int)HttpStatusCode.BadRequest),
+            Application.Exceptions.ApplicationException ex => (new ErrorResponse(
                 message: ex.Message,
                 errorCode: ex.ErrorCode,
-                errors: ex.Errors),
-            _ => new ErrorResponse(message: "An unexpected error occurred")
+                errors: ex.Errors), ex.StatusCode),
+            _ => (new ErrorResponse(message: "An unexpected error occurred"), (int)HttpStatusCode.InternalServerError)
         };
+
+        httpContext.Response.StatusCode = statusCode;
 
         var jsonOptions = new JsonSerializerOptions
         {

@@ -4,8 +4,6 @@ using Mapster;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-// Removed ThreatIntelligence interfaces and services - using generic repository pattern
-using MeUi.Application.Features.ThreatIntelligence.Queries.GetThreatTimeSeries;
 
 namespace MeUi.Application;
 
@@ -23,9 +21,6 @@ public static class DependencyInjection
         services.AddScoped<IMapper, ServiceMapper>();
 
         // ThreatIntelligence services removed - using generic repository pattern
-
-        // Explicitly register the GetThreatTimeSeries handler to ensure it's discovered
-        services.AddScoped<IRequestHandler<GetThreatTimeSeriesNewQuery, ThreatTimeSeriesDto>, GetThreatTimeSeriesQueryHandler>();
 
         return services;
     }

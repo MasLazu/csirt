@@ -1,40 +1,37 @@
 using MediatR;
 using MeUi.Application.Exceptions;
 using MeUi.Application.Interfaces;
+using MeUi.Domain.Entities;
 
 namespace MeUi.Application.Features.TenantUsers.Commands.RemoveRoleFromTenantUser;
 
 public class RemoveRoleFromTenantUserCommandHandler : IRequestHandler<RemoveRoleFromTenantUserCommand, Unit>
 {
-    private readonly ITenantUserRepository _tenantUserRepository;
+    private readonly IRepository<TenantUserRole> _tenantUserRoleRepository;
+    private readonly IRepository<TenantRole> _tenantRoleRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public RemoveRoleFromTenantUserCommandHandler(
-        ITenantUserRepository tenantUserRepository,
+        IRepository<TenantUserRole> tenantUserRoleRepository,
+        IRepository<TenantRole> tenantRoleRepository,
         IUnitOfWork unitOfWork)
     {
-        _tenantUserRepository = tenantUserRepository;
+        _tenantUserRoleRepository = tenantUserRoleRepository;
+        _tenantRoleRepository = tenantRoleRepository;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Unit> Handle(RemoveRoleFromTenantUserCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(RemoveRoleFromTenantUserCommand request, CancellationToken ct)
     {
-        // Validate tenant user exists
-        var tenantUser = await _tenantUserRepository.GetByIdAsync(request.TenantUserId, cancellationToken);
-        if (tenantUser == null)
-        {
-            throw new NotFoundException($"Tenant user with ID {request.TenantUserId} not found");
-        }
+        IEnumerable<TenantUserRole> tenantUserRole = await _tenantUserRoleRepository
+            .FindAsync(tur => tur.TenantUserId == request.TenantUserId && tur.TenantRoleId == request.RoleId, ct);
 
-        // Check if user has this role
-        var hasRole = await _tenantUserRepository.UserHasRoleAsync(request.TenantUserId, request.RoleId, cancellationToken);
-        if (!hasRole)
-        {
-            throw new NotFoundException($"User does not have the specified role");
-        }
+        TenantRole tenantRole = await _tenantRoleRepository.GetByIdAsync(request.RoleId, ct)
+            ?? throw new NotFoundException("Role not found.");
 
-        await _tenantUserRepository.RemoveRoleFromUserAsync(request.TenantUserId, request.RoleId, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _tenantUserRoleRepository.DeleteRangeAsync(tenantUserRole, ct);
+        await _tenantRoleRepository.DeleteAsync(tenantRole, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
 
         return Unit.Value;
     }

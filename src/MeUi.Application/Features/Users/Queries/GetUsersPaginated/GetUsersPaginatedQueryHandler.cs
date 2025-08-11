@@ -25,29 +25,20 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
     {
         Expression<Func<User, bool>>? predicate = null;
 
-        if (!string.IsNullOrEmpty(request.SearchTerm) && request.IsSuspended.HasValue)
+        if (!string.IsNullOrEmpty(request.SearchTerm))
         {
             string searchTerm = request.SearchTerm.ToLower();
-            bool isSuspended = request.IsSuspended.Value;
-            predicate = u => u.IsSuspended == isSuspended &&
-                           (u.Name != null && u.Name.ToLower().Contains(searchTerm) ||
-                            u.Email != null && u.Email.ToLower().Contains(searchTerm) ||
-                            u.Username != null && u.Username.ToLower().Contains(searchTerm));
-        }
-        else if (!string.IsNullOrEmpty(request.SearchTerm))
-        {
-            string searchTerm = request.SearchTerm.ToLower();
-            predicate = u => u.Name != null && u.Name.ToLower().Contains(searchTerm) ||
-                           u.Email != null && u.Email.ToLower().Contains(searchTerm) ||
-                           u.Username != null && u.Username.ToLower().Contains(searchTerm);
-        }
-        else if (request.IsSuspended.HasValue)
-        {
-            bool isSuspended = request.IsSuspended.Value;
-            predicate = u => u.IsSuspended == isSuspended;
+            var searchPredicate = BuildSearchPredicate(searchTerm);
+            predicate = predicate == null ? searchPredicate : CombinePredicates(predicate, searchPredicate);
         }
 
-        (IEnumerable<User> users, int totalCount) = await _userRepository.GetPaginatedAsync(
+        if (request.IsSuspended.HasValue)
+        {
+            var suspendedPredicate = BuildSuspendedPredicate(request.IsSuspended.Value);
+            predicate = predicate == null ? suspendedPredicate : CombinePredicates(predicate, suspendedPredicate);
+        }
+
+        var result = await _userRepository.GetPaginatedAsync(
             predicate: predicate,
             orderBy: u => u.Name,
             orderByDescending: false,
@@ -55,17 +46,60 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
             take: request.PageSize,
             ct: ct);
 
-        IEnumerable<UserDto> userDtos = _mapper.Map<IEnumerable<UserDto>>(users);
-
-        int totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
+        var userDtos = _mapper.Map<IEnumerable<UserDto>>(result.Items);
 
         return new PaginatedResult<UserDto>
         {
             Items = userDtos,
             Page = request.PageNumber,
             PageSize = request.PageSize,
-            TotalItems = totalCount,
-            TotalPages = totalPages
+            TotalItems = result.TotalCount,
+            TotalPages = (int)Math.Ceiling((double)result.TotalCount / request.PageSize)
         };
+    }
+
+    private static Expression<Func<User, bool>> BuildSearchPredicate(string searchTerm)
+    {
+        return tu => (tu.Name != null && tu.Name.ToLower().Contains(searchTerm)) ||
+                     (tu.Email != null && tu.Email.ToLower().Contains(searchTerm)) ||
+                     (tu.Username != null && tu.Username.ToLower().Contains(searchTerm));
+    }
+
+    private static Expression<Func<User, bool>> BuildSuspendedPredicate(bool isSuspended)
+    {
+        return tu => tu.IsSuspended == isSuspended;
+    }
+
+    private static Expression<Func<User, bool>> CombinePredicates(
+        Expression<Func<User, bool>> first,
+        Expression<Func<User, bool>> second)
+    {
+        var parameter = Expression.Parameter(typeof(User), "tu");
+        var firstBody = ReplaceParameter(first.Body, first.Parameters[0], parameter);
+        var secondBody = ReplaceParameter(second.Body, second.Parameters[0], parameter);
+        var combined = Expression.AndAlso(firstBody, secondBody);
+        return Expression.Lambda<Func<User, bool>>(combined, parameter);
+    }
+
+    private static Expression ReplaceParameter(Expression expression, ParameterExpression oldParameter, ParameterExpression newParameter)
+    {
+        return new ParameterReplacer(oldParameter, newParameter).Visit(expression);
+    }
+
+    private class ParameterReplacer : ExpressionVisitor
+    {
+        private readonly ParameterExpression _oldParameter;
+        private readonly ParameterExpression _newParameter;
+
+        public ParameterReplacer(ParameterExpression oldParameter, ParameterExpression newParameter)
+        {
+            _oldParameter = oldParameter;
+            _newParameter = newParameter;
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return node == _oldParameter ? _newParameter : base.VisitParameter(node);
+        }
     }
 }

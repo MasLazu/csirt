@@ -9,7 +9,7 @@ public class GetPageGroupsEndpoint : BaseEndpointWithoutRequest<IEnumerable<Page
     public override void ConfigureEndpoint()
     {
         Get("api/v1/page-groups");
-        Description(x => x.WithTags("PageGroup").WithSummary("Get all page groups"));
+        Description(x => x.WithTags("Page Group").WithSummary("Get all page groups"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

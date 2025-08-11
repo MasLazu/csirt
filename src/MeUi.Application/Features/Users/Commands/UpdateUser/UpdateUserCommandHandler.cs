@@ -8,13 +8,16 @@ namespace MeUi.Application.Features.Users.Commands.UpdateUser;
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Guid>
 {
     private readonly IRepository<User> _userRepository;
+    private readonly IRepository<TenantUser> _tenantUserRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateUserCommandHandler(
         IRepository<User> userRepository,
+        IRepository<TenantUser> tenantUserRepository,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
+        _tenantUserRepository = tenantUserRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -23,31 +26,14 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Guid>
         User user = await _userRepository.GetByIdAsync(request.Id, ct) ??
             throw new NotFoundException($"User with ID '{request.Id}' not found.");
 
-        if (string.IsNullOrEmpty(request.Email) && string.IsNullOrEmpty(request.Username))
+        if (await _userRepository.ExistsAsync(u => u.Email == request.Email || u.Username == request.Username, ct))
         {
-            throw new BadRequestException("Either Email or Username must be provided.");
+            throw new BadRequestException("User with this email already exists.");
         }
 
-        if (!string.IsNullOrEmpty(request.Email) && request.Email != user.Email)
+        if (await _tenantUserRepository.ExistsAsync(tu => tu.Email == request.Email || tu.Username == request.Username, ct))
         {
-            User? existingUserByEmail = await _userRepository.FirstOrDefaultAsync(
-                u => u.Email == request.Email && u.Id != request.Id, ct);
-
-            if (existingUserByEmail != null)
-            {
-                throw new NotFoundException($"User with email '{request.Email}' already exists.");
-            }
-        }
-
-        if (!string.IsNullOrEmpty(request.Username) && request.Username != user.Username)
-        {
-            User? existingUserByUsername = await _userRepository.FirstOrDefaultAsync(
-                u => u.Username == request.Username && u.Id != request.Id, ct);
-
-            if (existingUserByUsername != null)
-            {
-                throw new NotFoundException($"User with username '{request.Username}' already exists.");
-            }
+            throw new BadRequestException("Tenant user with this email already exists.");
         }
 
         user.Username = request.Username;

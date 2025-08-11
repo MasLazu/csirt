@@ -24,7 +24,8 @@ public class TenantUserLoginMethodConfiguration : IEntityTypeConfiguration<Tenan
             .HasForeignKey(x => x.TenantUserId);
 
         builder.HasOne(x => x.LoginMethod)
-            .WithMany()
-            .HasForeignKey(x => x.LoginMethodCode);
+            .WithMany(x => x.TenantUserLoginMethods)
+            .HasForeignKey(x => x.LoginMethodCode)
+            .HasPrincipalKey(x => x.Code);
     }
 }

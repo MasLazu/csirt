@@ -1,4 +1,3 @@
-using MapsterMapper;
 using MediatR;
 using MeUi.Application.Exceptions;
 using MeUi.Application.Interfaces;
@@ -9,50 +8,61 @@ namespace MeUi.Application.Features.Users.Commands.CreateUser;
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Guid>
 {
     private readonly IRepository<User> _userRepository;
+    private readonly IRepository<TenantUser> _tenantUserRepository;
+    private readonly IRepository<Password> _passwordRepository;
+    private readonly IRepository<UserLoginMethod> _userLoginMethodRepository;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
 
     public CreateUserCommandHandler(
         IRepository<User> userRepository,
-        IUnitOfWork unitOfWork,
-        IMapper mapper)
+        IRepository<TenantUser> tenantUserRepository,
+        IRepository<UserLoginMethod> userLoginMethodRepository,
+        IRepository<Password> passwordRepository,
+        IPasswordHasher passwordHasher,
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
+        _tenantUserRepository = tenantUserRepository;
+        _passwordHasher = passwordHasher;
+        _userLoginMethodRepository = userLoginMethodRepository;
+        _passwordRepository = passwordRepository;
         _unitOfWork = unitOfWork;
-        _mapper = mapper;
     }
 
     public async Task<Guid> Handle(CreateUserCommand request, CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(request.Email) && string.IsNullOrEmpty(request.Username))
+        if (await _userRepository.ExistsAsync(u => u.Email == request.Email || u.Username == request.Username, ct))
         {
-            throw new BadRequestException("Either Email or Username must be provided.");
+            throw new BadRequestException("User with this email already exists.");
         }
 
-        if (!string.IsNullOrEmpty(request.Email))
+        if (await _tenantUserRepository.ExistsAsync(tu => tu.Email == request.Email || tu.Username == request.Username, ct))
         {
-            User? existingUserByEmail = await _userRepository.FirstOrDefaultAsync(u => u.Email == request.Email, ct);
-
-            if (existingUserByEmail != null)
-            {
-                throw new ConflictException($"User with email '{request.Email}' already exists.");
-            }
+            throw new BadRequestException("Tenant user with this email already exists.");
         }
 
-        if (!string.IsNullOrEmpty(request.Username))
+        var user = new User
         {
-            User? existingUserByUsername = await _userRepository.FirstOrDefaultAsync(
-                u => u.Username == request.Username, ct);
+            Email = request.Email,
+            Username = request.Username,
+            Name = request.Name,
+        };
 
-            if (existingUserByUsername != null)
-            {
-                throw new ConflictException($"User with username '{request.Username}' already exists.");
-            }
-        }
+        var userLoginMethod = new UserLoginMethod
+        {
+            UserId = user.Id,
+            LoginMethodCode = "PASSWORD"
+        };
 
-        User user = _mapper.Map<User>(request);
-        user = await _userRepository.AddAsync(user, ct);
+        var password = new Password
+        {
+            PasswordHash = _passwordHasher.HashPassword(request.Password),
+        };
 
+        await _userRepository.AddAsync(user, ct);
+        await _userLoginMethodRepository.AddAsync(userLoginMethod, ct);
+        await _passwordRepository.AddAsync(password, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
         return user.Id;

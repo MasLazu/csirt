@@ -162,7 +162,7 @@ public class DatabaseSeeder
             {
                 Email = superUserEmail,
                 Username = _configuration["SuperUser:Username"] ?? "superadmin",
-                Name = $"{_configuration["SuperUser:FirstName"]} {_configuration["SuperUser:LastName"]}".Trim(),
+                Name = _configuration["SuperUser:Name"] ?? "Super Administrator",
                 IsSuspended = false
             };
 

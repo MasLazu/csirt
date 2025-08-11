@@ -6,14 +6,6 @@ public class CreateRoleCommandValidator : AbstractValidator<CreateRoleCommand>
 {
     public CreateRoleCommandValidator()
     {
-        RuleFor(x => x.Code)
-            .NotEmpty()
-            .WithMessage("Role code is required.")
-            .MaximumLength(50)
-            .WithMessage("Role code must not exceed 50 characters.")
-            .Matches(@"^[A-Z][A-Z0-9_]*$")
-            .WithMessage("Role code must start with a letter and contain only uppercase letters, numbers, and underscores.");
-
         RuleFor(x => x.Name)
             .NotEmpty()
             .WithMessage("Role name is required.")

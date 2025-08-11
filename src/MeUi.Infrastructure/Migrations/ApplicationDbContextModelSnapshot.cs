@@ -4,20 +4,17 @@ using System.Net;
 using MeUi.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace MeUi.Infrastructure.Data.Migrations
+namespace MeUi.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250809061027_AddTenantUserPasswordWithCorrectTableNames")]
-    partial class AddTenantUserPasswordWithCorrectTableNames
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,82 +55,76 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
+                    b.HasIndex("Code");
 
                     b.HasIndex("DeletedAt");
 
                     b.ToTable("Actions");
                 });
 
-            modelBuilder.Entity("MeUi.Domain.Entities.AsnInfo", b =>
+            modelBuilder.Entity("MeUi.Domain.Entities.AsnRegistry", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Asn")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("asn");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                        .HasColumnType("text");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Asn")
-                        .IsUnique()
-                        .HasDatabaseName("idx_asn_info_asn_unique");
+                    b.HasIndex("Number");
 
-                    b.ToTable("asn_info", (string)null);
+                    b.ToTable("AsnRegistries");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Country", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("char(2)")
-                        .HasColumnName("code");
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("idx_countries_code_unique");
+                    b.HasIndex("Code");
 
-                    b.ToTable("countries", (string)null);
+                    b.HasIndex("DeletedAt");
+
+                    b.ToTable("Countries");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.LoginMethod", b =>
@@ -173,10 +164,7 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasAlternateKey("Code");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
+                    b.HasIndex("Code");
 
                     b.HasIndex("DeletedAt");
 
@@ -185,32 +173,31 @@ namespace MeUi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("MeUi.Domain.Entities.MalwareFamily", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("idx_malware_families_name_unique");
+                    b.HasIndex("DeletedAt");
 
-                    b.ToTable("malware_families", (string)null);
+                    b.HasIndex("Name");
+
+                    b.ToTable("MalwareFamilies");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Page", b =>
@@ -251,8 +238,7 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
+                    b.HasIndex("Code");
 
                     b.HasIndex("DeletedAt");
 
@@ -260,8 +246,7 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.HasIndex("Path")
-                        .IsUnique();
+                    b.HasIndex("Path");
 
                     b.ToTable("Pages");
                 });
@@ -298,8 +283,7 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
+                    b.HasIndex("Code");
 
                     b.HasIndex("DeletedAt");
 
@@ -335,10 +319,39 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("PermissionId");
 
-                    b.HasIndex("PageId", "PermissionId")
-                        .IsUnique();
-
                     b.ToTable("PagePermissions");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.PageTenantPermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantPermissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeletedAt");
+
+                    b.HasIndex("PageId");
+
+                    b.HasIndex("TenantPermissionId");
+
+                    b.ToTable("PageTenantPermission");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Password", b =>
@@ -365,15 +378,9 @@ namespace MeUi.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("UserLoginMethodId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DeletedAt");
-
-                    b.HasIndex("UserLoginMethodId")
-                        .IsUnique();
 
                     b.ToTable("Passwords");
                 });
@@ -388,6 +395,9 @@ namespace MeUi.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("ActionId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -407,6 +417,8 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("ActionCode");
 
+                    b.HasIndex("ActionId");
+
                     b.HasIndex("DeletedAt");
 
                     b.HasIndex("ResourceCode", "ActionCode")
@@ -417,32 +429,31 @@ namespace MeUi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("MeUi.Domain.Entities.Protocol", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("name");
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("idx_protocols_name_unique");
+                    b.HasIndex("DeletedAt");
 
-                    b.ToTable("protocols", (string)null);
+                    b.HasIndex("Name");
+
+                    b.ToTable("Protocols");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.RefreshToken", b =>
@@ -471,9 +482,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DeletedAt");
@@ -482,8 +490,6 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("Token")
                         .IsUnique();
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
                 });
@@ -534,11 +540,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -560,10 +561,9 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
                     b.HasIndex("DeletedAt");
+
+                    b.HasIndex("Name");
 
                     b.ToTable("Roles");
                 });
@@ -613,7 +613,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("ContactPhone")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -624,7 +623,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
@@ -634,9 +632,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
-
-                    b.Property<DateTime?>("SubscriptionExpiresAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -649,25 +644,18 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("IsActive");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("Name");
 
                     b.ToTable("Tenants");
                 });
 
-            modelBuilder.Entity("MeUi.Domain.Entities.TenantAsn", b =>
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantAsnRegistry", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("AsnId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("AssignedByTenantUserId")
+                    b.Property<Guid>("AsnRegistryId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -684,18 +672,122 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AsnId");
-
-                    b.HasIndex("AssignedByTenantUserId");
+                    b.HasIndex("AsnRegistryId");
 
                     b.HasIndex("DeletedAt");
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("TenantId", "AsnId")
+                    b.HasIndex("TenantId", "AsnRegistryId")
                         .IsUnique();
 
-                    b.ToTable("TenantAsns");
+                    b.ToTable("TenantAsnRegistries");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantPermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActionCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResourceCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActionCode");
+
+                    b.HasIndex("DeletedAt");
+
+                    b.HasIndex("ResourceCode", "ActionCode")
+                        .IsUnique();
+
+                    b.ToTable("TenantPermissions");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeletedAt");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TenantRole");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantRolePermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantPermissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantRoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantPermissionId");
+
+                    b.HasIndex("TenantRoleId");
+
+                    b.ToTable("TenantRolePermission");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUser", b =>
@@ -718,9 +810,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                     b.Property<bool>("IsSuspended")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsTenantAdmin")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -741,8 +830,6 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("DeletedAt");
 
-                    b.HasIndex("IsTenantAdmin");
-
                     b.HasIndex("TenantId");
 
                     b.HasIndex("Email", "TenantId")
@@ -758,90 +845,74 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LoginMethodCode")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("login_method_code");
-
-                    b.Property<Guid>("LoginMethodId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("login_method_id");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<Guid>("TenantUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_user_id");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("DeletedAt");
 
-                    b.HasIndex("LoginMethodId");
+                    b.HasIndex("LoginMethodCode");
 
                     b.HasIndex("TenantUserId");
 
                     b.HasIndex("TenantUserId", "LoginMethodCode")
                         .IsUnique();
 
-                    b.ToTable("tenant_user_login_methods", (string)null);
+                    b.ToTable("TenantUserLoginMethods");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUserPassword", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("password_hash");
+                    b.Property<Guid>("PasswordId")
+                        .HasColumnType("uuid");
 
-                    b.Property<string>("PasswordSalt")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("password_salt");
+                    b.Property<Guid?>("TenantUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("TenantUserLoginMethodId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_user_login_method_id");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantUserLoginMethodId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_tenant_user_passwords_tenant_user_login_method_id");
+                    b.HasIndex("DeletedAt");
 
-                    b.ToTable("tenant_user_passwords", (string)null);
+                    b.HasIndex("PasswordId");
+
+                    b.HasIndex("TenantUserId");
+
+                    b.HasIndex("TenantUserLoginMethodId");
+
+                    b.ToTable("TenantUserPasswords");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUserRefreshToken", b =>
@@ -856,19 +927,11 @@ namespace MeUi.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("RefreshTokenId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("TenantUserId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -877,11 +940,9 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("DeletedAt");
 
-                    b.HasIndex("ExpiresAt");
+                    b.HasIndex("RefreshTokenId");
 
-                    b.HasIndex("TenantUserId");
-
-                    b.HasIndex("Token")
+                    b.HasIndex("TenantUserId", "RefreshTokenId")
                         .IsUnique();
 
                     b.ToTable("TenantUserRefreshTokens");
@@ -899,7 +960,10 @@ namespace MeUi.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("RoleId")
+                    b.Property<Guid>("TenantRoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantRoleId1")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("TenantUserId")
@@ -912,139 +976,89 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("DeletedAt");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex("TenantRoleId");
+
+                    b.HasIndex("TenantRoleId1");
 
                     b.HasIndex("TenantUserId");
 
-                    b.HasIndex("TenantUserId", "RoleId")
+                    b.HasIndex("TenantUserId", "TenantRoleId")
                         .IsUnique();
 
                     b.ToTable("TenantUserRoles");
                 });
 
-            modelBuilder.Entity("MeUi.Domain.Entities.ThreatIntelligence", b =>
+            modelBuilder.Entity("MeUi.Domain.Entities.ThreatEvent", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("timestamp");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("AsnId")
-                        .HasColumnType("integer")
-                        .HasColumnName("asn_id");
+                    b.Property<Guid>("AsnRegistryId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("category");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("deleted_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<IPAddress>("DestinationAddress")
-                        .HasColumnType("inet")
-                        .HasColumnName("destination_address");
+                        .HasColumnType("inet");
 
-                    b.Property<int?>("DestinationCountryId")
-                        .HasColumnType("integer")
-                        .HasColumnName("destination_country_id");
+                    b.Property<Guid?>("DestinationCountryId")
+                        .HasColumnType("uuid");
 
                     b.Property<int?>("DestinationPort")
-                        .HasColumnType("integer")
-                        .HasColumnName("destination_port");
+                        .HasColumnType("integer");
 
-                    b.Property<int?>("MalwareFamilyId")
-                        .HasColumnType("integer")
-                        .HasColumnName("malware_family_id");
+                    b.Property<Guid?>("MalwareFamilyId")
+                        .HasColumnType("uuid");
 
-                    b.Property<int?>("ProtocolId")
-                        .HasColumnType("integer")
-                        .HasColumnName("protocol_id");
+                    b.Property<Guid?>("ProtocolId")
+                        .HasColumnType("uuid");
 
                     b.Property<IPAddress>("SourceAddress")
                         .IsRequired()
-                        .HasColumnType("inet")
-                        .HasColumnName("source_address");
+                        .HasColumnType("inet");
 
-                    b.Property<int?>("SourceCountryId")
-                        .HasColumnType("integer")
-                        .HasColumnName("source_country_id");
+                    b.Property<Guid?>("SourceCountryId")
+                        .HasColumnType("uuid");
 
                     b.Property<int?>("SourcePort")
-                        .HasColumnType("integer")
-                        .HasColumnName("source_port");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("updated_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id", "Timestamp");
 
-                    b.HasIndex("DeletedAt")
-                        .HasDatabaseName("idx_threat_deleted_at")
-                        .HasFilter("deleted_at IS NOT NULL");
+                    b.HasIndex("AsnRegistryId");
 
-                    b.HasIndex("DestinationAddress")
-                        .HasDatabaseName("idx_threat_dest_addr");
+                    b.HasIndex("Category");
 
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("DestinationAddress"), "hash");
+                    b.HasIndex("DeletedAt");
 
-                    b.HasIndex("SourceAddress")
-                        .HasDatabaseName("idx_threat_source_addr");
+                    b.HasIndex("DestinationAddress");
 
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SourceAddress"), "hash");
+                    b.HasIndex("DestinationCountryId");
 
-                    b.HasIndex("Timestamp")
-                        .IsDescending()
-                        .HasDatabaseName("idx_threat_timestamp_desc");
+                    b.HasIndex("MalwareFamilyId");
 
-                    b.HasIndex("Category", "Timestamp")
-                        .HasDatabaseName("idx_threat_category_time");
+                    b.HasIndex("ProtocolId");
 
-                    b.HasIndex("DestinationCountryId", "Timestamp")
-                        .HasDatabaseName("idx_threat_dest_country_time");
+                    b.HasIndex("SourceAddress");
 
-                    b.HasIndex("MalwareFamilyId", "Timestamp")
-                        .HasDatabaseName("idx_threat_malware_time")
-                        .HasFilter("malware_family_id IS NOT NULL");
+                    b.HasIndex("SourceCountryId");
 
-                    b.HasIndex("ProtocolId", "Timestamp")
-                        .HasDatabaseName("idx_threat_protocol_time")
-                        .HasFilter("protocol_id IS NOT NULL");
-
-                    b.HasIndex("SourceCountryId", "Timestamp")
-                        .HasDatabaseName("idx_threat_source_country_time");
-
-                    b.HasIndex("Timestamp", "AsnId")
-                        .HasDatabaseName("idx_threat_timestamp_asn");
-
-                    b.HasIndex("Timestamp", "SourceAddress")
-                        .HasDatabaseName("idx_threat_timestamp_source");
-
-                    b.HasIndex("AsnId", "Category", "Timestamp")
-                        .HasDatabaseName("idx_threat_asn_category_time");
-
-                    b.HasIndex("SourceCountryId", "ProtocolId", "Timestamp")
-                        .HasDatabaseName("idx_threat_country_protocol_time");
-
-                    b.HasIndex("SourcePort", "DestinationPort", "Timestamp")
-                        .HasDatabaseName("idx_threat_ports_time")
-                        .HasFilter("source_port IS NOT NULL OR destination_port IS NOT NULL");
-
-                    b.ToTable("threat_intelligence", (string)null);
+                    b.ToTable("ThreatEvents");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.User", b =>
@@ -1086,11 +1100,11 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique()
-                        .HasFilter("[Email] IS NOT NULL");
+                        .HasFilter("\"Email\" IS NOT NULL");
 
                     b.HasIndex("Username")
                         .IsUnique()
-                        .HasFilter("[Username] IS NOT NULL");
+                        .HasFilter("\"Username\" IS NOT NULL");
 
                     b.ToTable("Users");
                 });
@@ -1112,7 +1126,69 @@ namespace MeUi.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<Guid>("LoginMethodId")
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeletedAt");
+
+                    b.HasIndex("LoginMethodCode");
+
+                    b.HasIndex("UserId", "LoginMethodCode")
+                        .IsUnique();
+
+                    b.ToTable("UserLoginMethods");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.UserPassword", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PasswordId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserLoginMethodId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeletedAt");
+
+                    b.HasIndex("PasswordId");
+
+                    b.HasIndex("UserLoginMethodId");
+
+                    b.ToTable("UserPasswords");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.UserRefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RefreshTokenId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -1125,12 +1201,12 @@ namespace MeUi.Infrastructure.Data.Migrations
 
                     b.HasIndex("DeletedAt");
 
-                    b.HasIndex("LoginMethodId");
+                    b.HasIndex("RefreshTokenId");
 
-                    b.HasIndex("UserId", "LoginMethodCode")
+                    b.HasIndex("UserId", "RefreshTokenId")
                         .IsUnique();
 
-                    b.ToTable("UserLoginMethods");
+                    b.ToTable("UserRefreshTokens");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.UserRole", b =>
@@ -1170,8 +1246,7 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     b.HasOne("MeUi.Domain.Entities.PageGroup", "PageGroup")
                         .WithMany("Pages")
-                        .HasForeignKey("PageGroupId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("PageGroupId");
 
                     b.Navigation("PageGroup");
                 });
@@ -1195,47 +1270,48 @@ namespace MeUi.Infrastructure.Data.Migrations
                     b.Navigation("Permission");
                 });
 
-            modelBuilder.Entity("MeUi.Domain.Entities.Password", b =>
+            modelBuilder.Entity("MeUi.Domain.Entities.PageTenantPermission", b =>
                 {
-                    b.HasOne("MeUi.Domain.Entities.UserLoginMethod", "UserLoginMethod")
-                        .WithMany()
-                        .HasForeignKey("UserLoginMethodId")
+                    b.HasOne("MeUi.Domain.Entities.Page", "Page")
+                        .WithMany("PageTenantPermissions")
+                        .HasForeignKey("PageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("UserLoginMethod");
+                    b.HasOne("MeUi.Domain.Entities.TenantPermission", "TenantPermission")
+                        .WithMany("PageTenantPermissions")
+                        .HasForeignKey("TenantPermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Page");
+
+                    b.Navigation("TenantPermission");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Permission", b =>
                 {
                     b.HasOne("MeUi.Domain.Entities.Action", "Action")
-                        .WithMany("Permissions")
+                        .WithMany()
                         .HasForeignKey("ActionCode")
                         .HasPrincipalKey("Code")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("MeUi.Domain.Entities.Action", null)
+                        .WithMany("Permissions")
+                        .HasForeignKey("ActionId");
 
                     b.HasOne("MeUi.Domain.Entities.Resource", "Resource")
                         .WithMany("Permissions")
                         .HasForeignKey("ResourceCode")
                         .HasPrincipalKey("Code")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Action");
 
                     b.Navigation("Resource");
-                });
-
-            modelBuilder.Entity("MeUi.Domain.Entities.RefreshToken", b =>
-                {
-                    b.HasOne("MeUi.Domain.Entities.User", "User")
-                        .WithMany("RefreshTokens")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.RolePermission", b =>
@@ -1257,29 +1333,74 @@ namespace MeUi.Infrastructure.Data.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("MeUi.Domain.Entities.TenantAsn", b =>
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantAsnRegistry", b =>
                 {
-                    b.HasOne("MeUi.Domain.Entities.AsnInfo", "AsnInfo")
+                    b.HasOne("MeUi.Domain.Entities.AsnRegistry", "AsnRegistry")
                         .WithMany()
-                        .HasForeignKey("AsnId")
+                        .HasForeignKey("AsnRegistryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MeUi.Domain.Entities.TenantUser", "AssignedByTenantUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedByTenantUserId");
-
                     b.HasOne("MeUi.Domain.Entities.Tenant", "Tenant")
-                        .WithMany("TenantAsns")
+                        .WithMany("TenantAsnRegistries")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AsnInfo");
-
-                    b.Navigation("AssignedByTenantUser");
+                    b.Navigation("AsnRegistry");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantPermission", b =>
+                {
+                    b.HasOne("MeUi.Domain.Entities.Action", "Action")
+                        .WithMany("TenantPermissions")
+                        .HasForeignKey("ActionCode")
+                        .HasPrincipalKey("Code")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MeUi.Domain.Entities.Resource", "Resource")
+                        .WithMany("TenantPermissions")
+                        .HasForeignKey("ResourceCode")
+                        .HasPrincipalKey("Code")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Action");
+
+                    b.Navigation("Resource");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantRole", b =>
+                {
+                    b.HasOne("MeUi.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("TenantRoles")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantRolePermission", b =>
+                {
+                    b.HasOne("MeUi.Domain.Entities.TenantPermission", "TenantPermission")
+                        .WithMany("TenantRolePermissions")
+                        .HasForeignKey("TenantPermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MeUi.Domain.Entities.TenantRole", "TenantRole")
+                        .WithMany("TenantRolePermissions")
+                        .HasForeignKey("TenantRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TenantPermission");
+
+                    b.Navigation("TenantRole");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUser", b =>
@@ -1296,8 +1417,9 @@ namespace MeUi.Infrastructure.Data.Migrations
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUserLoginMethod", b =>
                 {
                     b.HasOne("MeUi.Domain.Entities.LoginMethod", "LoginMethod")
-                        .WithMany()
-                        .HasForeignKey("LoginMethodId")
+                        .WithMany("TenantUserLoginMethods")
+                        .HasForeignKey("LoginMethodCode")
+                        .HasPrincipalKey("Code")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1314,33 +1436,57 @@ namespace MeUi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUserPassword", b =>
                 {
-                    b.HasOne("MeUi.Domain.Entities.TenantUserLoginMethod", "TenantUserLoginMethod")
-                        .WithOne("TenantUserPassword")
-                        .HasForeignKey("MeUi.Domain.Entities.TenantUserPassword", "TenantUserLoginMethodId")
+                    b.HasOne("MeUi.Domain.Entities.Password", "Password")
+                        .WithMany("TenantUserPasswords")
+                        .HasForeignKey("PasswordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("MeUi.Domain.Entities.TenantUser", null)
+                        .WithMany("TenantUserPasswords")
+                        .HasForeignKey("TenantUserId");
+
+                    b.HasOne("MeUi.Domain.Entities.TenantUserLoginMethod", "TenantUserLoginMethod")
+                        .WithMany()
+                        .HasForeignKey("TenantUserLoginMethodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Password");
 
                     b.Navigation("TenantUserLoginMethod");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUserRefreshToken", b =>
                 {
+                    b.HasOne("MeUi.Domain.Entities.RefreshToken", "RefreshToken")
+                        .WithMany("TenantUserRefreshTokens")
+                        .HasForeignKey("RefreshTokenId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("MeUi.Domain.Entities.TenantUser", "TenantUser")
                         .WithMany("TenantUserRefreshTokens")
                         .HasForeignKey("TenantUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("RefreshToken");
+
                     b.Navigation("TenantUser");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUserRole", b =>
                 {
-                    b.HasOne("MeUi.Domain.Entities.Role", "Role")
+                    b.HasOne("MeUi.Domain.Entities.TenantRole", "TenantRole")
                         .WithMany()
-                        .HasForeignKey("RoleId")
+                        .HasForeignKey("TenantRoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("MeUi.Domain.Entities.TenantRole", null)
+                        .WithMany("TenantUserRoles")
+                        .HasForeignKey("TenantRoleId1");
 
                     b.HasOne("MeUi.Domain.Entities.TenantUser", "TenantUser")
                         .WithMany("TenantUserRoles")
@@ -1348,45 +1494,36 @@ namespace MeUi.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Role");
+                    b.Navigation("TenantRole");
 
                     b.Navigation("TenantUser");
                 });
 
-            modelBuilder.Entity("MeUi.Domain.Entities.ThreatIntelligence", b =>
+            modelBuilder.Entity("MeUi.Domain.Entities.ThreatEvent", b =>
                 {
-                    b.HasOne("MeUi.Domain.Entities.AsnInfo", "AsnInfo")
-                        .WithMany("ThreatIntelligences")
-                        .HasForeignKey("AsnId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_threat_asn");
+                    b.HasOne("MeUi.Domain.Entities.AsnRegistry", "AsnRegistry")
+                        .WithMany("ThreatEvents")
+                        .HasForeignKey("AsnRegistryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("MeUi.Domain.Entities.Country", "DestinationCountry")
                         .WithMany("DestinationThreats")
-                        .HasForeignKey("DestinationCountryId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_threat_dest_country");
+                        .HasForeignKey("DestinationCountryId");
 
                     b.HasOne("MeUi.Domain.Entities.MalwareFamily", "MalwareFamily")
-                        .WithMany("ThreatIntelligences")
-                        .HasForeignKey("MalwareFamilyId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_threat_malware_family");
+                        .WithMany("ThreatEvents")
+                        .HasForeignKey("MalwareFamilyId");
 
                     b.HasOne("MeUi.Domain.Entities.Protocol", "Protocol")
-                        .WithMany("ThreatIntelligences")
-                        .HasForeignKey("ProtocolId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_threat_protocol");
+                        .WithMany("ThreatEvents")
+                        .HasForeignKey("ProtocolId");
 
                     b.HasOne("MeUi.Domain.Entities.Country", "SourceCountry")
                         .WithMany("SourceThreats")
-                        .HasForeignKey("SourceCountryId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_threat_source_country");
+                        .HasForeignKey("SourceCountryId");
 
-                    b.Navigation("AsnInfo");
+                    b.Navigation("AsnRegistry");
 
                     b.Navigation("DestinationCountry");
 
@@ -1401,7 +1538,8 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     b.HasOne("MeUi.Domain.Entities.LoginMethod", "LoginMethod")
                         .WithMany("UserLoginMethods")
-                        .HasForeignKey("LoginMethodId")
+                        .HasForeignKey("LoginMethodCode")
+                        .HasPrincipalKey("Code")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1412,6 +1550,44 @@ namespace MeUi.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("LoginMethod");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.UserPassword", b =>
+                {
+                    b.HasOne("MeUi.Domain.Entities.Password", "Password")
+                        .WithMany("UserPasswords")
+                        .HasForeignKey("PasswordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MeUi.Domain.Entities.UserLoginMethod", "UserLoginMethod")
+                        .WithMany()
+                        .HasForeignKey("UserLoginMethodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Password");
+
+                    b.Navigation("UserLoginMethod");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.UserRefreshToken", b =>
+                {
+                    b.HasOne("MeUi.Domain.Entities.RefreshToken", "RefreshToken")
+                        .WithMany("UserRefreshTokens")
+                        .HasForeignKey("RefreshTokenId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MeUi.Domain.Entities.User", "User")
+                        .WithMany("UserRefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RefreshToken");
 
                     b.Navigation("User");
                 });
@@ -1438,11 +1614,13 @@ namespace MeUi.Infrastructure.Data.Migrations
             modelBuilder.Entity("MeUi.Domain.Entities.Action", b =>
                 {
                     b.Navigation("Permissions");
+
+                    b.Navigation("TenantPermissions");
                 });
 
-            modelBuilder.Entity("MeUi.Domain.Entities.AsnInfo", b =>
+            modelBuilder.Entity("MeUi.Domain.Entities.AsnRegistry", b =>
                 {
-                    b.Navigation("ThreatIntelligences");
+                    b.Navigation("ThreatEvents");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Country", b =>
@@ -1454,22 +1632,33 @@ namespace MeUi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("MeUi.Domain.Entities.LoginMethod", b =>
                 {
+                    b.Navigation("TenantUserLoginMethods");
+
                     b.Navigation("UserLoginMethods");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.MalwareFamily", b =>
                 {
-                    b.Navigation("ThreatIntelligences");
+                    b.Navigation("ThreatEvents");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Page", b =>
                 {
                     b.Navigation("PagePermissions");
+
+                    b.Navigation("PageTenantPermissions");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.PageGroup", b =>
                 {
                     b.Navigation("Pages");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.Password", b =>
+                {
+                    b.Navigation("TenantUserPasswords");
+
+                    b.Navigation("UserPasswords");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Permission", b =>
@@ -1481,12 +1670,21 @@ namespace MeUi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("MeUi.Domain.Entities.Protocol", b =>
                 {
-                    b.Navigation("ThreatIntelligences");
+                    b.Navigation("ThreatEvents");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Navigation("TenantUserRefreshTokens");
+
+                    b.Navigation("UserRefreshTokens");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Resource", b =>
                 {
                     b.Navigation("Permissions");
+
+                    b.Navigation("TenantPermissions");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.Role", b =>
@@ -1498,30 +1696,43 @@ namespace MeUi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("MeUi.Domain.Entities.Tenant", b =>
                 {
-                    b.Navigation("TenantAsns");
+                    b.Navigation("TenantAsnRegistries");
+
+                    b.Navigation("TenantRoles");
 
                     b.Navigation("TenantUsers");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantPermission", b =>
+                {
+                    b.Navigation("PageTenantPermissions");
+
+                    b.Navigation("TenantRolePermissions");
+                });
+
+            modelBuilder.Entity("MeUi.Domain.Entities.TenantRole", b =>
+                {
+                    b.Navigation("TenantRolePermissions");
+
+                    b.Navigation("TenantUserRoles");
                 });
 
             modelBuilder.Entity("MeUi.Domain.Entities.TenantUser", b =>
                 {
                     b.Navigation("TenantUserLoginMethods");
 
+                    b.Navigation("TenantUserPasswords");
+
                     b.Navigation("TenantUserRefreshTokens");
 
                     b.Navigation("TenantUserRoles");
                 });
 
-            modelBuilder.Entity("MeUi.Domain.Entities.TenantUserLoginMethod", b =>
-                {
-                    b.Navigation("TenantUserPassword");
-                });
-
             modelBuilder.Entity("MeUi.Domain.Entities.User", b =>
                 {
-                    b.Navigation("RefreshTokens");
-
                     b.Navigation("UserLoginMethods");
+
+                    b.Navigation("UserRefreshTokens");
 
                     b.Navigation("UserRoles");
                 });

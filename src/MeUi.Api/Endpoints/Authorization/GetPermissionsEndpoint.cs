@@ -1,3 +1,4 @@
+using MeUi.Api.Endpoints;
 using MeUi.Application.Features.Authorization.Queries.GetPermissions;
 using MeUi.Application.Features.Authorization.Models;
 

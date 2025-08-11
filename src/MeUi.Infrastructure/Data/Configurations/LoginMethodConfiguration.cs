@@ -24,5 +24,10 @@ public class LoginMethodConfiguration : IEntityTypeConfiguration<LoginMethod>
             .WithOne(x => x.LoginMethod)
             .HasForeignKey(x => x.LoginMethodCode)
             .HasPrincipalKey(x => x.Code);
+
+        builder.HasMany(x => x.TenantUserLoginMethods)
+            .WithOne(x => x.LoginMethod)
+            .HasForeignKey(x => x.LoginMethodCode)
+            .HasPrincipalKey(x => x.Code);
     }
 }

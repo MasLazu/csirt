@@ -1,3 +1,4 @@
+using MeUi.Api.Endpoints;
 using MeUi.Application.Features.Users.Commands.UpdateUser;
 
 namespace MeUi.Api.Endpoints.Users;

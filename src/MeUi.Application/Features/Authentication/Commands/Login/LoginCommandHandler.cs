@@ -27,6 +27,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
         IRepository<UserPassword> userPasswordRepository,
         IRepository<RefreshTokenEntity> refreshTokenRepository,
         IRepository<UserRefreshToken> userRefreshTokenRepository,
+        IRepository<Password> passwordRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         IUnitOfWork unitOfWork)
@@ -36,6 +37,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
         _userPasswordRepository = userPasswordRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _userRefreshTokenRepository = userRefreshTokenRepository;
+        _passwordRepository = passwordRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;

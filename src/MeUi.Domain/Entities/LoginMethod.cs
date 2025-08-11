@@ -9,4 +9,5 @@ public class LoginMethod : BaseEntity
     public bool IsActive { get; set; } = true;
 
     public ICollection<UserLoginMethod> UserLoginMethods { get; set; } = [];
+    public ICollection<TenantUserLoginMethod> TenantUserLoginMethods { get; set; } = [];
 }

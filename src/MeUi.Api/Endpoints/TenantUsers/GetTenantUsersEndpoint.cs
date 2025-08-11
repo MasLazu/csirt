@@ -1,12 +1,12 @@
 using MeUi.Api.Endpoints;
 using MeUi.Application.Features.TenantUsers.Models;
-using MeUi.Application.Features.TenantUsers.Queries.GetTenantUsers;
+using MeUi.Application.Features.TenantUsers.Queries.GetTenantUsersPaginated;
 using MeUi.Application.Interfaces;
 using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantUsers;
 
-public class GetTenantUsersEndpoint : BaseEndpoint<GetTenantUsersQuery, PaginatedResult<TenantUserDto>>, ITenantPermissionProvider
+public class GetTenantUsersEndpoint : BaseEndpoint<GetTenantUsersPaginatedQuery, PaginatedResult<TenantUserDto>>, ITenantPermissionProvider
 {
     public static string Permission => "READ:TENANT_USER";
 
@@ -17,7 +17,7 @@ public class GetTenantUsersEndpoint : BaseEndpoint<GetTenantUsersQuery, Paginate
         // TODO: Add authorization for tenant admin or super admin only
     }
 
-    public override async Task HandleAsync(GetTenantUsersQuery req, CancellationToken ct)
+    public override async Task HandleAsync(GetTenantUsersPaginatedQuery req, CancellationToken ct)
     {
         var result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, "Tenant users retrieved successfully", ct);

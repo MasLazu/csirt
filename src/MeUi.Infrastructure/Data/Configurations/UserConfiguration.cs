@@ -18,8 +18,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.UpdatedAt);
         builder.Property(x => x.DeletedAt);
 
-        builder.HasIndex(x => x.Username).IsUnique().HasFilter("Username IS NOT NULL");
-        builder.HasIndex(x => x.Email).IsUnique().HasFilter("Email IS NOT NULL");
+        builder.HasIndex(x => x.Username).IsUnique().HasFilter("\"Username\" IS NOT NULL");
+        builder.HasIndex(x => x.Email).IsUnique().HasFilter("\"Email\" IS NOT NULL");
         builder.HasIndex(x => x.DeletedAt);
 
         builder.HasMany(x => x.UserLoginMethods)

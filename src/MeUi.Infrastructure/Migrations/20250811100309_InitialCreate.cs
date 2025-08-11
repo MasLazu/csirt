@@ -1,25 +1,17 @@
 ﻿using System;
+using System.Net;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace MeUi.Infrastructure.Data.Migrations
+namespace MeUi.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTenantSchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_threat_intelligence",
-                table: "threat_intelligence");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_threat_intelligence",
-                table: "threat_intelligence",
-                columns: new[] { "id", "timestamp" });
-
             migrationBuilder.CreateTable(
                 name: "Actions",
                 columns: table => new
@@ -36,6 +28,38 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     table.PrimaryKey("PK_Actions", x => x.Id);
                     table.UniqueConstraint("AK_Actions_Code", x => x.Code);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AsnInfos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Number = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AsnInfos", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Countries",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Countries", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -58,6 +82,21 @@ namespace MeUi.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MalwareFamilies",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MalwareFamilies", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PageGroups",
                 columns: table => new
                 {
@@ -72,6 +111,54 @@ namespace MeUi.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PageGroups", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Passwords",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    PasswordHash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    PasswordSalt = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Passwords", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Protocols",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Protocols", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Token = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    RevokedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -97,7 +184,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -115,9 +201,9 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
                     ContactEmail = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    ContactPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ContactPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -167,8 +253,58 @@ namespace MeUi.Infrastructure.Data.Migrations
                         name: "FK_Pages_PageGroups_PageGroupId",
                         column: x => x.PageGroupId,
                         principalTable: "PageGroups",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ThreatEvents",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AsnRegistryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SourceAddress = table.Column<IPAddress>(type: "inet", nullable: false),
+                    SourceCountryId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DestinationAddress = table.Column<IPAddress>(type: "inet", nullable: true),
+                    DestinationCountryId = table.Column<Guid>(type: "uuid", nullable: true),
+                    SourcePort = table.Column<int>(type: "integer", nullable: true),
+                    DestinationPort = table.Column<int>(type: "integer", nullable: true),
+                    ProtocolId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Category = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    MalwareFamilyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ThreatEvents", x => new { x.Id, x.Timestamp });
+                    table.ForeignKey(
+                        name: "FK_ThreatEvents_AsnInfos_AsnRegistryId",
+                        column: x => x.AsnRegistryId,
+                        principalTable: "AsnInfos",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ThreatEvents_Countries_DestinationCountryId",
+                        column: x => x.DestinationCountryId,
+                        principalTable: "Countries",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ThreatEvents_Countries_SourceCountryId",
+                        column: x => x.SourceCountryId,
+                        principalTable: "Countries",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ThreatEvents_MalwareFamilies_MalwareFamilyId",
+                        column: x => x.MalwareFamilyId,
+                        principalTable: "MalwareFamilies",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ThreatEvents_Protocols_ProtocolId",
+                        column: x => x.ProtocolId,
+                        principalTable: "Protocols",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -178,6 +314,7 @@ namespace MeUi.Infrastructure.Data.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ResourceCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ActionCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ActionId = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -190,13 +327,97 @@ namespace MeUi.Infrastructure.Data.Migrations
                         column: x => x.ActionCode,
                         principalTable: "Actions",
                         principalColumn: "Code",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Permissions_Actions_ActionId",
+                        column: x => x.ActionId,
+                        principalTable: "Actions",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Permissions_Resources_ResourceCode",
                         column: x => x.ResourceCode,
                         principalTable: "Resources",
                         principalColumn: "Code",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TenantPermissions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ResourceCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ActionCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantPermissions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantPermissions_Actions_ActionCode",
+                        column: x => x.ActionCode,
+                        principalTable: "Actions",
+                        principalColumn: "Code",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TenantPermissions_Resources_ResourceCode",
+                        column: x => x.ResourceCode,
+                        principalTable: "Resources",
+                        principalColumn: "Code",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TenantAsns",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AsnRegistryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantAsns", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantAsns_AsnInfos_AsnRegistryId",
+                        column: x => x.AsnRegistryId,
+                        principalTable: "AsnInfos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TenantAsns_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TenantRole",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantRole", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantRole_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -209,7 +430,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                     Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     IsSuspended = table.Column<bool>(type: "boolean", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsTenantAdmin = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -226,36 +446,11 @@ namespace MeUi.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "RefreshTokens",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Token = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    RevokedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RefreshTokens_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "UserLoginMethods",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LoginMethodId = table.Column<Guid>(type: "uuid", nullable: false),
                     LoginMethodCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -265,13 +460,41 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     table.PrimaryKey("PK_UserLoginMethods", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_UserLoginMethods_LoginMethods_LoginMethodId",
-                        column: x => x.LoginMethodId,
+                        name: "FK_UserLoginMethods_LoginMethods_LoginMethodCode",
+                        column: x => x.LoginMethodCode,
                         principalTable: "LoginMethods",
-                        principalColumn: "Id",
+                        principalColumn: "Code",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_UserLoginMethods_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserRefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RefreshTokenId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserRefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserRefreshTokens_RefreshTokens_RefreshTokenId",
+                        column: x => x.RefreshTokenId,
+                        principalTable: "RefreshTokens",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserRefreshTokens_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -363,37 +586,58 @@ namespace MeUi.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TenantAsns",
+                name: "PageTenantPermission",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    AsnId = table.Column<int>(type: "integer", nullable: false),
-                    AssignedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    AssignedByTenantUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    PageId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantPermissionId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TenantAsns", x => x.Id);
+                    table.PrimaryKey("PK_PageTenantPermission", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TenantAsns_TenantUsers_AssignedByTenantUserId",
-                        column: x => x.AssignedByTenantUserId,
-                        principalTable: "TenantUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_TenantAsns_Tenants_TenantId",
-                        column: x => x.TenantId,
-                        principalTable: "Tenants",
+                        name: "FK_PageTenantPermission_Pages_PageId",
+                        column: x => x.PageId,
+                        principalTable: "Pages",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_TenantAsns_asn_info_AsnId",
-                        column: x => x.AsnId,
-                        principalTable: "asn_info",
-                        principalColumn: "id",
+                        name: "FK_PageTenantPermission_TenantPermissions_TenantPermissionId",
+                        column: x => x.TenantPermissionId,
+                        principalTable: "TenantPermissions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TenantRolePermission",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantPermissionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantRoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantRolePermission", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantRolePermission_TenantPermissions_TenantPermissionId",
+                        column: x => x.TenantPermissionId,
+                        principalTable: "TenantPermissions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TenantRolePermission_TenantRole_TenantRoleId",
+                        column: x => x.TenantRoleId,
+                        principalTable: "TenantRole",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -403,7 +647,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LoginMethodId = table.Column<Guid>(type: "uuid", nullable: false),
                     LoginMethodCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -413,10 +656,10 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     table.PrimaryKey("PK_TenantUserLoginMethods", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TenantUserLoginMethods_LoginMethods_LoginMethodId",
-                        column: x => x.LoginMethodId,
+                        name: "FK_TenantUserLoginMethods_LoginMethods_LoginMethodCode",
+                        column: x => x.LoginMethodCode,
                         principalTable: "LoginMethods",
-                        principalColumn: "Id",
+                        principalColumn: "Code",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_TenantUserLoginMethods_TenantUsers_TenantUserId",
@@ -431,10 +674,8 @@ namespace MeUi.Infrastructure.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Token = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    RevokedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     TenantUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RefreshTokenId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -442,6 +683,12 @@ namespace MeUi.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TenantUserRefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantUserRefreshTokens_RefreshTokens_RefreshTokenId",
+                        column: x => x.RefreshTokenId,
+                        principalTable: "RefreshTokens",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_TenantUserRefreshTokens_TenantUsers_TenantUserId",
                         column: x => x.TenantUserId,
@@ -456,7 +703,8 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantRoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantRoleId1 = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -465,11 +713,16 @@ namespace MeUi.Infrastructure.Data.Migrations
                 {
                     table.PrimaryKey("PK_TenantUserRoles", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TenantUserRoles_Roles_RoleId",
-                        column: x => x.RoleId,
-                        principalTable: "Roles",
+                        name: "FK_TenantUserRoles_TenantRole_TenantRoleId",
+                        column: x => x.TenantRoleId,
+                        principalTable: "TenantRole",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TenantUserRoles_TenantRole_TenantRoleId1",
+                        column: x => x.TenantRoleId1,
+                        principalTable: "TenantRole",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_TenantUserRoles_TenantUsers_TenantUserId",
                         column: x => x.TenantUserId,
@@ -479,45 +732,71 @@ namespace MeUi.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Passwords",
+                name: "UserPasswords",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    PasswordId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserLoginMethodId = table.Column<Guid>(type: "uuid", nullable: false),
-                    PasswordHash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    PasswordSalt = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Passwords", x => x.Id);
+                    table.PrimaryKey("PK_UserPasswords", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Passwords_UserLoginMethods_UserLoginMethodId",
+                        name: "FK_UserPasswords_Passwords_PasswordId",
+                        column: x => x.PasswordId,
+                        principalTable: "Passwords",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserPasswords_UserLoginMethods_UserLoginMethodId",
                         column: x => x.UserLoginMethodId,
                         principalTable: "UserLoginMethods",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "idx_threat_dest_addr",
-                table: "threat_intelligence",
-                column: "destination_address")
-                .Annotation("Npgsql:IndexMethod", "hash");
-
-            migrationBuilder.CreateIndex(
-                name: "idx_threat_source_addr",
-                table: "threat_intelligence",
-                column: "source_address")
-                .Annotation("Npgsql:IndexMethod", "hash");
+            migrationBuilder.CreateTable(
+                name: "TenantUserPasswords",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    PasswordId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantUserLoginMethodId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantUserPasswords", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantUserPasswords_Passwords_PasswordId",
+                        column: x => x.PasswordId,
+                        principalTable: "Passwords",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TenantUserPasswords_TenantUserLoginMethods_TenantUserLoginM~",
+                        column: x => x.TenantUserLoginMethodId,
+                        principalTable: "TenantUserLoginMethods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TenantUserPasswords_TenantUsers_TenantUserId",
+                        column: x => x.TenantUserId,
+                        principalTable: "TenantUsers",
+                        principalColumn: "Id");
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Actions_Code",
                 table: "Actions",
-                column: "Code",
-                unique: true);
+                column: "Code");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Actions_DeletedAt",
@@ -525,10 +804,24 @@ namespace MeUi.Infrastructure.Data.Migrations
                 column: "DeletedAt");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AsnInfos_Number",
+                table: "AsnInfos",
+                column: "Number");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Countries_Code",
+                table: "Countries",
+                column: "Code");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Countries_DeletedAt",
+                table: "Countries",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_LoginMethods_Code",
                 table: "LoginMethods",
-                column: "Code",
-                unique: true);
+                column: "Code");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LoginMethods_DeletedAt",
@@ -536,10 +829,19 @@ namespace MeUi.Infrastructure.Data.Migrations
                 column: "DeletedAt");
 
             migrationBuilder.CreateIndex(
+                name: "IX_MalwareFamilies_DeletedAt",
+                table: "MalwareFamilies",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MalwareFamilies_Name",
+                table: "MalwareFamilies",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PageGroups_Code",
                 table: "PageGroups",
-                column: "Code",
-                unique: true);
+                column: "Code");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PageGroups_DeletedAt",
@@ -557,12 +859,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                 column: "PageId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PagePermissions_PageId_PermissionId",
-                table: "PagePermissions",
-                columns: new[] { "PageId", "PermissionId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_PagePermissions_PermissionId",
                 table: "PagePermissions",
                 column: "PermissionId");
@@ -570,8 +866,7 @@ namespace MeUi.Infrastructure.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Pages_Code",
                 table: "Pages",
-                column: "Code",
-                unique: true);
+                column: "Code");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Pages_DeletedAt",
@@ -591,8 +886,22 @@ namespace MeUi.Infrastructure.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Pages_Path",
                 table: "Pages",
-                column: "Path",
-                unique: true);
+                column: "Path");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PageTenantPermission_DeletedAt",
+                table: "PageTenantPermission",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PageTenantPermission_PageId",
+                table: "PageTenantPermission",
+                column: "PageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PageTenantPermission_TenantPermissionId",
+                table: "PageTenantPermission",
+                column: "TenantPermissionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Passwords_DeletedAt",
@@ -600,15 +909,14 @@ namespace MeUi.Infrastructure.Data.Migrations
                 column: "DeletedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Passwords_UserLoginMethodId",
-                table: "Passwords",
-                column: "UserLoginMethodId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Permissions_ActionCode",
                 table: "Permissions",
                 column: "ActionCode");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Permissions_ActionId",
+                table: "Permissions",
+                column: "ActionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Permissions_DeletedAt",
@@ -620,6 +928,16 @@ namespace MeUi.Infrastructure.Data.Migrations
                 table: "Permissions",
                 columns: new[] { "ResourceCode", "ActionCode" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Protocols_DeletedAt",
+                table: "Protocols",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Protocols_Name",
+                table: "Protocols",
+                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_DeletedAt",
@@ -636,11 +954,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                 table: "RefreshTokens",
                 column: "Token",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokens_UserId",
-                table: "RefreshTokens",
-                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Resources_Code",
@@ -670,25 +983,19 @@ namespace MeUi.Infrastructure.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Roles_Code",
-                table: "Roles",
-                column: "Code",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Roles_DeletedAt",
                 table: "Roles",
                 column: "DeletedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantAsns_AsnId",
-                table: "TenantAsns",
-                column: "AsnId");
+                name: "IX_Roles_Name",
+                table: "Roles",
+                column: "Name");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantAsns_AssignedByTenantUserId",
+                name: "IX_TenantAsns_AsnRegistryId",
                 table: "TenantAsns",
-                column: "AssignedByTenantUserId");
+                column: "AsnRegistryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TenantAsns_DeletedAt",
@@ -701,10 +1008,51 @@ namespace MeUi.Infrastructure.Data.Migrations
                 column: "TenantId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantAsns_TenantId_AsnId",
+                name: "IX_TenantAsns_TenantId_AsnRegistryId",
                 table: "TenantAsns",
-                columns: new[] { "TenantId", "AsnId" },
+                columns: new[] { "TenantId", "AsnRegistryId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantPermissions_ActionCode",
+                table: "TenantPermissions",
+                column: "ActionCode");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantPermissions_DeletedAt",
+                table: "TenantPermissions",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantPermissions_ResourceCode_ActionCode",
+                table: "TenantPermissions",
+                columns: new[] { "ResourceCode", "ActionCode" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantRole_DeletedAt",
+                table: "TenantRole",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantRole_Name",
+                table: "TenantRole",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantRole_TenantId",
+                table: "TenantRole",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantRolePermission_TenantPermissionId",
+                table: "TenantRolePermission",
+                column: "TenantPermissionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantRolePermission_TenantRoleId",
+                table: "TenantRolePermission",
+                column: "TenantRoleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tenants_ContactEmail",
@@ -724,8 +1072,7 @@ namespace MeUi.Infrastructure.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Tenants_Name",
                 table: "Tenants",
-                column: "Name",
-                unique: true);
+                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TenantUserLoginMethods_DeletedAt",
@@ -733,9 +1080,9 @@ namespace MeUi.Infrastructure.Data.Migrations
                 column: "DeletedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantUserLoginMethods_LoginMethodId",
+                name: "IX_TenantUserLoginMethods_LoginMethodCode",
                 table: "TenantUserLoginMethods",
-                column: "LoginMethodId");
+                column: "LoginMethodCode");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TenantUserLoginMethods_TenantUserId",
@@ -749,24 +1096,39 @@ namespace MeUi.Infrastructure.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_TenantUserPasswords_DeletedAt",
+                table: "TenantUserPasswords",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantUserPasswords_PasswordId",
+                table: "TenantUserPasswords",
+                column: "PasswordId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantUserPasswords_TenantUserId",
+                table: "TenantUserPasswords",
+                column: "TenantUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantUserPasswords_TenantUserLoginMethodId",
+                table: "TenantUserPasswords",
+                column: "TenantUserLoginMethodId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TenantUserRefreshTokens_DeletedAt",
                 table: "TenantUserRefreshTokens",
                 column: "DeletedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantUserRefreshTokens_ExpiresAt",
+                name: "IX_TenantUserRefreshTokens_RefreshTokenId",
                 table: "TenantUserRefreshTokens",
-                column: "ExpiresAt");
+                column: "RefreshTokenId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantUserRefreshTokens_TenantUserId",
+                name: "IX_TenantUserRefreshTokens_TenantUserId_RefreshTokenId",
                 table: "TenantUserRefreshTokens",
-                column: "TenantUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TenantUserRefreshTokens_Token",
-                table: "TenantUserRefreshTokens",
-                column: "Token",
+                columns: new[] { "TenantUserId", "RefreshTokenId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -775,9 +1137,14 @@ namespace MeUi.Infrastructure.Data.Migrations
                 column: "DeletedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantUserRoles_RoleId",
+                name: "IX_TenantUserRoles_TenantRoleId",
                 table: "TenantUserRoles",
-                column: "RoleId");
+                column: "TenantRoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantUserRoles_TenantRoleId1",
+                table: "TenantUserRoles",
+                column: "TenantRoleId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TenantUserRoles_TenantUserId",
@@ -785,9 +1152,9 @@ namespace MeUi.Infrastructure.Data.Migrations
                 column: "TenantUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantUserRoles_TenantUserId_RoleId",
+                name: "IX_TenantUserRoles_TenantUserId_TenantRoleId",
                 table: "TenantUserRoles",
-                columns: new[] { "TenantUserId", "RoleId" },
+                columns: new[] { "TenantUserId", "TenantRoleId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -802,11 +1169,6 @@ namespace MeUi.Infrastructure.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantUsers_IsTenantAdmin",
-                table: "TenantUsers",
-                column: "IsTenantAdmin");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_TenantUsers_TenantId",
                 table: "TenantUsers",
                 column: "TenantId");
@@ -818,19 +1180,95 @@ namespace MeUi.Infrastructure.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_AsnRegistryId",
+                table: "ThreatEvents",
+                column: "AsnRegistryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_Category",
+                table: "ThreatEvents",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_DeletedAt",
+                table: "ThreatEvents",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_DestinationAddress",
+                table: "ThreatEvents",
+                column: "DestinationAddress");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_DestinationCountryId",
+                table: "ThreatEvents",
+                column: "DestinationCountryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_MalwareFamilyId",
+                table: "ThreatEvents",
+                column: "MalwareFamilyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_ProtocolId",
+                table: "ThreatEvents",
+                column: "ProtocolId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_SourceAddress",
+                table: "ThreatEvents",
+                column: "SourceAddress");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ThreatEvents_SourceCountryId",
+                table: "ThreatEvents",
+                column: "SourceCountryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserLoginMethods_DeletedAt",
                 table: "UserLoginMethods",
                 column: "DeletedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserLoginMethods_LoginMethodId",
+                name: "IX_UserLoginMethods_LoginMethodCode",
                 table: "UserLoginMethods",
-                column: "LoginMethodId");
+                column: "LoginMethodCode");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserLoginMethods_UserId_LoginMethodCode",
                 table: "UserLoginMethods",
                 columns: new[] { "UserId", "LoginMethodCode" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPasswords_DeletedAt",
+                table: "UserPasswords",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPasswords_PasswordId",
+                table: "UserPasswords",
+                column: "PasswordId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPasswords_UserLoginMethodId",
+                table: "UserPasswords",
+                column: "UserLoginMethodId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserRefreshTokens_DeletedAt",
+                table: "UserRefreshTokens",
+                column: "DeletedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserRefreshTokens_RefreshTokenId",
+                table: "UserRefreshTokens",
+                column: "RefreshTokenId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserRefreshTokens_UserId_RefreshTokenId",
+                table: "UserRefreshTokens",
+                columns: new[] { "UserId", "RefreshTokenId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -859,14 +1297,14 @@ namespace MeUi.Infrastructure.Data.Migrations
                 table: "Users",
                 column: "Email",
                 unique: true,
-                filter: "[Email] IS NOT NULL");
+                filter: "\"Email\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Username",
                 table: "Users",
                 column: "Username",
                 unique: true,
-                filter: "[Username] IS NOT NULL");
+                filter: "\"Username\" IS NOT NULL");
         }
 
         /// <inheritdoc />
@@ -876,10 +1314,7 @@ namespace MeUi.Infrastructure.Data.Migrations
                 name: "PagePermissions");
 
             migrationBuilder.DropTable(
-                name: "Passwords");
-
-            migrationBuilder.DropTable(
-                name: "RefreshTokens");
+                name: "PageTenantPermission");
 
             migrationBuilder.DropTable(
                 name: "RolePermissions");
@@ -888,7 +1323,10 @@ namespace MeUi.Infrastructure.Data.Migrations
                 name: "TenantAsns");
 
             migrationBuilder.DropTable(
-                name: "TenantUserLoginMethods");
+                name: "TenantRolePermission");
+
+            migrationBuilder.DropTable(
+                name: "TenantUserPasswords");
 
             migrationBuilder.DropTable(
                 name: "TenantUserRefreshTokens");
@@ -897,19 +1335,52 @@ namespace MeUi.Infrastructure.Data.Migrations
                 name: "TenantUserRoles");
 
             migrationBuilder.DropTable(
+                name: "ThreatEvents");
+
+            migrationBuilder.DropTable(
+                name: "UserPasswords");
+
+            migrationBuilder.DropTable(
+                name: "UserRefreshTokens");
+
+            migrationBuilder.DropTable(
                 name: "UserRoles");
 
             migrationBuilder.DropTable(
                 name: "Pages");
 
             migrationBuilder.DropTable(
-                name: "UserLoginMethods");
-
-            migrationBuilder.DropTable(
                 name: "Permissions");
 
             migrationBuilder.DropTable(
-                name: "TenantUsers");
+                name: "TenantPermissions");
+
+            migrationBuilder.DropTable(
+                name: "TenantUserLoginMethods");
+
+            migrationBuilder.DropTable(
+                name: "TenantRole");
+
+            migrationBuilder.DropTable(
+                name: "AsnInfos");
+
+            migrationBuilder.DropTable(
+                name: "Countries");
+
+            migrationBuilder.DropTable(
+                name: "MalwareFamilies");
+
+            migrationBuilder.DropTable(
+                name: "Protocols");
+
+            migrationBuilder.DropTable(
+                name: "Passwords");
+
+            migrationBuilder.DropTable(
+                name: "UserLoginMethods");
+
+            migrationBuilder.DropTable(
+                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "Roles");
@@ -918,36 +1389,22 @@ namespace MeUi.Infrastructure.Data.Migrations
                 name: "PageGroups");
 
             migrationBuilder.DropTable(
-                name: "LoginMethods");
-
-            migrationBuilder.DropTable(
-                name: "Users");
-
-            migrationBuilder.DropTable(
                 name: "Actions");
 
             migrationBuilder.DropTable(
                 name: "Resources");
 
             migrationBuilder.DropTable(
+                name: "TenantUsers");
+
+            migrationBuilder.DropTable(
+                name: "LoginMethods");
+
+            migrationBuilder.DropTable(
+                name: "Users");
+
+            migrationBuilder.DropTable(
                 name: "Tenants");
-
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_threat_intelligence",
-                table: "threat_intelligence");
-
-            migrationBuilder.DropIndex(
-                name: "idx_threat_dest_addr",
-                table: "threat_intelligence");
-
-            migrationBuilder.DropIndex(
-                name: "idx_threat_source_addr",
-                table: "threat_intelligence");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_threat_intelligence",
-                table: "threat_intelligence",
-                column: "id");
         }
     }
 }

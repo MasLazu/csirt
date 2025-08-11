@@ -10,11 +10,6 @@ public class UpdateRoleCommandValidator : AbstractValidator<UpdateRoleCommand>
             .NotEmpty()
             .WithMessage("Role ID is required");
 
-        RuleFor(x => x.Code)
-            .MaximumLength(50)
-            .WithMessage("Role code must not exceed 50 characters")
-            .When(x => !string.IsNullOrEmpty(x.Code));
-
         RuleFor(x => x.Name)
             .MaximumLength(100)
             .WithMessage("Role name must not exceed 100 characters")

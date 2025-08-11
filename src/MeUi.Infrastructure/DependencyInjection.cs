@@ -18,7 +18,17 @@ public static class DependencyInjection
     {
         string connectionString = BuildConnectionString(configuration);
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                // Enable retry on failure for better resilience with TimescaleDB
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+
+                // Configure command timeout for long-running TimescaleDB queries
+                npgsqlOptions.CommandTimeout(30);
+            }));
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();

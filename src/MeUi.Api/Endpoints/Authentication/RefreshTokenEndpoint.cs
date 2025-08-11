@@ -1,3 +1,4 @@
+using MeUi.Api.Endpoints;
 using MeUi.Api.Models;
 using MeUi.Application.Exceptions;
 using MeUi.Application.Features.Authentication.Commands.RefreshToken;

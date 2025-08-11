@@ -1,3 +1,4 @@
+using MeUi.Api.Endpoints;
 using MeUi.Application.Features.Authorization.Models;
 using MeUi.Application.Features.Authorization.Queries.GetTenantActions;
 using MeUi.Application.Interfaces;

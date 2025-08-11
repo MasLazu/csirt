@@ -34,7 +34,7 @@ public class ApplicationDbContext : DbContext
 
     // Tenant entities
     public DbSet<Tenant> Tenants { get; set; }
-    public DbSet<TenantAsnRegistry> TenantAsns { get; set; }
+    public DbSet<TenantAsnRegistry> TenantAsnRegistries { get; set; }
     public DbSet<TenantUser> TenantUsers { get; set; }
     public DbSet<TenantUserLoginMethod> TenantUserLoginMethods { get; set; }
     public DbSet<TenantUserRefreshToken> TenantUserRefreshTokens { get; set; }
@@ -43,7 +43,7 @@ public class ApplicationDbContext : DbContext
 
     // TimescaleDB entities
     public DbSet<ThreatEvent> ThreatEvents { get; set; }
-    public DbSet<AsnRegistry> AsnInfos { get; set; }
+    public DbSet<AsnRegistry> AsnRegistries { get; set; }
     public DbSet<Country> Countries { get; set; }
     public DbSet<Protocol> Protocols { get; set; }
     public DbSet<MalwareFamily> MalwareFamilies { get; set; }
@@ -71,26 +71,18 @@ public class ApplicationDbContext : DbContext
         base.OnConfiguring(optionsBuilder);
 
         // Configure PostgreSQL-specific options for TimescaleDB optimization
-        if (optionsBuilder.IsConfigured)
+        if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseNpgsql(options =>
-            {
-                // Enable retry on failure for better resilience with TimescaleDB
-                options.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
-                    errorCodesToAdd: null);
-
-                // Configure command timeout for long-running TimescaleDB queries
-                options.CommandTimeout(30);
-
-                optionsBuilder.EnableSensitiveDataLogging();
-                optionsBuilder.EnableDetailedErrors();
-            });
-
-            optionsBuilder.ConfigureWarnings(warnings =>
-                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+            // This will only be used if no connection string is provided via DI
+            // Mainly for design-time operations
+            return;
         }
+
+        optionsBuilder.EnableSensitiveDataLogging();
+        optionsBuilder.EnableDetailedErrors();
+        
+        optionsBuilder.ConfigureWarnings(warnings =>
+            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
     }
 
     private static void ApplySoftDeleteQueryFilters(ModelBuilder modelBuilder)

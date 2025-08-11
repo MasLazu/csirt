@@ -10,8 +10,11 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, G
     private readonly IRepository<Tenant> _tenantRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public CreateTenantCommandHandler(IUnitOfWork unitOfWork)
+    public CreateTenantCommandHandler(
+        IRepository<Tenant> tenantRepository,
+        IUnitOfWork unitOfWork)
     {
+        _tenantRepository = tenantRepository;
         _unitOfWork = unitOfWork;
     }
 

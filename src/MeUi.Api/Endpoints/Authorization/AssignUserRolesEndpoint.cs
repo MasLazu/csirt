@@ -1,3 +1,4 @@
+using MeUi.Api.Endpoints;
 using MeUi.Application.Features.Authorization.Commands.AssignUserRoles;
 
 namespace MeUi.Api.Endpoints.Authorization;

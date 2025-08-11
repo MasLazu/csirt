@@ -8,6 +8,5 @@ public record CreateTenantUserCommand : IRequest<Guid>
     public string Email { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public Guid TenantId { get; init; }
-    public bool IsTenantAdmin { get; init; } = false;
     public ICollection<Guid> RoleIds { get; init; } = new List<Guid>();
 }

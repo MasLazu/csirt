@@ -8,44 +8,47 @@ namespace MeUi.Application.Features.TenantUsers.Commands.AssignRoleToTenantUser;
 public class AssignRoleToTenantUserCommandHandler : IRequestHandler<AssignRoleToTenantUserCommand, Unit>
 {
     private readonly IRepository<TenantUser> _tenantUserRepository;
-    private readonly IRepository<Role> _roleRepository;
+    private readonly IRepository<TenantRole> _tenantRoleRepository;
+    private readonly IRepository<TenantUserRole> _tenantUserRoleRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public AssignRoleToTenantUserCommandHandler(
-        ITenantUserRepository tenantUserRepository,
-        IRepository<MeUi.Domain.Entities.Role> roleRepository,
+        IRepository<TenantUser> tenantUserRepository,
+        IRepository<TenantRole> roleRepository,
+        IRepository<TenantUserRole> tenantUserRoleRepository,
         IUnitOfWork unitOfWork)
     {
         _tenantUserRepository = tenantUserRepository;
-        _roleRepository = roleRepository;
+        _tenantRoleRepository = roleRepository;
+        _tenantUserRoleRepository = tenantUserRoleRepository;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Unit> Handle(AssignRoleToTenantUserCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(AssignRoleToTenantUserCommand request, CancellationToken ct)
     {
-        // Validate tenant user exists
-        var tenantUser = await _tenantUserRepository.GetByIdAsync(request.TenantUserId, cancellationToken);
-        if (tenantUser == null)
+        if (!await _tenantRoleRepository.ExistsAsync(request.RoleId, ct))
         {
-            throw new NotFoundException($"Tenant user with ID {request.TenantUserId} not found");
+            throw new NotFoundException("Role not found.");
         }
 
-        // Validate role exists
-        var role = await _roleRepository.GetByIdAsync(request.RoleId, cancellationToken);
-        if (role == null)
+        if (!await _tenantUserRepository.ExistsAsync(request.TenantUserId, ct))
         {
-            throw new NotFoundException($"Role with ID {request.RoleId} not found");
+            throw new NotFoundException("Tenant user not found.");
         }
 
-        // Check if user already has this role
-        var hasRole = await _tenantUserRepository.UserHasRoleAsync(request.TenantUserId, request.RoleId, cancellationToken);
-        if (hasRole)
+        if (await _tenantUserRoleRepository.ExistsAsync(tur => tur.TenantUserId == request.TenantUserId && tur.TenantRoleId == request.RoleId, ct))
         {
-            throw new ConflictException($"User already has the role '{role.Name}'");
+            return Unit.Value;
         }
 
-        await _tenantUserRepository.AssignRoleToUserAsync(request.TenantUserId, request.RoleId, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        var tenantUserRole = new TenantUserRole
+        {
+            TenantUserId = request.TenantUserId,
+            TenantRoleId = request.RoleId
+        };
+
+        await _tenantUserRoleRepository.AddAsync(tenantUserRole, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
 
         return Unit.Value;
     }

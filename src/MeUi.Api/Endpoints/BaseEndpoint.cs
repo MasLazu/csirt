@@ -19,6 +19,6 @@ public abstract class BaseEndpoint<TRequest, TResponse> : Endpoint<TRequest, Api
 
     protected async Task SendSuccessAsync(TResponse data, string message, CancellationToken ct)
     {
-        await SendOkAsync(new SuccessApiResponse<TResponse>(data), ct);
+        await SendOkAsync(new SuccessApiResponse<TResponse>(data, message), ct);
     }
 }

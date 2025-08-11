@@ -7,68 +7,60 @@ namespace MeUi.Application.Features.TenantUsers.Commands.CreateTenantUser;
 
 public class CreateTenantUserCommandHandler : IRequestHandler<CreateTenantUserCommand, Guid>
 {
-    private readonly ITenantUserRepository _tenantUserRepository;
-    private readonly ITenantRepository _tenantRepository;
+    private readonly IRepository<User> _userRepository;
+    private readonly IRepository<TenantUser> _tenantUserRepository;
+    private readonly IRepository<TenantRole> _tenantRoleRepository;
+    private readonly IRepository<TenantUserRole> _tenantUserRoleRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateTenantUserCommandHandler(
-        ITenantUserRepository tenantUserRepository,
-        ITenantRepository tenantRepository,
+        IRepository<User> userRepository,
+        IRepository<TenantUser> tenantUserRepository,
+        IRepository<TenantRole> tenantRoleRepository,
+        IRepository<TenantUserRole> tenantUserRoleRepository,
         IUnitOfWork unitOfWork)
     {
+        _userRepository = userRepository;
+        _tenantRoleRepository = tenantRoleRepository;
+        _tenantUserRoleRepository = tenantUserRoleRepository;
         _tenantUserRepository = tenantUserRepository;
-        _tenantRepository = tenantRepository;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Guid> Handle(CreateTenantUserCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateTenantUserCommand request, CancellationToken ct)
     {
-        // Validate tenant exists
-        var tenant = await _tenantRepository.GetByIdAsync(request.TenantId, cancellationToken);
-        if (tenant == null)
+        if (await _userRepository.ExistsAsync(u => u.Email == request.Email || u.Username == request.Username, ct))
         {
-            throw new NotFoundException($"Tenant with ID {request.TenantId} not found");
+            throw new ConflictException("User with this email already exists.");
         }
 
-        // Check if username is unique within tenant
-        var isUsernameUnique = await _tenantUserRepository.IsUsernameUniqueInTenantAsync(
-            request.Username, request.TenantId, null, cancellationToken);
-        if (!isUsernameUnique)
+        if (await _tenantUserRepository.ExistsAsync(tu => tu.Email == request.Email && tu.TenantId == request.TenantId, ct))
         {
-            throw new ConflictException($"Username '{request.Username}' already exists in this tenant");
+            throw new ConflictException("Tenant user with this email already exists.");
         }
 
-        // Check if email is unique within tenant
-        var isEmailUnique = await _tenantUserRepository.IsEmailUniqueInTenantAsync(
-            request.Email, request.TenantId, null, cancellationToken);
-        if (!isEmailUnique)
+        if (await _tenantRoleRepository.CountAsync(tr => request.RoleIds.Contains(tr.Id), ct) != request.RoleIds.Count)
         {
-            throw new ConflictException($"Email '{request.Email}' already exists in this tenant");
+            throw new NotFoundException("One or more roles not found.");
         }
 
         var tenantUser = new TenantUser
         {
-            Username = request.Username,
             Email = request.Email,
-            Name = request.Name,
             TenantId = request.TenantId,
-            IsTenantAdmin = request.IsTenantAdmin,
-            IsSuspended = false
+            Username = request.Username,
+            Name = request.Name,
         };
 
-        await _tenantUserRepository.AddAsync(tenantUser, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Assign roles if provided
-        foreach (var roleId in request.RoleIds)
+        var tenantUserROle = request.RoleIds.Select(roleId => new TenantUserRole
         {
-            await _tenantUserRepository.AssignRoleToUserAsync(tenantUser.Id, roleId, cancellationToken);
-        }
+            TenantUserId = tenantUser.Id,
+            TenantRoleId = roleId
+        }).ToList();
 
-        if (request.RoleIds.Any())
-        {
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        await _tenantUserRepository.AddAsync(tenantUser, ct);
+        await _tenantUserRoleRepository.AddRangeAsync(tenantUserROle, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
 
         return tenantUser.Id;
     }
