@@ -12,7 +12,7 @@ public class GetTenantByIdEndpoint : BaseEndpoint<GetTenantByIdQuery, TenantDto>
     public override void ConfigureEndpoint()
     {
         Get("api/v1/tenants/{id}");
-        Description(x => x.WithTags("Tenant").WithSummary("Get tenant by ID"));
+        Description(x => x.WithTags("Tenant Management").WithSummary("Get tenant by ID"));
     }
 
     public override async Task HandleAsync(GetTenantByIdQuery req, CancellationToken ct)

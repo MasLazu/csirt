@@ -11,7 +11,7 @@ public class CreateTenantEndpoint : BaseEndpoint<CreateTenantCommand, Guid>, IPe
     public override void ConfigureEndpoint()
     {
         Post("api/v1/tenants");
-        Description(x => x.WithTags("Tenant").WithSummary("Create a new tenant"));
+        Description(x => x.WithTags("Tenant Management").WithSummary("Create a new tenant"));
     }
 
     public override async Task HandleAsync(CreateTenantCommand req, CancellationToken ct)

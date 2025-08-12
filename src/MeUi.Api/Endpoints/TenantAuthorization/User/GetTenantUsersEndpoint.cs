@@ -13,7 +13,7 @@ public class GetTenantUsersEndpoint : BaseEndpoint<GetTenantUsersPaginatedQuery,
     public override void ConfigureEndpoint()
     {
         Get("api/v1/tenants/{tenantId}/users");
-        Description(x => x.WithTags("Tenant User Management").WithSummary("Get paginated users for a specific tenant"));
+        Description(x => x.WithTags("Tenant User Management").WithSummary("Get paginated list of users within a tenant with filtering by suspension status and search capabilities"));
     }
 
     public override async Task HandleAsync(GetTenantUsersPaginatedQuery req, CancellationToken ct)

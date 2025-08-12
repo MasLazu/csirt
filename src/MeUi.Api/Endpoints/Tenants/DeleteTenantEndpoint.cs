@@ -11,7 +11,7 @@ public class DeleteTenantEndpoint : BaseEndpointWithoutResponse<DeleteTenantComm
     public override void ConfigureEndpoint()
     {
         Delete("api/v1/tenants/{id}");
-        Description(x => x.WithTags("Tenant").WithSummary("Delete a tenant"));
+        Description(x => x.WithTags("Tenant Management").WithSummary("Delete a tenant"));
     }
 
     public override async Task HandleAsync(DeleteTenantCommand req, CancellationToken ct)

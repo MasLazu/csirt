@@ -13,7 +13,7 @@ public class GetTenantRolesPaginatedEndpoint : BaseEndpoint<GetTenantRolesPagina
     public override void ConfigureEndpoint()
     {
         Get("api/v1/tenants/{tenantId}/roles");
-        Description(x => x.WithTags("Tenant Role Management").WithSummary("Get paginated roles for a specific tenant"));
+        Description(x => x.WithTags("Tenant Role Management").WithSummary("Get paginated list of roles within a tenant context with search and sorting"));
     }
 
     public override async Task HandleAsync(GetTenantRolesPaginatedQuery req, CancellationToken ct)

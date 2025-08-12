@@ -10,7 +10,7 @@ public class GetUsersEndpoint : BaseEndpoint<GetUsersPaginatedQuery, PaginatedDt
     public override void ConfigureEndpoint()
     {
         Get("api/v1/users");
-        Description(x => x.WithTags("User Management").WithSummary("Get paginated list of users"));
+        Description(x => x.WithTags("User Management").WithSummary("Get paginated list of system users with filtering by suspension status and search capabilities"));
     }
 
     public override async Task HandleAsync(GetUsersPaginatedQuery req, CancellationToken ct)

@@ -11,7 +11,7 @@ public class UpdateTenantEndpoint : BaseEndpointWithoutResponse<UpdateTenantComm
     public override void ConfigureEndpoint()
     {
         Put("api/v1/tenants/{id}");
-        Description(x => x.WithTags("Tenant").WithSummary("Update an existing tenant"));
+        Description(x => x.WithTags("Tenant Management").WithSummary("Update an existing tenant"));
     }
 
     public override async Task HandleAsync(UpdateTenantCommand req, CancellationToken ct)

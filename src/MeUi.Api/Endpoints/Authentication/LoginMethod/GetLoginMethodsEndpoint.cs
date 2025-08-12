@@ -12,7 +12,7 @@ public class GetLoginMethodsEndpoint : BaseEndpointWithoutRequest<IEnumerable<Lo
     public override void ConfigureEndpoint()
     {
         Get("api/v1/auth/login-methods");
-        Description(x => x.WithTags("Authentication").WithSummary("Get login methods"));
+        Description(x => x.WithTags("Authentication").WithSummary("Get all available login methods (requires READ:LOGIN_METHOD permission)"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)
