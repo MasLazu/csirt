@@ -6,8 +6,12 @@ public class DeleteUserRoleCommandValidator : AbstractValidator<DeleteUserRoleCo
 {
     public DeleteUserRoleCommandValidator()
     {
-        RuleFor(x => x.Id)
+        RuleFor(x => x.UserId)
             .NotEmpty()
-            .WithMessage("UserRole ID is required");
+            .WithMessage("User ID is required");
+
+        RuleFor(x => x.RoleId)
+            .NotEmpty()
+            .WithMessage("Role ID is required");
     }
 }

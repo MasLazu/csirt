@@ -10,7 +10,7 @@ public class DeleteUserRoleEndpoint : BaseEndpoint<DeleteUserRoleCommand, Guid>,
 
     public override void ConfigureEndpoint()
     {
-        Delete("api/v1/user-roles/{id}");
+        Delete("api/v1/users/{UserId}/roles/{RoleId}");
         Description(x => x.WithTags("User Authorization").WithSummary("Delete a user role assignment"));
     }
 

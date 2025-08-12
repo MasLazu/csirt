@@ -20,8 +20,9 @@ public class DeleteUserRoleCommandHandler : IRequestHandler<DeleteUserRoleComman
 
     public async Task<Guid> Handle(DeleteUserRoleCommand request, CancellationToken ct)
     {
-        UserRole userRole = await _userRoleRepository.GetByIdAsync(request.Id, ct) ??
-            throw new NotFoundException($"UserRole with ID '{request.Id}' not found");
+        UserRole userRole = await _userRoleRepository.FirstOrDefaultAsync(
+            ur => ur.UserId == request.UserId && ur.RoleId == request.RoleId, ct) ??
+            throw new NotFoundException($"UserRole for User '{request.UserId}' and Role '{request.RoleId}' not found");
 
         await _userRoleRepository.DeleteAsync(userRole, ct);
         await _unitOfWork.SaveChangesAsync(ct);
