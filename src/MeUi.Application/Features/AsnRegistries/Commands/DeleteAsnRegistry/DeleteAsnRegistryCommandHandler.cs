@@ -30,7 +30,6 @@ public class DeleteAsnRegistryCommandHandler : IRequestHandler<DeleteAsnRegistry
             asn => asn.Id == request.Id, ct) ??
             throw new NotFoundException($"ASN Registry with ID {request.Id} not found");
 
-        // Check if ASN registry is assigned to any tenants
         bool hasTenantAssignments = await _tenantAsnRegistryRepository.ExistsAsync(
             tar => tar.AsnRegistryId == request.Id, ct);
 
@@ -39,7 +38,6 @@ public class DeleteAsnRegistryCommandHandler : IRequestHandler<DeleteAsnRegistry
             throw new ConflictException("Cannot delete ASN Registry that is assigned to tenants. Please remove all tenant assignments first.");
         }
 
-        // Check if ASN registry has associated threat events
         bool hasThreatEvents = await _threatEventRepository.ExistsAsync(
             te => te.AsnRegistryId == request.Id, ct);
 

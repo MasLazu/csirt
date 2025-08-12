@@ -7,10 +7,7 @@ namespace MeUi.Api.Endpoints.TenantAsnRegistries;
 
 public class GetTenantAsnRegistriesEndpoint : BaseEndpoint<GetTenantAsnRegistriesPaginatedQuery, PaginatedDto<AsnRegistryDto>>, ITenantPermissionProvider, IPermissionProvider
 {
-    // Tenant users with READ:ASN_REGISTRY permission can view their tenant's ASNs
     public static string TenantPermission => "READ:ASN_REGISTRY";
-    
-    // Global admins with READ:TENANT_ASN permission can view any tenant's ASNs
     public static string Permission => "READ:TENANT_ASN";
 
     public override void ConfigureEndpoint()

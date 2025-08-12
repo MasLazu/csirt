@@ -20,7 +20,6 @@ public class CreateAsnRegistryCommandHandler : IRequestHandler<CreateAsnRegistry
 
     public async Task<Guid> Handle(CreateAsnRegistryCommand request, CancellationToken ct)
     {
-        // Check if ASN number already exists
         bool asnExists = await _asnRegistryRepository.ExistsAsync(
             asn => asn.Number == request.Number, ct);
 

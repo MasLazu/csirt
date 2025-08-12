@@ -8,7 +8,7 @@ public class GetAsnRegistriesPaginatedQueryValidator : AbstractValidator<GetAsnR
     public GetAsnRegistriesPaginatedQueryValidator()
     {
         Include(new BasePaginatedQueryValidator<AsnRegistryDto>());
-        
+
         // Valid sort fields for ASN registries - this would need to be implemented in the handler
         // ValidSortFields = new[] { "Number", "Description", "CreatedAt", "UpdatedAt" };
     }

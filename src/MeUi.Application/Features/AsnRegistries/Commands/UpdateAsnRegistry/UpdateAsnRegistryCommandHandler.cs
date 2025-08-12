@@ -24,7 +24,6 @@ public class UpdateAsnRegistryCommandHandler : IRequestHandler<UpdateAsnRegistry
             asn => asn.Id == request.Id, ct) ??
             throw new NotFoundException($"ASN Registry with ID {request.Id} not found");
 
-        // Check if the new ASN number conflicts with existing ones (excluding current record)
         bool asnExists = await _asnRegistryRepository.ExistsAsync(
             asn => asn.Number == request.Number && asn.Id != request.Id, ct);
 
