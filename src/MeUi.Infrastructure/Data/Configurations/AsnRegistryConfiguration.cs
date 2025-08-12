@@ -17,7 +17,7 @@ public class AsnRegistryConfiguration : IEntityTypeConfiguration<AsnRegistry>
         builder.Property(e => e.CreatedAt)
             .IsRequired();
 
-        builder.HasIndex(e => e.Number);
+        builder.HasIndex(e => e.Number).IsUnique();
 
         builder.Property(x => x.DeletedAt);
 

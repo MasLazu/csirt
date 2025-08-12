@@ -9,7 +9,7 @@ public class LogoutEndpoint : BaseEndpointWithourRequestResponse
     public override void ConfigureEndpoint()
     {
         Post("api/v1/auth/logout");
-        Description(x => x.WithTags("Auth").WithSummary("User logout"));
+        Description(x => x.WithTags("Authentication").WithSummary("User logout"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

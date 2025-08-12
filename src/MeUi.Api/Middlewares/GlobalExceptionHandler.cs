@@ -24,6 +24,14 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         (ErrorResponse response, int statusCode) = exception switch
         {
+            FluentValidation.ValidationException ex => (new ErrorResponse(
+                message: "One or more validation errors occurred.",
+                errorCode: "VALIDATION_ERROR",
+                errors: ex.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(e => e.ErrorMessage).ToArray())), (int)HttpStatusCode.BadRequest),
             FastEndpoints.ValidationFailureException ex => (new ErrorResponse(
                 message: "One or more validation errors occurred.",
                 errorCode: "VALIDATION_ERROR",

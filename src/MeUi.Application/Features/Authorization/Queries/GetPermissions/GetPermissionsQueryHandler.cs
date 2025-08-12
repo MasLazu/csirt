@@ -1,7 +1,7 @@
 using Mapster;
 using MediatR;
 using MeUi.Application.Interfaces;
-using MeUi.Application.Features.Authorization.Models;
+using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetPermissions;

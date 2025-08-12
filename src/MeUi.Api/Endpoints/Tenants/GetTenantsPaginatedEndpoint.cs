@@ -1,22 +1,23 @@
 using MeUi.Api.Endpoints;
-using MeUi.Application.Features.Tenants.Models;
 using MeUi.Application.Features.Tenants.Queries.GetTenantsPaginated;
+using MeUi.Application.Interfaces;
 using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Tenants;
 
-public class GetTenantsPaginatedEndpoint : BaseEndpoint<GetTenantsPaginatedQuery, PaginatedResult<TenantDto>>
+public class GetTenantsPaginatedEndpoint : BaseEndpoint<GetTenantsPaginatedQuery, PaginatedDto<TenantDto>>, IPermissionProvider
 {
+    public static string Permission => "READ:TENANT";
+
     public override void ConfigureEndpoint()
     {
         Get("api/v1/tenants");
-        Description(x => x.WithTags("Tenants").WithSummary("Get paginated list of tenants"));
-        // TODO: Add authorization for super admin only
+        Description(x => x.WithTags("Tenant Management").WithSummary("Get paginated list of tenants"));
     }
 
     public override async Task HandleAsync(GetTenantsPaginatedQuery req, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        PaginatedDto<TenantDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, "Tenants retrieved successfully", ct);
     }
 }

@@ -1,113 +1,74 @@
 using System.Linq.Expressions;
+using Mapster;
 using MediatR;
-using MeUi.Application.Features.TenantUsers.Models;
 using MeUi.Application.Interfaces;
 using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 
 namespace MeUi.Application.Features.TenantUsers.Queries.GetTenantUsersPaginated;
 
-public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUsersPaginatedQuery, PaginatedResult<TenantUserDto>>
+public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUsersPaginatedQuery, PaginatedDto<TenantUserDto>>
 {
     private readonly IRepository<TenantUser> _tenantUserRepository;
 
-    public GetTenantUsersPaginatedQueryHandler(
-        IRepository<TenantUser> tenantUserRepository)
+    public GetTenantUsersPaginatedQueryHandler(IRepository<TenantUser> tenantUserRepository)
     {
         _tenantUserRepository = tenantUserRepository;
     }
 
-    public async Task<PaginatedResult<TenantUserDto>> Handle(GetTenantUsersPaginatedQuery request, CancellationToken ct)
+    public async Task<PaginatedDto<TenantUserDto>> Handle(GetTenantUsersPaginatedQuery request, CancellationToken ct)
     {
+        // Build the predicate for tenant filtering and optional filters
         Expression<Func<TenantUser, bool>> predicate = tu => tu.TenantId == request.TenantId;
 
-        if (!string.IsNullOrEmpty(request.SearchTerm))
+        if (!string.IsNullOrEmpty(request.Search))
         {
-            string searchTerm = request.SearchTerm.ToLower();
-            var searchPredicate = BuildSearchPredicate(searchTerm);
-            predicate = CombinePredicates(predicate, searchPredicate);
+            predicate = tu => tu.TenantId == request.TenantId && 
+                             (tu.Name != null && tu.Name.Contains(request.Search) || 
+                              tu.Email != null && tu.Email.Contains(request.Search) || 
+                              tu.Username != null && tu.Username.Contains(request.Search));
         }
 
-        if (request.IsSuspended != null)
+        if (request.IsSuspended.HasValue)
         {
-            var suspendedPredicate = BuildSuspendedPredicate(request.IsSuspended.Value);
-            predicate = CombinePredicates(predicate, suspendedPredicate);
+            bool isSuspended = request.IsSuspended.Value;
+            predicate = tu => tu.TenantId == request.TenantId && 
+                             tu.IsSuspended == isSuspended &&
+                             (!string.IsNullOrEmpty(request.Search) ? 
+                                (tu.Name != null && tu.Name.Contains(request.Search) || 
+                                 tu.Email != null && tu.Email.Contains(request.Search) || 
+                                 tu.Username != null && tu.Username.Contains(request.Search)) : true);
         }
 
-        var tenantUsers = await _tenantUserRepository.GetPaginatedAsync(
-            predicate,
-            orderBy: tu => tu.Name,
-            orderByDescending: false,
-            skip: (request.Page - 1) * request.PageSize,
-            take: request.PageSize,
-            ct);
-
-        var tenantUserDtos = tenantUsers.Items.Select(tu => new TenantUserDto
+        // Determine sort field and direction
+        Expression<Func<TenantUser, object>> orderBy = request.SortBy?.ToLower() switch
         {
-            Id = tu.Id,
-            TenantId = tu.TenantId,
-            Name = tu.Name,
-            Email = tu.Email,
-            Username = tu.Username,
-            IsSuspended = tu.IsSuspended,
-            IsTenantAdmin = tu.TenantUserRoles.Any(tur => tur.TenantRole.Name == "Admin"),
-            CreatedAt = tu.CreatedAt,
-            UpdatedAt = tu.UpdatedAt,
-            Roles = tu.TenantUserRoles.Select(tur => tur.TenantRole.Name).ToList()
-        }).ToList();
+            "email" => tu => tu.Email ?? string.Empty,
+            "username" => tu => tu.Username ?? string.Empty,
+            "issuspended" => tu => tu.IsSuspended,
+            "createdat" => tu => tu.CreatedAt,
+            "updatedat" => tu => tu.UpdatedAt,
+            _ => tu => tu.Name ?? string.Empty // Default sort by name
+        };
 
-        return new PaginatedResult<TenantUserDto>
+        // Use efficient database-level pagination
+        (IEnumerable<TenantUser> tenantUsers, int totalItems) = await _tenantUserRepository.GetPaginatedAsync(
+            predicate: predicate,
+            orderBy: orderBy,
+            orderByDescending: request.IsDescending,
+            skip: (request.ValidatedPage - 1) * request.ValidatedPageSize,
+            take: request.ValidatedPageSize,
+            ct: ct);
+
+        IEnumerable<TenantUserDto> tenantUserDtos = tenantUsers.Adapt<IEnumerable<TenantUserDto>>();
+
+        return new PaginatedDto<TenantUserDto>
         {
             Items = tenantUserDtos,
-            TotalItems = tenantUsers.TotalCount,
-            Page = request.Page,
-            PageSize = request.PageSize,
-            TotalPages = (int)Math.Ceiling((double)tenantUsers.TotalCount / request.PageSize)
+            TotalItems = totalItems,
+            Page = request.ValidatedPage,
+            PageSize = request.ValidatedPageSize,
+            TotalPages = (int)Math.Ceiling((double)totalItems / request.ValidatedPageSize)
         };
-    }
-
-    private static Expression<Func<TenantUser, bool>> BuildSearchPredicate(string searchTerm)
-    {
-        return tu => (tu.Name != null && tu.Name.ToLower().Contains(searchTerm)) ||
-                     (tu.Email != null && tu.Email.ToLower().Contains(searchTerm)) ||
-                     (tu.Username != null && tu.Username.ToLower().Contains(searchTerm));
-    }
-
-    private static Expression<Func<TenantUser, bool>> BuildSuspendedPredicate(bool isSuspended)
-    {
-        return tu => tu.IsSuspended == isSuspended;
-    }
-
-    private static Expression<Func<TenantUser, bool>> CombinePredicates(
-        Expression<Func<TenantUser, bool>> first,
-        Expression<Func<TenantUser, bool>> second)
-    {
-        var parameter = Expression.Parameter(typeof(TenantUser), "tu");
-        var firstBody = ReplaceParameter(first.Body, first.Parameters[0], parameter);
-        var secondBody = ReplaceParameter(second.Body, second.Parameters[0], parameter);
-        var combined = Expression.AndAlso(firstBody, secondBody);
-        return Expression.Lambda<Func<TenantUser, bool>>(combined, parameter);
-    }
-
-    private static Expression ReplaceParameter(Expression expression, ParameterExpression oldParameter, ParameterExpression newParameter)
-    {
-        return new ParameterReplacer(oldParameter, newParameter).Visit(expression);
-    }
-
-    private class ParameterReplacer : ExpressionVisitor
-    {
-        private readonly ParameterExpression _oldParameter;
-        private readonly ParameterExpression _newParameter;
-
-        public ParameterReplacer(ParameterExpression oldParameter, ParameterExpression newParameter)
-        {
-            _oldParameter = oldParameter;
-            _newParameter = newParameter;
-        }
-
-        protected override Expression VisitParameter(ParameterExpression node)
-        {
-            return node == _oldParameter ? _newParameter : base.VisitParameter(node);
-        }
     }
 }

@@ -1,8 +1,8 @@
 using Mapster;
 using MediatR;
 using MeUi.Application.Exceptions;
-using MeUi.Application.Features.Tenants.Models;
 using MeUi.Application.Interfaces;
+using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 
 namespace MeUi.Application.Features.Tenants.Queries.GetTenantAsnRegistries;

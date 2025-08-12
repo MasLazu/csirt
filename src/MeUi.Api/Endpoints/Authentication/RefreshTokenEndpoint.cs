@@ -1,8 +1,7 @@
 using MeUi.Api.Endpoints;
 using MeUi.Api.Models;
 using MeUi.Application.Exceptions;
-using MeUi.Application.Features.Authentication.Commands.RefreshToken;
-using MeUi.Application.Features.Authentication.Models;
+using MeUi.Application.Features.Authentication.Commands.TokenRefresh;
 
 namespace MeUi.Api.Endpoints.Authentication;
 
@@ -12,7 +11,7 @@ public class RefreshTokenEndpoint : BaseEndpointWithoutRequest<AccessTokenRespon
     {
         Post("api/v1/auth/refresh");
         AllowAnonymous();
-        Description(x => x.WithTags("Auth").WithSummary("Refresh access token"));
+        Description(x => x.WithTags("Authentication").WithSummary("Refresh access token"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)
@@ -24,12 +23,12 @@ public class RefreshTokenEndpoint : BaseEndpointWithoutRequest<AccessTokenRespon
             throw new UnauthorizedException("No refresh token found in cookies");
         }
 
-        var command = new RefreshTokenCommand
+        var command = new TokenRefreshCommand
         {
             RefreshToken = refreshToken
         };
 
-        TokenResponse tokenResponse = await Mediator.Send(command, ct);
+        TokenRefreshResponse tokenResponse = await Mediator.Send(command, ct);
 
         await SendSuccessAsync(new AccessTokenResponseData()
         {

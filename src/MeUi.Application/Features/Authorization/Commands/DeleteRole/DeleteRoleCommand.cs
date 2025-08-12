@@ -4,5 +4,5 @@ namespace MeUi.Application.Features.Authorization.Commands.DeleteRole;
 
 public record DeleteRoleCommand : IRequest<Guid>
 {
-    public Guid Id { get; init; }
+    public Guid Id { get; set; }
 }

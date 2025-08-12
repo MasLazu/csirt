@@ -2,6 +2,6 @@ namespace MeUi.Api.Models;
 
 public class AccessTokenResponseData
 {
-    public string AccessToken { get; init; } = string.Empty;
-    public DateTime ExpiresAt { get; init; }
+    public string AccessToken { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
 }

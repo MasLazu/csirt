@@ -9,6 +9,7 @@ using MeUi.Infrastructure.Data.Configurations;
 using MeUi.Infrastructure.Services;
 using MongoDB.Driver;
 using Npgsql;
+using MeUi.Infrastructure.Data.Seeders;
 
 namespace MeUi.Infrastructure;
 
@@ -32,7 +33,16 @@ public static class DependencyInjection
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<Data.Seeders.DatabaseSeeder>();
+        // Seeder registrations
+        services.AddScoped<LoginMethodSeeder>();
+        services.AddScoped<PermissionSeeder>();
+        services.AddScoped<TenantPermissionSeeder>();
+        services.AddScoped<SuperRoleSeeder>();
+        services.AddScoped<SuperRolePermissionSeeder>();
+        services.AddScoped<PageGroupSeeder>();
+        services.AddScoped<PageSeeder>();
+        services.AddScoped<SuperUserSeeder>();
+        services.AddScoped<DatabaseSeeder>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 

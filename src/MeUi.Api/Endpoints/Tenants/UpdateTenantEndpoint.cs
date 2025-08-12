@@ -1,15 +1,17 @@
 using MeUi.Api.Endpoints;
 using MeUi.Application.Features.Tenants.Commands.UpdateTenant;
+using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Tenants;
 
-public class UpdateTenantEndpoint : BaseEndpointWithoutResponse<UpdateTenantCommand>
+public class UpdateTenantEndpoint : BaseEndpointWithoutResponse<UpdateTenantCommand>, IPermissionProvider
 {
+    public static string Permission => "UPDATE:TENANT";
+
     public override void ConfigureEndpoint()
     {
         Put("api/v1/tenants/{id}");
-        Description(x => x.WithTags("Tenants").WithSummary("Update an existing tenant"));
-        // TODO: Add authorization for super admin only
+        Description(x => x.WithTags("Tenant").WithSummary("Update an existing tenant"));
     }
 
     public override async Task HandleAsync(UpdateTenantCommand req, CancellationToken ct)

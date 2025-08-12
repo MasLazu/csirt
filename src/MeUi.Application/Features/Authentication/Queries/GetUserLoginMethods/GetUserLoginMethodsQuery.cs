@@ -1,6 +1,9 @@
 using MediatR;
-using MeUi.Application.Features.Authentication.Models;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Authentication.Queries.GetUserLoginMethods;
 
-public record GetUserLoginMethodsQuery(Guid UserId) : IRequest<IEnumerable<LoginMethodDto>>;
+public class GetUserLoginMethodsQuery : IRequest<IEnumerable<LoginMethodDto>>
+{
+    public Guid UserId { get; set; }
+}

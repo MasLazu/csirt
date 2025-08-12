@@ -88,7 +88,8 @@ namespace MeUi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Number");
+                    b.HasIndex("Number")
+                        .IsUnique();
 
                     b.ToTable("AsnRegistries");
                 });
@@ -120,7 +121,8 @@ namespace MeUi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code");
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("DeletedAt");
 
@@ -195,7 +197,8 @@ namespace MeUi.Infrastructure.Migrations
 
                     b.HasIndex("DeletedAt");
 
-                    b.HasIndex("Name");
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("MalwareFamilies");
                 });
@@ -451,7 +454,8 @@ namespace MeUi.Infrastructure.Migrations
 
                     b.HasIndex("DeletedAt");
 
-                    b.HasIndex("Name");
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("Protocols");
                 });

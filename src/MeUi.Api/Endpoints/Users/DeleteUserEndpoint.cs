@@ -8,7 +8,7 @@ public class DeleteUserEndpoint : BaseEndpoint<DeleteUserCommand, Guid>
     public override void ConfigureEndpoint()
     {
         Delete("api/v1/users/{id}");
-        Description(x => x.WithTags("User").WithSummary("Delete a user"));
+        Description(x => x.WithTags("User Management").WithSummary("Delete a user"));
     }
 
     public override async Task HandleAsync(DeleteUserCommand req, CancellationToken ct)

@@ -2,5 +2,5 @@ namespace MeUi.Application.Interfaces;
 
 public interface ITenantPermissionProvider
 {
-    static abstract string Permission { get; }
+    static abstract string TenantPermission { get; }
 }

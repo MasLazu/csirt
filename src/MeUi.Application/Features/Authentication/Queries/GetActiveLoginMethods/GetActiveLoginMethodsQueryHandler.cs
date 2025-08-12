@@ -1,7 +1,7 @@
 using Mapster;
 using MediatR;
 using MeUi.Application.Interfaces;
-using MeUi.Application.Features.Authentication.Models;
+using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 
 namespace MeUi.Application.Features.Authentication.Queries.GetActiveLoginMethods;
@@ -17,12 +17,7 @@ public class GetActiveLoginMethodsQueryHandler : IRequestHandler<GetActiveLoginM
 
     public async Task<IEnumerable<LoginMethodDto>> Handle(GetActiveLoginMethodsQuery request, CancellationToken ct)
     {
-        IEnumerable<LoginMethod> loginMethods = await _loginMethodRepository.GetAllAsync(ct);
-
-        var activeLoginMethods = loginMethods
-            .Where(lm => lm.IsActive && !lm.IsDeleted)
-            .ToList();
-
-        return activeLoginMethods.Adapt<IEnumerable<LoginMethodDto>>();
+        IEnumerable<LoginMethod> loginMethods = await _loginMethodRepository.FindAsync(lm => lm.IsActive, ct);
+        return loginMethods.Adapt<IEnumerable<LoginMethodDto>>();
     }
 }

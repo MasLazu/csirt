@@ -159,6 +159,13 @@ func NewProgressTracker(totalDocuments int64) *ProgressTracker {
 	}
 }
 
+// SetTotal sets the total document count
+func (p *ProgressTracker) SetTotal(total int64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.totalDocuments = total
+}
+
 // IncrementProcessed increments the processed document count
 func (p *ProgressTracker) IncrementProcessed(count int) {
 	p.mu.Lock()
@@ -273,7 +280,7 @@ func (m *MigrationTool) Migrate(ctx context.Context) error {
 			}
 		}()
 		migrationName := "threat_intelligence_migration"
-		if err := m.mongoClient.ReadAllDocumentsWithResume(ctx, m.config.Migration.BatchSize, documentChan, migrationName, m.postgresClient); err != nil {
+		if err := m.mongoClient.ReadAllDocumentsWithResume(ctx, m.config.Migration.BatchSize, documentChan, migrationName, m.postgresClient, progressTracker); err != nil {
 			log.Printf("Error reading documents: %v", err)
 		}
 	}()
@@ -401,42 +408,40 @@ func (m *MigrationTool) processBatchWithRetry(ctx context.Context, documents []T
 
 	// Phase 2: Insert batch into PostgreSQL with retry logic
 	if len(threats) > 0 {
-		insertErr := m.insertBatchWithRetry(ctx, threats, retryCount)
-		if insertErr != nil {
-			// Check if we should retry the entire batch
-			if m.shouldRetryBatch(insertErr, retryCount) {
-				log.Printf("Retrying batch (attempt %d/%d) after error: %v",
-					retryCount+1, m.batchProcessor.maxRetries, insertErr)
-
-				// Wait before retry
-				select {
-				case <-time.After(m.batchProcessor.retryDelay):
-				case <-ctx.Done():
-					result.Errors = append(result.Errors, fmt.Errorf("retry cancelled: %w", ctx.Err()))
-					return result
-				}
-
-				// Retry the entire batch
-				return m.processBatchWithRetry(ctx, documents, retryCount+1)
-			}
-
-			// Log database error for all documents in batch
-			for _, threat := range threats {
-				migErr := MigrationError{
-					Type:        DatabaseError,
-					DocumentID:  threat.ID.String(),
-					Message:     insertErr.Error(),
-					OriginalErr: insertErr,
-					Timestamp:   time.Now(),
-					Retryable:   m.isRetryableError(insertErr),
-				}
-				m.errorLogger.LogError(migErr)
-			}
-
-			result.ErrorCount += len(threats)
-			result.Errors = append(result.Errors, fmt.Errorf("batch insert failed after %d retries: %w", retryCount, insertErr))
-		} else {
+		if m.config.Migration.DryRun {
+			// Simulate success without DB writes
 			result.ProcessedCount = len(threats)
+		} else {
+			insertErr := m.insertBatchWithRetry(ctx, threats, retryCount)
+			if insertErr != nil {
+				// Check if we should retry the entire batch
+				if m.shouldRetryBatch(insertErr, retryCount) {
+					log.Printf("Retrying batch (attempt %d/%d) after error: %v",
+						retryCount+1, m.batchProcessor.maxRetries, insertErr)
+
+					// Wait before retry
+					select {
+					case <-time.After(m.batchProcessor.retryDelay):
+					case <-ctx.Done():
+						result.Errors = append(result.Errors, fmt.Errorf("retry cancelled: %w", ctx.Err()))
+						return result
+					}
+
+					// Retry the entire batch
+					return m.processBatchWithRetry(ctx, documents, retryCount+1)
+				}
+
+				// Log database error for all documents in batch
+				for _, threat := range threats {
+					migErr := MigrationError{Type: DatabaseError, DocumentID: threat.ID.String(), Message: insertErr.Error(), OriginalErr: insertErr, Timestamp: time.Now(), Retryable: m.isRetryableError(insertErr)}
+					m.errorLogger.LogError(migErr)
+				}
+
+				result.ErrorCount += len(threats)
+				result.Errors = append(result.Errors, fmt.Errorf("batch insert failed after %d retries: %w", retryCount, insertErr))
+			} else {
+				result.ProcessedCount = len(threats)
+			}
 		}
 	}
 

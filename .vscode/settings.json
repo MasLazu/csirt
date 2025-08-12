@@ -1,2 +1,28 @@
 {
+  "mcp": {
+    "servers": {
+      "postgres": {
+        "command": "mpx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-postgres",
+          "postgresql://postgres:FazizHomelab4212@10.0.0.107:5432/csrit-2"
+        ]
+      },
+      "MongoDB": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "mongodb-mcp-server",
+          "--connectionString",
+          "mongodb://100.115.172.63:27017",
+          "--readOnly"
+        ]
+      },
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest"]
+      }
+    }
+  }
 }

@@ -4,6 +4,7 @@ using Mapster;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using MeUi.Application.Behaviors;
 
 namespace MeUi.Application;
 
@@ -15,12 +16,12 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        var config = TypeAdapterConfig.GlobalSettings;
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        TypeAdapterConfig config = TypeAdapterConfig.GlobalSettings;
         config.Scan(Assembly.GetExecutingAssembly());
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
-
-        // ThreatIntelligence services removed - using generic repository pattern
 
         return services;
     }

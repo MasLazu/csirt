@@ -1,8 +1,8 @@
 using MediatR;
 using MeUi.Application.Interfaces;
-using MeUi.Application.Features.Authorization.Models;
 using MeUi.Domain.Entities;
 using Mapster;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetPageGroups;
 

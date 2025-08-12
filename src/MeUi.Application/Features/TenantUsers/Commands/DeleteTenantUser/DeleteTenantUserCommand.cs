@@ -4,5 +4,5 @@ namespace MeUi.Application.Features.TenantUsers.Commands.DeleteTenantUser;
 
 public record DeleteTenantUserCommand : IRequest<Unit>
 {
-    public Guid Id { get; init; }
+    public Guid Id { get; set; }
 }

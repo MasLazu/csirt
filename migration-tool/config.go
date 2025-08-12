@@ -43,6 +43,17 @@ type MigrationConfig struct {
 	RetryDelaySeconds      int
 	BatchTimeoutSeconds    int
 	ProgressReportInterval int
+	// Performance / ingestion tuning
+	UseCopy                  bool   // enable high-throughput COPY ingestion
+	CopyThreshold            int    // minimum batch size before switching to COPY
+	CopyTempTable            string // optional staging table name
+	DisableIndexesDuringLoad bool   // if true, non-critical indexes will be disabled (future use)
+	// Adaptive COPY tuning
+	AdaptiveCopy         bool // enable adaptive COPY based on system load
+	CopyTargetRowsPerSec int  // target rows per second for adaptive COPY
+	CopyMinThreshold     int  // minimum batch size for adaptive COPY
+	CopyMaxThreshold     int  // maximum batch size for adaptive COPY
+	DryRun               bool // do transformation & validation only (no DB writes)
 }
 
 // LoadConfig loads configuration from environment variables with defaults
@@ -70,14 +81,23 @@ func LoadConfig() (*Config, error) {
 			SSLMode:  getEnvOrDefault("POSTGRES_SSLMODE", "disable"),
 		},
 		Migration: MigrationConfig{
-			BatchSize:              getEnvIntOrDefault("MIGRATION_BATCH_SIZE", 10000),
-			WorkerCount:            getEnvIntOrDefault("MIGRATION_WORKER_COUNT", 10),
-			BufferSize:             getEnvIntOrDefault("MIGRATION_BUFFER_SIZE", 100),
-			ConnectionPoolSize:     getEnvIntOrDefault("MIGRATION_CONNECTION_POOL_SIZE", 20),
-			MaxRetries:             getEnvIntOrDefault("MIGRATION_MAX_RETRIES", 3),
-			RetryDelaySeconds:      getEnvIntOrDefault("MIGRATION_RETRY_DELAY_SECONDS", 5),
-			BatchTimeoutSeconds:    getEnvIntOrDefault("MIGRATION_BATCH_TIMEOUT_SECONDS", 300),
-			ProgressReportInterval: getEnvIntOrDefault("MIGRATION_PROGRESS_REPORT_INTERVAL", 30),
+			BatchSize:                getEnvIntOrDefault("MIGRATION_BATCH_SIZE", 10000),
+			WorkerCount:              getEnvIntOrDefault("MIGRATION_WORKER_COUNT", 10),
+			BufferSize:               getEnvIntOrDefault("MIGRATION_BUFFER_SIZE", 100),
+			ConnectionPoolSize:       getEnvIntOrDefault("MIGRATION_CONNECTION_POOL_SIZE", 20),
+			MaxRetries:               getEnvIntOrDefault("MIGRATION_MAX_RETRIES", 3),
+			RetryDelaySeconds:        getEnvIntOrDefault("MIGRATION_RETRY_DELAY_SECONDS", 5),
+			BatchTimeoutSeconds:      getEnvIntOrDefault("MIGRATION_BATCH_TIMEOUT_SECONDS", 300),
+			ProgressReportInterval:   getEnvIntOrDefault("MIGRATION_PROGRESS_REPORT_INTERVAL", 30),
+			UseCopy:                  getEnvBoolOrDefault("MIGRATION_USE_COPY", true),
+			CopyThreshold:            getEnvIntOrDefault("MIGRATION_COPY_THRESHOLD", 2000),
+			CopyTempTable:            getEnvOrDefault("MIGRATION_COPY_TEMP_TABLE", ""),
+			DisableIndexesDuringLoad: getEnvBoolOrDefault("MIGRATION_DISABLE_INDEXES", false),
+			AdaptiveCopy:             getEnvBoolOrDefault("MIGRATION_COPY_ADAPTIVE", true),
+			CopyTargetRowsPerSec:     getEnvIntOrDefault("MIGRATION_COPY_TARGET_RPS", 25000),
+			CopyMinThreshold:         getEnvIntOrDefault("MIGRATION_COPY_MIN_THRESHOLD", 500),
+			CopyMaxThreshold:         getEnvIntOrDefault("MIGRATION_COPY_MAX_THRESHOLD", 50000),
+			DryRun:                   getEnvBoolOrDefault("MIGRATION_DRY_RUN", false),
 		},
 	}
 
@@ -108,6 +128,16 @@ func getEnvIntOrDefault(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intValue, err := strconv.Atoi(value); err == nil {
 			return intValue
+		}
+	}
+	return defaultValue
+}
+
+// getEnvBoolOrDefault returns environment variable as bool or default if not set/invalid
+func getEnvBoolOrDefault(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if v, err := strconv.ParseBool(value); err == nil {
+			return v
 		}
 	}
 	return defaultValue

@@ -20,7 +20,10 @@ public class UpdateTenantUserCommandHandler : IRequestHandler<UpdateTenantUserCo
 
     public async Task<Unit> Handle(UpdateTenantUserCommand request, CancellationToken cancellationToken)
     {
-        TenantUser tenantUser = await _tenantUserRepository.GetByIdAsync(request.Id, cancellationToken)
+        // Find the tenant user by user ID and tenant ID
+        TenantUser tenantUser = await _tenantUserRepository.FirstOrDefaultAsync(
+            tu => tu.Id == request.UserId && tu.TenantId == request.TenantId, 
+            cancellationToken)
             ?? throw new NotFoundException("Tenant user not found.");
 
         tenantUser.Email = request.Email;

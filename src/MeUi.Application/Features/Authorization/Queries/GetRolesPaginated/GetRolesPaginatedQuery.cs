@@ -1,12 +1,11 @@
 using MediatR;
-using MeUi.Application.Features.Authorization.Models;
 using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetRolesPaginated;
 
-public record GetRolesPaginatedQuery : IRequest<PaginatedResult<RoleDto>>
+public record GetRolesPaginatedQuery : IRequest<PaginatedDto<RoleDto>>
 {
-    public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 10;
-    public string? Search { get; init; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public string? Search { get; set; }
 }

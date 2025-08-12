@@ -23,13 +23,6 @@ public class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand, Guid>
         Role role = await _roleRepository.GetByIdAsync(request.Id, ct) ??
             throw new InvalidOperationException($"Role with ID '{request.Id}' not found");
 
-        Role? existingRole = await _roleRepository.FirstOrDefaultAsync(r => r.Id != request.Id, ct);
-
-        if (existingRole != null)
-        {
-            throw new InvalidOperationException($"Role with id '{request.Id}' already exists");
-        }
-
         role.Name = request.Name;
         role.Description = request.Description;
 

@@ -8,7 +8,7 @@ public class UpdateUserEndpoint : BaseEndpoint<UpdateUserCommand, Guid>
     public override void ConfigureEndpoint()
     {
         Put("api/v1/users/{id}");
-        Description(x => x.WithTags("User").WithSummary("Update an existing user"));
+        Description(x => x.WithTags("User Management").WithSummary("Update an existing user"));
     }
 
     public override async Task HandleAsync(UpdateUserCommand req, CancellationToken ct)

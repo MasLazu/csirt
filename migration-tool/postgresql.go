@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -20,20 +22,20 @@ type PostgreSQLClient struct {
 	db     *sql.DB
 	config PostgreSQLConfig
 
-	// Prepared statements for batch inserts
-	insertAsnStmt           *sql.Stmt
-	insertCountryStmt       *sql.Stmt
-	insertProtocolStmt      *sql.Stmt
-	insertMalwareFamilyStmt *sql.Stmt
-	insertThreatStmt        *sql.Stmt
+	// Removed per-table prepared insert statements except for ThreatEvents
+	insertThreatStmt *sql.Stmt
 
-	// Lookup caches for normalized data
-	asnCache           map[string]int
-	countryCache       map[string]int
-	protocolCache      map[string]int
-	malwareFamilyCache map[string]int
+	asnCache           map[string]uuid.UUID
+	countryCache       map[string]uuid.UUID
+	protocolCache      map[string]uuid.UUID
+	malwareFamilyCache map[string]uuid.UUID
 
-	// Mutex for thread-safe cache access
+	useCopy       bool
+	copyThreshold int
+	adaptiveCopy  bool
+	copyMin       int
+	copyMax       int
+
 	cacheMutex sync.RWMutex
 }
 
@@ -50,16 +52,16 @@ type MigrationProgress struct {
 type ThreatRecord struct {
 	ID                   uuid.UUID
 	Timestamp            time.Time
-	AsnID                int
+	AsnRegistryID        uuid.UUID
 	SourceAddress        net.IP
-	SourceCountryID      *int
+	SourceCountryID      *uuid.UUID
 	DestinationAddress   *net.IP
-	DestinationCountryID *int
+	DestinationCountryID *uuid.UUID
 	SourcePort           *int
 	DestinationPort      *int
-	ProtocolID           *int
+	ProtocolID           *uuid.UUID
 	Category             string
-	MalwareFamilyID      *int
+	MalwareFamilyID      *uuid.UUID
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }
@@ -88,10 +90,15 @@ func NewPostgreSQLClient(config PostgreSQLConfig, migrationConfig MigrationConfi
 	client := &PostgreSQLClient{
 		db:                 db,
 		config:             config,
-		asnCache:           make(map[string]int),
-		countryCache:       make(map[string]int),
-		protocolCache:      make(map[string]int),
-		malwareFamilyCache: make(map[string]int),
+		asnCache:           make(map[string]uuid.UUID),
+		countryCache:       make(map[string]uuid.UUID),
+		protocolCache:      make(map[string]uuid.UUID),
+		malwareFamilyCache: make(map[string]uuid.UUID),
+		useCopy:            migrationConfig.UseCopy,
+		copyThreshold:      migrationConfig.CopyThreshold,
+		adaptiveCopy:       migrationConfig.AdaptiveCopy,
+		copyMin:            migrationConfig.CopyMinThreshold,
+		copyMax:            migrationConfig.CopyMaxThreshold,
 	}
 
 	// Prepare statements
@@ -116,21 +123,9 @@ func NewPostgreSQLClient(config PostgreSQLConfig, migrationConfig MigrationConfi
 
 // Close closes the PostgreSQL connection and prepared statements
 func (p *PostgreSQLClient) Close() error {
-	// Close prepared statements
-	statements := []*sql.Stmt{
-		p.insertAsnStmt,
-		p.insertCountryStmt,
-		p.insertProtocolStmt,
-		p.insertMalwareFamilyStmt,
-		p.insertThreatStmt,
+	if p.insertThreatStmt != nil {
+		_ = p.insertThreatStmt.Close()
 	}
-
-	for _, stmt := range statements {
-		if stmt != nil {
-			stmt.Close()
-		}
-	}
-
 	return p.db.Close()
 }
 
@@ -138,157 +133,115 @@ func (p *PostgreSQLClient) Close() error {
 func (p *PostgreSQLClient) prepareStatements() error {
 	var err error
 
-	// ASN info insert statement
-	p.insertAsnStmt, err = p.db.Prepare(`
-		INSERT INTO asn_info (asn, description, created_at) 
-		VALUES ($1, $2, $3) 
-		ON CONFLICT (asn) DO NOTHING 
-		RETURNING id`)
-	if err != nil {
-		return fmt.Errorf("failed to prepare ASN insert statement: %w", err)
-	}
-
-	// Country insert statement
-	p.insertCountryStmt, err = p.db.Prepare(`
-		INSERT INTO countries (code, name, created_at) 
-		VALUES ($1, $2, $3) 
-		ON CONFLICT (code) DO NOTHING 
-		RETURNING id`)
-	if err != nil {
-		return fmt.Errorf("failed to prepare country insert statement: %w", err)
-	}
-
-	// Protocol insert statement
-	p.insertProtocolStmt, err = p.db.Prepare(`
-		INSERT INTO protocols (name, created_at) 
-		VALUES ($1, $2) 
-		ON CONFLICT (name) DO NOTHING 
-		RETURNING id`)
-	if err != nil {
-		return fmt.Errorf("failed to prepare protocol insert statement: %w", err)
-	}
-
-	// Malware family insert statement
-	p.insertMalwareFamilyStmt, err = p.db.Prepare(`
-		INSERT INTO malware_families (name, created_at) 
-		VALUES ($1, $2) 
-		ON CONFLICT (name) DO NOTHING 
-		RETURNING id`)
-	if err != nil {
-		return fmt.Errorf("failed to prepare malware family insert statement: %w", err)
-	}
-
-	// Threat intelligence insert statement
 	p.insertThreatStmt, err = p.db.Prepare(`
-		INSERT INTO threat_intelligence (
-			id, timestamp, asn_id, source_address, source_country_id,
-			destination_address, destination_country_id, source_port, destination_port,
-			protocol_id, category, malware_family_id, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`)
+		INSERT INTO "ThreatEvents" (
+			"Id","Timestamp","AsnRegistryId","SourceAddress","SourceCountryId",
+			"DestinationAddress","DestinationCountryId","SourcePort","DestinationPort",
+			"ProtocolId","Category","MalwareFamilyId","CreatedAt","UpdatedAt"
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`)
 	if err != nil {
-		return fmt.Errorf("failed to prepare threat insert statement: %w", err)
+		return fmt.Errorf("failed to prepare ThreatEvents insert: %w", err)
 	}
-
 	return nil
 }
 
 // loadLookupCaches loads existing lookup data into memory caches
 func (p *PostgreSQLClient) loadLookupCaches() error {
-	log.Println("Loading ASN cache...")
-	// Load ASN cache with timeout
+	log.Println("Loading ASN cache (AsnRegistries)...")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	rows, err := p.db.QueryContext(ctx, "SELECT id, asn FROM asn_info LIMIT 10000")
+	rows, err := p.db.QueryContext(ctx, `SELECT "Id", "Number" FROM "AsnRegistries" LIMIT 200000`)
 	if err != nil {
-		// If table doesn't exist, that's okay - we'll create entries as needed
 		log.Printf("Warning: Could not load ASN cache (table may not exist): %v", err)
 	} else {
 		defer rows.Close()
-		asnCount := 0
+		count := 0
 		for rows.Next() {
-			var id int
-			var asn string
-			if err := rows.Scan(&id, &asn); err != nil {
-				log.Printf("Warning: failed to scan ASN row: %v", err)
+			var id uuid.UUID
+			var number string
+			if err := rows.Scan(&id, &number); err != nil {
+				log.Printf("Warning: failed to scan AsnRegistries row: %v", err)
 				continue
 			}
-			p.asnCache[asn] = id
-			asnCount++
+			if number != "" {
+				p.asnCache[number] = id
+				count++
+			}
 		}
-		log.Printf("Loaded %d ASN entries", asnCount)
+		log.Printf("Loaded %d ASN entries", count)
 	}
 
-	log.Println("Loading country cache...")
-	// Load country cache with timeout
+	log.Println("Loading country cache (Countries)...")
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel2()
-
-	rows, err = p.db.QueryContext(ctx2, "SELECT id, code FROM countries LIMIT 1000")
+	rows, err = p.db.QueryContext(ctx2, `SELECT "Id", "Code" FROM "Countries" LIMIT 10000`)
 	if err != nil {
-		log.Printf("Warning: Could not load country cache (table may not exist): %v", err)
+		log.Printf("Warning: Could not load Countries cache: %v", err)
 	} else {
 		defer rows.Close()
-		countryCount := 0
+		count := 0
 		for rows.Next() {
-			var id int
+			var id uuid.UUID
 			var code string
 			if err := rows.Scan(&id, &code); err != nil {
-				log.Printf("Warning: failed to scan country row: %v", err)
+				log.Printf("Warning: failed to scan Countries row: %v", err)
 				continue
 			}
-			p.countryCache[code] = id
-			countryCount++
+			if code != "" {
+				p.countryCache[code] = id
+				count++
+			}
 		}
-		log.Printf("Loaded %d country entries", countryCount)
+		log.Printf("Loaded %d country entries", count)
 	}
 
-	log.Println("Loading protocol cache...")
-	// Load protocol cache with timeout
+	log.Println("Loading protocol cache (Protocols)...")
 	ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel3()
-
-	rows, err = p.db.QueryContext(ctx3, "SELECT id, name FROM protocols LIMIT 1000")
+	rows, err = p.db.QueryContext(ctx3, `SELECT "Id", "Name" FROM "Protocols" LIMIT 10000`)
 	if err != nil {
-		log.Printf("Warning: Could not load protocol cache (table may not exist): %v", err)
+		log.Printf("Warning: Could not load Protocols cache: %v", err)
 	} else {
 		defer rows.Close()
-		protocolCount := 0
+		count := 0
 		for rows.Next() {
-			var id int
+			var id uuid.UUID
 			var name string
 			if err := rows.Scan(&id, &name); err != nil {
-				log.Printf("Warning: failed to scan protocol row: %v", err)
+				log.Printf("Warning: failed to scan Protocols row: %v", err)
 				continue
 			}
-			p.protocolCache[name] = id
-			protocolCount++
+			if name != "" {
+				p.protocolCache[name] = id
+				count++
+			}
 		}
-		log.Printf("Loaded %d protocol entries", protocolCount)
+		log.Printf("Loaded %d protocol entries", count)
 	}
 
-	log.Println("Loading malware family cache...")
-	// Load malware family cache with timeout
+	log.Println("Loading malware family cache (MalwareFamilies)...")
 	ctx4, cancel4 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel4()
-
-	rows, err = p.db.QueryContext(ctx4, "SELECT id, name FROM malware_families LIMIT 1000")
+	rows, err = p.db.QueryContext(ctx4, `SELECT "Id", "Name" FROM "MalwareFamilies" LIMIT 10000`)
 	if err != nil {
-		log.Printf("Warning: Could not load malware family cache (table may not exist): %v", err)
+		log.Printf("Warning: Could not load MalwareFamilies cache: %v", err)
 	} else {
 		defer rows.Close()
-		familyCount := 0
+		count := 0
 		for rows.Next() {
-			var id int
+			var id uuid.UUID
 			var name string
 			if err := rows.Scan(&id, &name); err != nil {
-				log.Printf("Warning: failed to scan malware family row: %v", err)
+				log.Printf("Warning: failed to scan MalwareFamilies row: %v", err)
 				continue
 			}
-			p.malwareFamilyCache[name] = id
-			familyCount++
+			if name != "" {
+				p.malwareFamilyCache[name] = id
+				count++
+			}
 		}
-		log.Printf("Loaded %d malware family entries", familyCount)
+		log.Printf("Loaded %d malware family entries", count)
 	}
 
 	log.Printf("Loaded lookup caches: %d ASNs, %d countries, %d protocols, %d malware families",
@@ -298,146 +251,108 @@ func (p *PostgreSQLClient) loadLookupCaches() error {
 }
 
 // GetOrCreateAsnID gets or creates an ASN record and returns its ID
-func (p *PostgreSQLClient) GetOrCreateAsnID(asn, description string) (int, error) {
-	// Sanitize inputs to prevent UTF-8 issues
-	asn = sanitizeUTF8String(asn)
-	description = sanitizeUTF8String(description)
-
-	// Thread-safe cache access
+func (p *PostgreSQLClient) GetOrCreateAsnID(asn, description string) (uuid.UUID, error) {
+	// Cache check
 	p.cacheMutex.RLock()
-	if id, exists := p.asnCache[asn]; exists {
+	if id, ok := p.asnCache[asn]; ok {
 		p.cacheMutex.RUnlock()
 		return id, nil
 	}
 	p.cacheMutex.RUnlock()
 
-	var id int
-	err := p.insertAsnStmt.QueryRow(asn, description, time.Now()).Scan(&id)
+	id, err := p.getOrCreateUUID("AsnRegistries", "Number", asn, map[string]string{"Description": description})
 	if err != nil {
-		// If no rows returned, the record already exists, query for it
-		if err == sql.ErrNoRows {
-			err = p.db.QueryRow("SELECT id FROM asn_info WHERE asn = $1", asn).Scan(&id)
-			if err != nil {
-				return 0, fmt.Errorf("failed to get existing ASN ID: %w", err)
-			}
-		} else {
-			return 0, fmt.Errorf("failed to insert ASN: %w", err)
-		}
+		return uuid.Nil, err
 	}
-
-	// Thread-safe cache update
 	p.cacheMutex.Lock()
 	p.asnCache[asn] = id
 	p.cacheMutex.Unlock()
-
 	return id, nil
 }
 
 // GetOrCreateCountryID gets or creates a country record and returns its ID
-func (p *PostgreSQLClient) GetOrCreateCountryID(code, name string) (int, error) {
-	// Sanitize inputs to prevent UTF-8 issues
-	code = sanitizeUTF8String(code)
-	name = sanitizeUTF8String(name)
-
-	// Thread-safe cache access
+func (p *PostgreSQLClient) GetOrCreateCountryID(code, name string) (uuid.UUID, error) {
 	p.cacheMutex.RLock()
-	if id, exists := p.countryCache[code]; exists {
+	if id, ok := p.countryCache[code]; ok {
 		p.cacheMutex.RUnlock()
 		return id, nil
 	}
 	p.cacheMutex.RUnlock()
 
-	var id int
-	err := p.insertCountryStmt.QueryRow(code, name, time.Now()).Scan(&id)
+	id, err := p.getOrCreateUUID("Countries", "Code", code, map[string]string{"Name": name})
 	if err != nil {
-		if err == sql.ErrNoRows {
-			err = p.db.QueryRow("SELECT id FROM countries WHERE code = $1", code).Scan(&id)
-			if err != nil {
-				return 0, fmt.Errorf("failed to get existing country ID: %w", err)
-			}
-		} else {
-			return 0, fmt.Errorf("failed to insert country: %w", err)
-		}
+		return uuid.Nil, err
 	}
-
-	// Thread-safe cache update
 	p.cacheMutex.Lock()
 	p.countryCache[code] = id
 	p.cacheMutex.Unlock()
-
 	return id, nil
 }
 
 // GetOrCreateProtocolID gets or creates a protocol record and returns its ID
-func (p *PostgreSQLClient) GetOrCreateProtocolID(name string) (int, error) {
-	// Sanitize input to prevent UTF-8 issues
-	name = sanitizeUTF8String(name)
-
-	// Thread-safe cache access
+func (p *PostgreSQLClient) GetOrCreateProtocolID(name string) (uuid.UUID, error) {
 	p.cacheMutex.RLock()
-	if id, exists := p.protocolCache[name]; exists {
+	if id, ok := p.protocolCache[name]; ok {
 		p.cacheMutex.RUnlock()
 		return id, nil
 	}
 	p.cacheMutex.RUnlock()
 
-	var id int
-	err := p.insertProtocolStmt.QueryRow(name, time.Now()).Scan(&id)
+	id, err := p.getOrCreateUUID("Protocols", "Name", name, nil)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			err = p.db.QueryRow("SELECT id FROM protocols WHERE name = $1", name).Scan(&id)
-			if err != nil {
-				return 0, fmt.Errorf("failed to get existing protocol ID: %w", err)
-			}
-		} else {
-			return 0, fmt.Errorf("failed to insert protocol: %w", err)
-		}
+		return uuid.Nil, err
 	}
-
-	// Thread-safe cache update
 	p.cacheMutex.Lock()
 	p.protocolCache[name] = id
 	p.cacheMutex.Unlock()
-
 	return id, nil
 }
 
 // GetOrCreateMalwareFamilyID gets or creates a malware family record and returns its ID
-func (p *PostgreSQLClient) GetOrCreateMalwareFamilyID(name string) (int, error) {
-	// Sanitize input to prevent UTF-8 issues
-	name = sanitizeUTF8String(name)
-
-	// Thread-safe cache access
+func (p *PostgreSQLClient) GetOrCreateMalwareFamilyID(name string) (uuid.UUID, error) {
 	p.cacheMutex.RLock()
-	if id, exists := p.malwareFamilyCache[name]; exists {
+	if id, ok := p.malwareFamilyCache[name]; ok {
 		p.cacheMutex.RUnlock()
 		return id, nil
 	}
 	p.cacheMutex.RUnlock()
 
-	var id int
-	err := p.insertMalwareFamilyStmt.QueryRow(name, time.Now()).Scan(&id)
+	id, err := p.getOrCreateUUID("MalwareFamilies", "Name", name, nil)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			err = p.db.QueryRow("SELECT id FROM malware_families WHERE name = $1", name).Scan(&id)
-			if err != nil {
-				return 0, fmt.Errorf("failed to get existing malware family ID: %w", err)
-			}
-		} else {
-			return 0, fmt.Errorf("failed to insert malware family: %w", err)
-		}
+		return uuid.Nil, err
 	}
-
-	// Thread-safe cache update
 	p.cacheMutex.Lock()
 	p.malwareFamilyCache[name] = id
 	p.cacheMutex.Unlock()
-
 	return id, nil
 }
 
 // InsertThreatBatch inserts a batch of threat records
 func (p *PostgreSQLClient) InsertThreatBatch(threats []ThreatRecord) error {
+	if len(threats) == 0 {
+		return nil
+	}
+
+	threshold := p.copyThreshold
+	if p.adaptiveCopy {
+		// Placeholder adaptive logic: grow threshold modestly if very large batches observed
+		if len(threats) > threshold*4 && threshold < p.copyMax {
+			threshold = min(p.copyMax, threshold*2)
+		} else if len(threats) < threshold/2 && threshold > p.copyMin {
+			threshold = max(p.copyMin, threshold/2)
+		}
+		p.copyThreshold = threshold
+	}
+
+	if p.useCopy && len(threats) >= threshold {
+		if err := p.copyThreatBatch(threats); err == nil {
+			return nil
+		} else {
+			log.Printf("COPY failed, fallback to row inserts: %v", err)
+		}
+	}
+
+	// Fallback per-row prepared statement inside transaction
 	tx, err := p.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -448,45 +363,139 @@ func (p *PostgreSQLClient) InsertThreatBatch(threats []ThreatRecord) error {
 	defer stmt.Close()
 
 	for _, threat := range threats {
-		// Final sanitization of Category field before database insert
-		sanitizedCategory := sanitizeUTF8String(threat.Category)
-
-		// Convert IP addresses to strings and sanitize them
-		sourceAddrStr := threat.SourceAddress.String()
-		sourceAddrStr = sanitizeUTF8String(sourceAddrStr)
-
+		var srcCountry, dstCountry, proto, mal *uuid.UUID
+		if threat.SourceCountryID != nil {
+			srcCountry = threat.SourceCountryID
+		}
+		if threat.DestinationCountryID != nil {
+			dstCountry = threat.DestinationCountryID
+		}
+		if threat.ProtocolID != nil {
+			proto = threat.ProtocolID
+		}
+		if threat.MalwareFamilyID != nil {
+			mal = threat.MalwareFamilyID
+		}
 		var destAddrStr *string
 		if threat.DestinationAddress != nil {
-			destAddr := threat.DestinationAddress.String()
-			destAddr = sanitizeUTF8String(destAddr)
-			destAddrStr = &destAddr
+			s := threat.DestinationAddress.String()
+			destAddrStr = &s
 		}
-
-		_, err := stmt.Exec(
+		if _, err := stmt.Exec(
 			threat.ID,
 			threat.Timestamp,
-			threat.AsnID,
-			sourceAddrStr,
-			threat.SourceCountryID,
+			threat.AsnRegistryID,
+			threat.SourceAddress.String(),
+			srcCountry,
 			destAddrStr,
-			threat.DestinationCountryID,
+			dstCountry,
 			threat.SourcePort,
 			threat.DestinationPort,
-			threat.ProtocolID,
-			sanitizedCategory,
-			threat.MalwareFamilyID,
+			proto,
+			threat.Category,
+			mal,
 			threat.CreatedAt,
 			threat.UpdatedAt,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to insert threat record %s: %w", threat.ID, err)
+		); err != nil {
+			return fmt.Errorf("insert threat %s: %w", threat.ID, err)
 		}
 	}
-
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
+	return nil
+}
 
+// copyThreatBatch performs bulk ingestion using PostgreSQL COPY protocol
+func (p *PostgreSQLClient) copyThreatBatch(threats []ThreatRecord) error {
+	conn, err := p.db.Conn(context.Background())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	// Columns list mirrors prepared insert ordering
+	copyInStmt := pq.CopyIn("ThreatEvents",
+		"Id", "Timestamp", "AsnRegistryId", "SourceAddress", "SourceCountryId",
+		"DestinationAddress", "DestinationCountryId", "SourcePort", "DestinationPort",
+		"ProtocolId", "Category", "MalwareFamilyId", "CreatedAt", "UpdatedAt",
+	)
+
+	// Use explicit transaction for COPY for atomicity
+	var tx *sql.Tx
+	if err := conn.Raw(func(driverConn any) error { return nil }); err != nil {
+		return err
+	}
+	tx, err = conn.BeginTx(context.Background(), nil)
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(copyInStmt)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("prepare COPY failed: %w", err)
+	}
+
+	for _, t := range threats {
+		var destAddr *string
+		if t.DestinationAddress != nil {
+			s := t.DestinationAddress.String()
+			destAddr = &s
+		}
+		var srcCountry, dstCountry, proto, mal interface{}
+		if t.SourceCountryID != nil {
+			srcCountry = *t.SourceCountryID
+		} else {
+			srcCountry = nil
+		}
+		if t.DestinationCountryID != nil {
+			dstCountry = *t.DestinationCountryID
+		} else {
+			dstCountry = nil
+		}
+		if t.ProtocolID != nil {
+			proto = *t.ProtocolID
+		} else {
+			proto = nil
+		}
+		if t.MalwareFamilyID != nil {
+			mal = *t.MalwareFamilyID
+		} else {
+			mal = nil
+		}
+		if _, err := stmt.Exec(
+			&t.ID,
+			&t.Timestamp,
+			&t.AsnRegistryID,
+			t.SourceAddress.String(),
+			srcCountry,
+			destAddr,
+			dstCountry,
+			t.SourcePort,
+			t.DestinationPort,
+			proto,
+			&t.Category,
+			mal,
+			&t.CreatedAt,
+			&t.UpdatedAt,
+		); err != nil {
+			stmt.Close()
+			tx.Rollback()
+			return fmt.Errorf("COPY exec failed: %w", err)
+		}
+	}
+	if _, err := stmt.Exec(); err != nil {
+		stmt.Close()
+		tx.Rollback()
+		return fmt.Errorf("COPY finalize failed: %w", err)
+	}
+	if err := stmt.Close(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("COPY close failed: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("COPY commit failed: %w", err)
+	}
 	return nil
 }
 
@@ -1060,7 +1069,6 @@ func (p *PostgreSQLClient) normalizeMalwareFamily(family string) string {
 
 // TransformDocument transforms a MongoDB document to a PostgreSQL record
 func (p *PostgreSQLClient) TransformDocument(doc ThreatDocument) (*ThreatRecord, error) {
-	// Generate UUID from MongoDB ObjectID
 	id := uuid.New()
 
 	// Debug: Log the raw document data BEFORE sanitization
@@ -1095,7 +1103,7 @@ func (p *PostgreSQLClient) TransformDocument(doc ThreatDocument) (*ThreatRecord,
 	// Normalize and get ASN ID (required field)
 	normalizedASN := p.normalizeASN(doc.ASN)
 	normalizedASNInfo := p.normalizeASNInfo(doc.ASNInfo)
-	asnID, err := p.GetOrCreateAsnID(normalizedASN, normalizedASNInfo)
+	asnUUID, err := p.GetOrCreateAsnID(normalizedASN, normalizedASNInfo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ASN ID for '%s': %w", normalizedASN, err)
 	}
@@ -1120,7 +1128,7 @@ func (p *PostgreSQLClient) TransformDocument(doc ThreatDocument) (*ThreatRecord,
 	record := &ThreatRecord{
 		ID:            id,
 		Timestamp:     doc.Timestamp,
-		AsnID:         asnID,
+		AsnRegistryID: asnUUID,
 		SourceAddress: sourceIP,
 		Category:      normalizedCategory,
 		CreatedAt:     createdAt,
@@ -1255,4 +1263,86 @@ func sanitizeUTF8String(s string) string {
 	result = strings.ReplaceAll(result, "\x00", "")
 
 	return result
+}
+
+// getOrCreateUUID is a generic helper used for dynamic lookup table population (Approach A)
+func (p *PostgreSQLClient) getOrCreateUUID(table, keyColumn, value string, extra map[string]string) (uuid.UUID, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return uuid.Nil, fmt.Errorf("%s value cannot be empty", keyColumn)
+	}
+
+	// Try select first
+	selectSQL := fmt.Sprintf(`SELECT "Id" FROM "%s" WHERE "%s" = $1`, table, keyColumn)
+	var existing uuid.UUID
+	err := p.db.QueryRow(selectSQL, value).Scan(&existing)
+	if err == nil {
+		return existing, nil
+	}
+	if err != nil && err != sql.ErrNoRows { // retain check
+		return uuid.Nil, fmt.Errorf("lookup %s.%s failed: %w", table, keyColumn, err)
+	}
+
+	// Build insert (ensure CreatedAt present due to NOT NULL constraint in EF model)
+	newID := uuid.New()
+	columns := []string{`"Id"`, fmt.Sprintf(`"%s"`, keyColumn), `"CreatedAt"`}
+	createdAt := time.Now().UTC()
+	args := []any{newID, value, createdAt}
+
+	if extra == nil {
+		extra = map[string]string{}
+	}
+	// Prevent caller from overriding CreatedAt accidentally
+	delete(extra, "CreatedAt")
+
+	if len(extra) > 0 {
+		keys := make([]string, 0, len(extra))
+		for k := range extra {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			columns = append(columns, fmt.Sprintf(`"%s"`, k))
+			args = append(args, extra[k])
+		}
+	}
+
+	placeholders := make([]string, len(columns))
+	for i := range placeholders {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+	}
+
+	insertSQL := fmt.Sprintf(`INSERT INTO "%s" (%s) VALUES (%s) ON CONFLICT ("%s") DO NOTHING RETURNING "Id"`,
+		table,
+		strings.Join(columns, ","),
+		strings.Join(placeholders, ","),
+		keyColumn,
+	)
+
+	// Try insert (with RETURNING). If DO NOTHING triggered, we must re-select.
+	err = p.db.QueryRow(insertSQL, args...).Scan(&existing)
+	if err == sql.ErrNoRows {
+		// Conflict path, reselect
+		if e2 := p.db.QueryRow(selectSQL, value).Scan(&existing); e2 != nil {
+			return uuid.Nil, fmt.Errorf("post-conflict select %s.%s failed: %w", table, keyColumn, e2)
+		}
+		return existing, nil
+	}
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("insert %s.%s failed: %w", table, keyColumn, err)
+	}
+	return existing, nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

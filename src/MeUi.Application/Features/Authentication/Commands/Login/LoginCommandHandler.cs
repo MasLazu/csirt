@@ -1,20 +1,18 @@
 using MapsterMapper;
 using MediatR;
 using MeUi.Application.Interfaces;
-using MeUi.Application.Features.Authentication.Models;
 using MeUi.Domain.Entities;
-using RefreshTokenEntity = MeUi.Domain.Entities.RefreshToken;
 using Mapster;
 using MeUi.Application.Exceptions;
 
 namespace MeUi.Application.Features.Authentication.Commands.Login;
 
-public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
+public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
 {
     private readonly IRepository<User> _userRepository;
     private readonly IRepository<UserLoginMethod> _userLoginMethodRepository;
     private readonly IRepository<UserPassword> _userPasswordRepository;
-    private readonly IRepository<RefreshTokenEntity> _refreshTokenRepository;
+    private readonly IRepository<RefreshToken> _refreshTokenRepository;
     private readonly IRepository<UserRefreshToken> _userRefreshTokenRepository;
     private readonly IRepository<Password> _passwordRepository;
     private readonly IPasswordHasher _passwordHasher;
@@ -25,7 +23,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
         IRepository<User> userRepository,
         IRepository<UserLoginMethod> userLoginMethodRepository,
         IRepository<UserPassword> userPasswordRepository,
-        IRepository<RefreshTokenEntity> refreshTokenRepository,
+        IRepository<RefreshToken> refreshTokenRepository,
         IRepository<UserRefreshToken> userRefreshTokenRepository,
         IRepository<Password> passwordRepository,
         IPasswordHasher passwordHasher,
@@ -43,9 +41,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<TokenResponse> Handle(LoginCommand request, CancellationToken ct)
+    public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken ct)
     {
-        User? user = await FindUserAsync(request.EmailOrUsername, ct) ??
+        User? user = await FindUserAsync(request.Identifier, ct) ??
             throw new UnauthorizedException("Invalid credentials.");
 
         if (user.IsSuspended)
@@ -84,7 +82,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
         string accessToken = await _jwtTokenService.GenerateAccessTokenAsync(user, ct);
         string refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(ct);
 
-        var refreshTokenEntity = new RefreshTokenEntity
+        var refreshTokenEntity = new RefreshToken
         {
             Token = refreshToken,
             ExpiresAt = DateTime.UtcNow.AddDays(7)
@@ -104,7 +102,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
 
         UserInfo userInfo = user.Adapt<UserInfo>();
 
-        return new TokenResponse
+        return new LoginResponse
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,

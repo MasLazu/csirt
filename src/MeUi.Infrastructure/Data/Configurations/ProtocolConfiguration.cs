@@ -13,7 +13,7 @@ public class ProtocolConfiguration : IEntityTypeConfiguration<Protocol>
         builder.Property(e => e.Name).IsRequired().HasMaxLength(20);
         builder.Property(e => e.CreatedAt).IsRequired();
 
-        builder.HasIndex(e => e.Name);
+        builder.HasIndex(e => e.Name).IsUnique();
         builder.HasIndex(e => e.DeletedAt);
 
         builder.HasMany(e => e.ThreatEvents)

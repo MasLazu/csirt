@@ -1,14 +1,14 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using MeUi.Application.Features.Tenants.Models;
 using MeUi.Application.Interfaces;
 using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 using Mapster;
+using System.Linq.Expressions;
 
 namespace MeUi.Application.Features.Tenants.Queries.GetTenantsPaginated;
 
-public class GetTenantsPaginatedQueryHandler : IRequestHandler<GetTenantsPaginatedQuery, PaginatedResult<TenantDto>>
+public class GetTenantsPaginatedQueryHandler : IRequestHandler<GetTenantsPaginatedQuery, PaginatedDto<TenantDto>>
 {
     private readonly IRepository<Tenant> _tenantRepository;
 
@@ -17,25 +17,52 @@ public class GetTenantsPaginatedQueryHandler : IRequestHandler<GetTenantsPaginat
         _tenantRepository = tenantRepository;
     }
 
-    public async Task<PaginatedResult<TenantDto>> Handle(GetTenantsPaginatedQuery request, CancellationToken ct)
+    public async Task<PaginatedDto<TenantDto>> Handle(GetTenantsPaginatedQuery request, CancellationToken ct)
     {
+        // Build the predicate for filtering
+        Expression<Func<Tenant, bool>>? predicate = null;
+
+        if (!string.IsNullOrEmpty(request.Search))
+        {
+            predicate = t => t.Name.Contains(request.Search) ||
+                            t.Description != null && t.Description.Contains(request.Search);
+        }
+
+        if (request.IsActive.HasValue)
+        {
+            bool isActive = request.IsActive.Value;
+            predicate = predicate == null 
+                ? t => t.IsActive == isActive
+                : t => t.IsActive == isActive &&
+                       (t.Name.Contains(request.Search!) ||
+                        t.Description != null && t.Description.Contains(request.Search!));
+        }
+
+        // Determine sort field and direction
+        Expression<Func<Tenant, object>> orderBy = request.SortBy?.ToLower() switch
+        {
+            "description" => t => t.Description ?? string.Empty,
+            "isactive" => t => t.IsActive,
+            "createdat" => t => t.CreatedAt,
+            "updatedat" => t => t.UpdatedAt,
+            _ => t => t.Name // Default sort by name
+        };
+
         (IEnumerable<Tenant> items, int totalCount) = await _tenantRepository.GetPaginatedAsync(
-            predicate: t => string.IsNullOrEmpty(request.SearchTerm) ||
-                            t.Name.Contains(request.SearchTerm) ||
-                            t.Description!.Contains(request.SearchTerm),
-            orderBy: t => t.Name,
-            orderByDescending: false,
-            skip: request.Page * request.PageSize,
-            take: request.PageSize,
+            predicate: predicate,
+            orderBy: orderBy,
+            orderByDescending: request.IsDescending,
+            skip: (request.ValidatedPage - 1) * request.ValidatedPageSize,
+            take: request.ValidatedPageSize,
             ct: ct);
 
-        return new PaginatedResult<TenantDto>
+        return new PaginatedDto<TenantDto>
         {
             Items = items.Adapt<IEnumerable<TenantDto>>(),
-            Page = request.Page,
-            PageSize = request.PageSize,
+            Page = request.ValidatedPage,
+            PageSize = request.ValidatedPageSize,
             TotalItems = totalCount,
-            TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+            TotalPages = (int)Math.Ceiling((double)totalCount / request.ValidatedPageSize)
         };
     }
 }

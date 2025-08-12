@@ -1,8 +1,11 @@
 using FastEndpoints;
 using FastEndpoints.Security;
 using FastEndpoints.Swagger;
+using FluentValidation;
+using MeUi.Api.Endpoints.Tenants;
 using MeUi.Api.Middlewares;
 using MeUi.Application;
+using MeUi.Application.Features.Tenants.Commands.CreateTenant;
 using MeUi.Infrastructure;
 using MeUi.Infrastructure.Data.Seeders;
 using Serilog;

@@ -2,13 +2,12 @@ using MapsterMapper;
 using MediatR;
 using MeUi.Application.Interfaces;
 using MeUi.Application.Models;
-using MeUi.Application.Features.Users.Models;
 using MeUi.Domain.Entities;
 using System.Linq.Expressions;
 
 namespace MeUi.Application.Features.Users.Queries.GetUsersPaginated;
 
-public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQuery, PaginatedResult<UserDto>>
+public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQuery, PaginatedDto<UserDto>>
 {
     private readonly IRepository<User> _userRepository;
     private readonly IMapper _mapper;
@@ -21,85 +20,57 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
         _mapper = mapper;
     }
 
-    public async Task<PaginatedResult<UserDto>> Handle(GetUsersPaginatedQuery request, CancellationToken ct)
+    public async Task<PaginatedDto<UserDto>> Handle(GetUsersPaginatedQuery request, CancellationToken ct)
     {
+        // Build the predicate for filtering
         Expression<Func<User, bool>>? predicate = null;
 
-        if (!string.IsNullOrEmpty(request.SearchTerm))
+        if (!string.IsNullOrEmpty(request.Search))
         {
-            string searchTerm = request.SearchTerm.ToLower();
-            var searchPredicate = BuildSearchPredicate(searchTerm);
-            predicate = predicate == null ? searchPredicate : CombinePredicates(predicate, searchPredicate);
+            predicate = u => u.Name != null && u.Name.Contains(request.Search) ||
+                            u.Email != null && u.Email.Contains(request.Search) ||
+                            u.Username != null && u.Username.Contains(request.Search);
         }
 
         if (request.IsSuspended.HasValue)
         {
-            var suspendedPredicate = BuildSuspendedPredicate(request.IsSuspended.Value);
-            predicate = predicate == null ? suspendedPredicate : CombinePredicates(predicate, suspendedPredicate);
+            bool isSuspended = request.IsSuspended.Value;
+            predicate = predicate == null 
+                ? u => u.IsSuspended == isSuspended
+                : u => u.IsSuspended == isSuspended &&
+                       (u.Name != null && u.Name.Contains(request.Search!) ||
+                        u.Email != null && u.Email.Contains(request.Search!) ||
+                        u.Username != null && u.Username.Contains(request.Search!));
         }
 
-        var result = await _userRepository.GetPaginatedAsync(
+        // Determine sort field and direction
+        Expression<Func<User, object>> orderBy = request.SortBy?.ToLower() switch
+        {
+            "email" => u => u.Email ?? string.Empty,
+            "username" => u => u.Username ?? string.Empty,
+            "issuspended" => u => u.IsSuspended,
+            "createdat" => u => u.CreatedAt,
+            "updatedat" => u => u.UpdatedAt,
+            _ => u => u.Name ?? string.Empty // Default sort by name
+        };
+
+        (IEnumerable<User> Items, int TotalCount) result = await _userRepository.GetPaginatedAsync(
             predicate: predicate,
-            orderBy: u => u.Name,
-            orderByDescending: false,
-            skip: (request.PageNumber - 1) * request.PageSize,
-            take: request.PageSize,
+            orderBy: orderBy,
+            orderByDescending: request.IsDescending,
+            skip: (request.ValidatedPage - 1) * request.ValidatedPageSize,
+            take: request.ValidatedPageSize,
             ct: ct);
 
-        var userDtos = _mapper.Map<IEnumerable<UserDto>>(result.Items);
+        IEnumerable<UserDto> userDtos = _mapper.Map<IEnumerable<UserDto>>(result.Items);
 
-        return new PaginatedResult<UserDto>
+        return new PaginatedDto<UserDto>
         {
             Items = userDtos,
-            Page = request.PageNumber,
-            PageSize = request.PageSize,
+            Page = request.ValidatedPage,
+            PageSize = request.ValidatedPageSize,
             TotalItems = result.TotalCount,
-            TotalPages = (int)Math.Ceiling((double)result.TotalCount / request.PageSize)
+            TotalPages = (int)Math.Ceiling((double)result.TotalCount / request.ValidatedPageSize)
         };
-    }
-
-    private static Expression<Func<User, bool>> BuildSearchPredicate(string searchTerm)
-    {
-        return tu => (tu.Name != null && tu.Name.ToLower().Contains(searchTerm)) ||
-                     (tu.Email != null && tu.Email.ToLower().Contains(searchTerm)) ||
-                     (tu.Username != null && tu.Username.ToLower().Contains(searchTerm));
-    }
-
-    private static Expression<Func<User, bool>> BuildSuspendedPredicate(bool isSuspended)
-    {
-        return tu => tu.IsSuspended == isSuspended;
-    }
-
-    private static Expression<Func<User, bool>> CombinePredicates(
-        Expression<Func<User, bool>> first,
-        Expression<Func<User, bool>> second)
-    {
-        var parameter = Expression.Parameter(typeof(User), "tu");
-        var firstBody = ReplaceParameter(first.Body, first.Parameters[0], parameter);
-        var secondBody = ReplaceParameter(second.Body, second.Parameters[0], parameter);
-        var combined = Expression.AndAlso(firstBody, secondBody);
-        return Expression.Lambda<Func<User, bool>>(combined, parameter);
-    }
-
-    private static Expression ReplaceParameter(Expression expression, ParameterExpression oldParameter, ParameterExpression newParameter)
-    {
-        return new ParameterReplacer(oldParameter, newParameter).Visit(expression);
-    }
-
-    private class ParameterReplacer : ExpressionVisitor
-    {
-        private readonly ParameterExpression _oldParameter;
-        private readonly ParameterExpression _newParameter;
-
-        public ParameterReplacer(ParameterExpression oldParameter, ParameterExpression newParameter)
-        {
-            _oldParameter = oldParameter;
-            _newParameter = newParameter;
-        }
-
-        protected override Expression VisitParameter(ParameterExpression node)
-        {
-            return node == _oldParameter ? _newParameter : base.VisitParameter(node);
-        }
     }
 }

@@ -1,9 +1,9 @@
 using MediatR;
-using MeUi.Application.Features.Users.Models;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Users.Queries.GetUserByEmail;
 
 public record GetUserByEmailQuery : IRequest<UserDto?>
 {
-    public string Email { get; init; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
 }

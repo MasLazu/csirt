@@ -13,7 +13,7 @@ public class CountryConfiguration : IEntityTypeConfiguration<Country>
         builder.Property(e => e.Name).IsRequired().HasMaxLength(100);
         builder.Property(e => e.CreatedAt).IsRequired();
 
-        builder.HasIndex(e => e.Code);
+        builder.HasIndex(e => e.Code).IsUnique();
         builder.HasIndex(x => x.DeletedAt);
 
         builder.HasMany(e => e.SourceThreats)

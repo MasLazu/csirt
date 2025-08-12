@@ -1,14 +1,13 @@
 using Mapster;
 using MediatR;
 using MeUi.Application.Interfaces;
-using MeUi.Application.Features.Authorization.Models;
 using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 using System.Linq.Expressions;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetRolesPaginated;
 
-public class GetRolesPaginatedQueryHandler : IRequestHandler<GetRolesPaginatedQuery, PaginatedResult<RoleDto>>
+public class GetRolesPaginatedQueryHandler : IRequestHandler<GetRolesPaginatedQuery, PaginatedDto<RoleDto>>
 {
     private readonly IRepository<Role> _roleRepository;
 
@@ -17,7 +16,7 @@ public class GetRolesPaginatedQueryHandler : IRequestHandler<GetRolesPaginatedQu
         _roleRepository = roleRepository;
     }
 
-    public async Task<PaginatedResult<RoleDto>> Handle(GetRolesPaginatedQuery request, CancellationToken ct)
+    public async Task<PaginatedDto<RoleDto>> Handle(GetRolesPaginatedQuery request, CancellationToken ct)
     {
         Expression<Func<Role, bool>>? predicate = null;
 
@@ -35,7 +34,7 @@ public class GetRolesPaginatedQueryHandler : IRequestHandler<GetRolesPaginatedQu
 
         int totalPages = (int)Math.Ceiling((double)totalItems / request.PageSize);
 
-        return new PaginatedResult<RoleDto>
+        return new PaginatedDto<RoleDto>
         {
             Items = roles.Adapt<List<RoleDto>>(),
             Page = request.Page,

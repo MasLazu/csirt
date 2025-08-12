@@ -1,6 +1,6 @@
 using MediatR;
-using MeUi.Application.Features.Authorization.Models;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetPermissions;
 
-public record GetPermissionsQuery : IRequest<IEnumerable<PermissionDto>>;
+public class GetPermissionsQuery : IRequest<IEnumerable<PermissionDto>>;

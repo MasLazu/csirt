@@ -1,6 +1,6 @@
 using MediatR;
-using MeUi.Application.Features.Authorization.Models;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetResources;
 
-public record GetResourcesQuery : IRequest<IEnumerable<ResourceDto>>;
+public class GetResourcesQuery : IRequest<IEnumerable<ResourceDto>>;

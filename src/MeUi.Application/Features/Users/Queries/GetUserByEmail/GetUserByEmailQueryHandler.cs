@@ -1,7 +1,7 @@
 using MapsterMapper;
 using MediatR;
 using MeUi.Application.Interfaces;
-using MeUi.Application.Features.Users.Models;
+using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 
 namespace MeUi.Application.Features.Users.Queries.GetUserByEmail;

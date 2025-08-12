@@ -1,5 +1,5 @@
 using MediatR;
-using MeUi.Application.Features.Authorization.Models;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetAccessiblePages;
 

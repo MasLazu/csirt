@@ -1,8 +1,8 @@
 using MediatR;
 using MeUi.Application.Interfaces;
-using MeUi.Application.Features.Authorization.Models;
 using MeUi.Domain.Entities;
 using Mapster;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetPages;
 
@@ -18,7 +18,6 @@ public class GetPagesQueryHandler : IRequestHandler<GetPagesQuery, IEnumerable<P
     public async Task<IEnumerable<PageDto>> Handle(GetPagesQuery request, CancellationToken cancellationToken)
     {
         IEnumerable<Page> pages = await _pageRepository.GetAllAsync(cancellationToken);
-
         return pages.Adapt<IEnumerable<PageDto>>();
     }
 }

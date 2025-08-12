@@ -4,6 +4,6 @@ namespace MeUi.Application.Features.Authorization.Commands.AssignUserRoles;
 
 public record AssignUserRolesCommand : IRequest<IEnumerable<Guid>>
 {
-    public Guid UserId { get; init; }
-    public IEnumerable<Guid> RoleIds { get; init; } = [];
+    public Guid UserId { get; set; }
+    public IEnumerable<Guid> RoleIds { get; set; } = [];
 }

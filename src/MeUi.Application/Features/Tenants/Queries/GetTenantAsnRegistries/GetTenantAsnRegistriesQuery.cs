@@ -1,5 +1,5 @@
 using MediatR;
-using MeUi.Application.Features.Tenants.Models;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Tenants.Queries.GetTenantAsnRegistries;
 

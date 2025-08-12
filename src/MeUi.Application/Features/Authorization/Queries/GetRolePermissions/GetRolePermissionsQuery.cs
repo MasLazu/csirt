@@ -1,6 +1,9 @@
 using MediatR;
-using MeUi.Application.Features.Authorization.Models;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.Authorization.Queries.GetRolePermissions;
 
-public record GetRolePermissionsQuery(Guid RoleId) : IRequest<IEnumerable<PermissionDto>>;
+public record GetRolePermissionsQuery : IRequest<IEnumerable<PermissionDto>>
+{
+    public Guid RoleId { get; set; }
+}

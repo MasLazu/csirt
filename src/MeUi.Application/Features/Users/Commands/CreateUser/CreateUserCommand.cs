@@ -4,8 +4,8 @@ namespace MeUi.Application.Features.Users.Commands.CreateUser;
 
 public record CreateUserCommand : IRequest<Guid>
 {
-    public string? Username { get; init; }
-    public string? Email { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public string Password { get; init; } = string.Empty;
+    public string? Username { get; set; }
+    public string? Email { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }

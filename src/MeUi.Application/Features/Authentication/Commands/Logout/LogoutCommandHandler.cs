@@ -1,17 +1,16 @@
 using MediatR;
 using MeUi.Application.Interfaces;
 using MeUi.Domain.Entities;
-using RefreshTokenEntity = MeUi.Domain.Entities.RefreshToken;
 
 namespace MeUi.Application.Features.Authentication.Commands.Logout;
 
 public class LogoutCommandHandler : IRequestHandler<LogoutCommand, bool>
 {
-    private readonly IRepository<RefreshTokenEntity> _refreshTokenRepository;
+    private readonly IRepository<RefreshToken> _refreshTokenRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public LogoutCommandHandler(
-        IRepository<RefreshTokenEntity> refreshTokenRepository,
+        IRepository<RefreshToken> refreshTokenRepository,
         IUnitOfWork unitOfWork)
     {
         _refreshTokenRepository = refreshTokenRepository;
@@ -25,7 +24,7 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, bool>
             return true;
         }
 
-        RefreshTokenEntity? refreshTokenEntity = await _refreshTokenRepository.FirstOrDefaultAsync(
+        RefreshToken? refreshTokenEntity = await _refreshTokenRepository.FirstOrDefaultAsync(
             rt => rt.Token == request.RefreshToken,
             ct);
 

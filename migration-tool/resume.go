@@ -61,7 +61,8 @@ func (m *MongoDBClient) ReadDocumentsBatchWithSkip(ctx context.Context, batchSiz
 // GetExistingRecordCount returns the count of existing records in PostgreSQL
 func (p *PostgreSQLClient) GetExistingRecordCount() (int64, error) {
 	var count int64
-	err := p.db.QueryRow("SELECT COUNT(*) FROM threat_intelligence").Scan(&count)
+	// Fixed table name to match PascalCase schema
+	err := p.db.QueryRow(`SELECT COUNT(*) FROM "ThreatEvents"`).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count existing records: %w", err)
 	}
@@ -69,7 +70,7 @@ func (p *PostgreSQLClient) GetExistingRecordCount() (int64, error) {
 }
 
 // ReadAllDocumentsWithResume reads all documents with simple count-based resume
-func (m *MongoDBClient) ReadAllDocumentsWithResume(ctx context.Context, batchSize int, documentChan chan<- []ThreatDocument, migrationName string, postgresClient *PostgreSQLClient) error {
+func (m *MongoDBClient) ReadAllDocumentsWithResume(ctx context.Context, batchSize int, documentChan chan<- []ThreatDocument, migrationName string, postgresClient *PostgreSQLClient, progressTracker *ProgressTracker) error {
 	defer close(documentChan)
 
 	log.Println("Checking existing records in PostgreSQL...")
@@ -88,6 +89,11 @@ func (m *MongoDBClient) ReadAllDocumentsWithResume(ctx context.Context, batchSiz
 		totalCount = 25121993 // Use known total as fallback
 	}
 	log.Printf("Total documents to process: %d", totalCount)
+
+	// Update progress tracker total
+	if progressTracker != nil {
+		progressTracker.SetTotal(totalCount)
+	}
 
 	if existingCount > 0 {
 		log.Printf("🔄 RESUMING migration from count: %d/%d (%.2f%%) already processed",

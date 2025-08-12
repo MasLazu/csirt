@@ -4,5 +4,5 @@ namespace MeUi.Application.Features.Users.Commands.DeleteUser;
 
 public record DeleteUserCommand : IRequest<Guid>
 {
-    public Guid Id { get; init; }
+    public Guid Id { get; set; }
 }
