@@ -18,11 +18,8 @@ public class GetCountryQueryHandler : IRequestHandler<GetCountryQuery, CountryDt
 
     public async Task<CountryDto> Handle(GetCountryQuery request, CancellationToken ct)
     {
-        Country? country = await _countryRepository.GetByIdAsync(request.Id, ct);
-        if (country == null)
-        {
+        Country country = await _countryRepository.GetByIdAsync(request.Id, ct) ??
             throw new NotFoundException($"Country with ID {request.Id} not found");
-        }
 
         return country.Adapt<CountryDto>();
     }
