@@ -35,7 +35,7 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
         if (request.IsSuspended.HasValue)
         {
             bool isSuspended = request.IsSuspended.Value;
-            predicate = predicate == null 
+            predicate = predicate == null
                 ? u => u.IsSuspended == isSuspended
                 : u => u.IsSuspended == isSuspended &&
                        (u.Name != null && u.Name.Contains(request.Search!) ||

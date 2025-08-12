@@ -31,7 +31,7 @@ public class GetTenantsPaginatedQueryHandler : IRequestHandler<GetTenantsPaginat
         if (request.IsActive.HasValue)
         {
             bool isActive = request.IsActive.Value;
-            predicate = predicate == null 
+            predicate = predicate == null
                 ? t => t.IsActive == isActive
                 : t => t.IsActive == isActive &&
                        (t.Name.Contains(request.Search!) ||

@@ -11,7 +11,7 @@ public class DeleteUserRoleEndpoint : BaseEndpoint<DeleteUserRoleCommand, Guid>,
     public override void ConfigureEndpoint()
     {
         Delete("api/v1/user-roles/{id}");
-        Description(x => x.WithTags("Authorization: UserRole").WithSummary("Delete a user role assignment"));
+        Description(x => x.WithTags("User Authorization").WithSummary("Delete a user role assignment"));
     }
 
     public override async Task HandleAsync(DeleteUserRoleCommand req, CancellationToken ct)

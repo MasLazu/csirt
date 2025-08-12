@@ -23,20 +23,20 @@ public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUser
 
         if (!string.IsNullOrEmpty(request.Search))
         {
-            predicate = tu => tu.TenantId == request.TenantId && 
-                             (tu.Name != null && tu.Name.Contains(request.Search) || 
-                              tu.Email != null && tu.Email.Contains(request.Search) || 
+            predicate = tu => tu.TenantId == request.TenantId &&
+                             (tu.Name != null && tu.Name.Contains(request.Search) ||
+                              tu.Email != null && tu.Email.Contains(request.Search) ||
                               tu.Username != null && tu.Username.Contains(request.Search));
         }
 
         if (request.IsSuspended.HasValue)
         {
             bool isSuspended = request.IsSuspended.Value;
-            predicate = tu => tu.TenantId == request.TenantId && 
+            predicate = tu => tu.TenantId == request.TenantId &&
                              tu.IsSuspended == isSuspended &&
-                             (!string.IsNullOrEmpty(request.Search) ? 
-                                (tu.Name != null && tu.Name.Contains(request.Search) || 
-                                 tu.Email != null && tu.Email.Contains(request.Search) || 
+                             (!string.IsNullOrEmpty(request.Search) ?
+                                (tu.Name != null && tu.Name.Contains(request.Search) ||
+                                 tu.Email != null && tu.Email.Contains(request.Search) ||
                                  tu.Username != null && tu.Username.Contains(request.Search)) : true);
         }
 

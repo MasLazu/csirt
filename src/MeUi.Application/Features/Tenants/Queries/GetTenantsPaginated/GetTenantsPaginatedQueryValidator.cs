@@ -9,7 +9,7 @@ public class GetTenantsPaginatedQueryValidator : AbstractValidator<GetTenantsPag
     {
         // Include base validation rules
         Include(new BasePaginatedQueryValidator<TenantDto>());
-        
+
         // Additional validations specific to tenant queries can be added here
     }
 }

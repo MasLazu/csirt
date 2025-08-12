@@ -23,7 +23,7 @@ public class GetTenantRolesPaginatedQueryHandler : IRequestHandler<GetTenantRole
 
         if (!string.IsNullOrEmpty(request.Search))
         {
-            predicate = tr => tr.TenantId == request.TenantId && 
+            predicate = tr => tr.TenantId == request.TenantId &&
                              (tr.Name.Contains(request.Search) || tr.Description.Contains(request.Search));
         }
 

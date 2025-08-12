@@ -10,7 +10,7 @@ public class GetActiveLoginMethodsEndpoint : BaseEndpointWithoutRequest<IEnumera
     public override void ConfigureEndpoint()
     {
         Get("api/v1/auth/login-methods/active");
-        Description(x => x.WithTags("Authentication: LoginMethod").WithSummary("Get active login methods"));
+        Description(x => x.WithTags("Authentication").WithSummary("Get active login methods"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

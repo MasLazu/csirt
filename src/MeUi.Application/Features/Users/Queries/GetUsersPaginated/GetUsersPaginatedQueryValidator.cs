@@ -9,7 +9,7 @@ public class GetUsersPaginatedQueryValidator : AbstractValidator<GetUsersPaginat
     {
         // Include base validation rules
         Include(new BasePaginatedQueryValidator<UserDto>());
-        
+
         // Additional validations specific to user queries can be added here
     }
 }

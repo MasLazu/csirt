@@ -11,7 +11,7 @@ public class CreateUserRoleEndpoint : BaseEndpoint<CreateUserRoleCommand, Guid>,
     public override void ConfigureEndpoint()
     {
         Post("api/v1/user-riles");
-        Description(x => x.WithTags("Authorization: UserRole").WithSummary("Assign a role to a user"));
+        Description(x => x.WithTags("User Authorization").WithSummary("Assign a role to a user"));
     }
 
     public override async Task HandleAsync(CreateUserRoleCommand req, CancellationToken ct)
