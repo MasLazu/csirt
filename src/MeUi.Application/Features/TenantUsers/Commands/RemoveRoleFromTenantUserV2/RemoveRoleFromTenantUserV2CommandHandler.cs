@@ -26,17 +26,14 @@ public class RemoveRoleFromTenantUserV2CommandHandler : IRequestHandler<RemoveRo
 
     public async Task<Unit> Handle(RemoveRoleFromTenantUserV2Command request, CancellationToken ct)
     {
-        // Validate tenant user exists and belongs to the specified tenant
         TenantUser tenantUser = await _tenantUserRepository.FirstOrDefaultAsync(
             tu => tu.Id == request.UserId && tu.TenantId == request.TenantId, ct) ??
             throw new NotFoundException($"Tenant user with ID {request.UserId} not found in tenant {request.TenantId}");
 
-        // Validate role exists and belongs to the tenant
         TenantRole tenantRole = await _tenantRoleRepository.FirstOrDefaultAsync(
             tr => tr.Id == request.RoleId && tr.TenantId == request.TenantId, ct) ??
             throw new NotFoundException($"Role with ID {request.RoleId} not found in tenant {request.TenantId}");
 
-        // Find and remove the user role assignment
         TenantUserRole tenantUserRole = await _tenantUserRoleRepository.FirstOrDefaultAsync(
             tur => tur.TenantUserId == request.UserId && tur.TenantRoleId == request.RoleId, ct) ??
             throw new NotFoundException("Role assignment not found for this user");

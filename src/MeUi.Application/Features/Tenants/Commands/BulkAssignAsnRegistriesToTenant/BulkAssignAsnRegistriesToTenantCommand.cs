@@ -2,8 +2,9 @@ using MediatR;
 
 namespace MeUi.Application.Features.Tenants.Commands.BulkAssignAsnRegistriesToTenant;
 
-public record BulkAssignAsnRegistriesToTenantCommand(
-    Guid TenantId,
-    List<Guid> AsnRegistryIds,
-    Guid AssignedByTenantUserId
-) : IRequest<Unit>;
+public record BulkAssignAsnRegistriesToTenantCommand : IRequest<Unit>
+{
+    public Guid TenantId { get; set; }
+    public List<Guid> AsnRegistryIds { get; set; } = new();
+    public Guid AssignedByTenantUserId { get; set; }
+}
