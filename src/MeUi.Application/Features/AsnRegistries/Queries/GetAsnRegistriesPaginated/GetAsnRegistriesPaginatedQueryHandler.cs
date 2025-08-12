@@ -18,7 +18,6 @@ public class GetAsnRegistriesPaginatedQueryHandler : IRequestHandler<GetAsnRegis
 
     public async Task<PaginatedDto<AsnRegistryDto>> Handle(GetAsnRegistriesPaginatedQuery request, CancellationToken ct)
     {
-        // Build search filter
         Expression<Func<AsnRegistry, bool>> predicate = asn => true;
 
         if (!string.IsNullOrWhiteSpace(request.Search))
@@ -28,10 +27,8 @@ public class GetAsnRegistriesPaginatedQueryHandler : IRequestHandler<GetAsnRegis
                               asn.Description.ToLower().Contains(searchTerm);
         }
 
-        // Build orderBy expression
         Expression<Func<AsnRegistry, object>> orderBy = GetOrderByExpression(request.SortBy);
 
-        // Get paginated ASN registries using database-level filtering and pagination
         (IEnumerable<AsnRegistry> asnRegistries, int totalItems) = await _asnRegistryRepository.GetPaginatedAsync(
             predicate: predicate,
             orderBy: orderBy,

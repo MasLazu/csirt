@@ -8,7 +8,7 @@ public class GetTenantAsnRegistriesPaginatedQueryValidator : AbstractValidator<G
     public GetTenantAsnRegistriesPaginatedQueryValidator()
     {
         Include(new BasePaginatedQueryValidator<AsnRegistryDto>());
-        
+
         RuleFor(x => x.TenantId)
             .NotEmpty()
             .WithMessage("Tenant ID is required");
