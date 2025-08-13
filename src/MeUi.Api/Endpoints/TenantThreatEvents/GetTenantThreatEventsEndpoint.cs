@@ -5,9 +5,10 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventsEndpoint : BaseEndpoint<GetTenantThreatEventsPaginatedQuery, PaginatedDto<ThreatEventDto>>, ITenantPermissionProvider
+public class GetTenantThreatEventsEndpoint : BaseEndpoint<GetTenantThreatEventsPaginatedQuery, PaginatedDto<ThreatEventDto>>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:THREAT_EVENT";
+    public static string Permission => "READ:THREAT_EVENT";
 
     public override void ConfigureEndpoint()
     {

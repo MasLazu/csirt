@@ -5,9 +5,10 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantUsers.Roles;
 
-public class GetTenantUserRolesEndpoint : BaseEndpoint<GetTenantUserRolesQuery, IEnumerable<RoleDto>>, ITenantPermissionProvider
+public class GetTenantUserRolesEndpoint : BaseEndpoint<GetTenantUserRolesQuery, IEnumerable<RoleDto>>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:TENANT_USER_ROLES";
+    public static string Permission => "READ:TENANT_USER_ROLES";
 
     public override void ConfigureEndpoint()
     {

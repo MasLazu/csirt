@@ -8,6 +8,7 @@ namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
 public class GetTenantThreatEventSummaryAnalyticsEndpoint : BaseEndpoint<GetTenantThreatEventSummaryAnalyticsQuery, ThreatEventSummaryAnalyticsDto>, IPermissionProvider
 {
+    public static string TenantPermission => "READ:THREAT_ANALYTICS";
     public static string Permission => "READ:THREAT_ANALYTICS";
 
     public override void ConfigureEndpoint()

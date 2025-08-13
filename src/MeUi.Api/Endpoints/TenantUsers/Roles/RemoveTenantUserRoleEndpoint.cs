@@ -4,9 +4,10 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantUsers.Roles;
 
-public class RemoveTenantUserRoleEndpoint : BaseEndpointWithoutResponse<RemoveRoleFromTenantUserV2Command>, ITenantPermissionProvider
+public class RemoveTenantUserRoleEndpoint : BaseEndpointWithoutResponse<RemoveRoleFromTenantUserV2Command>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "REMOVE_ROLE:TENANT_USER";
+    public static string Permission => "REMOVE_ROLE:TENANT_USER";
 
     public override void ConfigureEndpoint()
     {
