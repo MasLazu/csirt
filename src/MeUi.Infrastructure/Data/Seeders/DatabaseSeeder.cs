@@ -17,6 +17,8 @@ public class DatabaseSeeder
     private readonly SuperRolePermissionSeeder _superRolePermissionSeeder;
     private readonly PageGroupSeeder _pageGroupSeeder;
     private readonly PageSeeder _pageSeeder;
+    private readonly PagePermissionSeeder _pagePermissionSeeder;
+    private readonly PageTenantPermissionSeeder _pageTenantPermissionSeeder;
     private readonly SuperUserSeeder _superUserSeeder;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<DatabaseSeeder> _logger;
@@ -29,6 +31,8 @@ public class DatabaseSeeder
         SuperRolePermissionSeeder superRolePermissionSeeder,
         PageGroupSeeder pageGroupSeeder,
         PageSeeder pageSeeder,
+    PagePermissionSeeder pagePermissionSeeder,
+    PageTenantPermissionSeeder pageTenantPermissionSeeder,
         SuperUserSeeder superUserSeeder,
         IUnitOfWork unitOfWork,
         ILogger<DatabaseSeeder> logger)
@@ -40,6 +44,8 @@ public class DatabaseSeeder
         _superRolePermissionSeeder = superRolePermissionSeeder;
         _pageGroupSeeder = pageGroupSeeder;
         _pageSeeder = pageSeeder;
+        _pagePermissionSeeder = pagePermissionSeeder;
+        _pageTenantPermissionSeeder = pageTenantPermissionSeeder;
         _superUserSeeder = superUserSeeder;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -68,6 +74,12 @@ public class DatabaseSeeder
             await _unitOfWork.SaveChangesAsync(ct);
 
             await _pageSeeder.SeedAsync(ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            await _pagePermissionSeeder.SeedAsync(ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            await _pageTenantPermissionSeeder.SeedAsync(ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
             await _superUserSeeder.SeedAsync(ct);
