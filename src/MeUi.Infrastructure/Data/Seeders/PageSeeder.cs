@@ -36,10 +36,12 @@ public class PageSeeder
         }
 
         // Define hierarchical pages (ParentCode optional)
-        var pages = new[]
+    var pages = new[]
         {
-            // Dashboard
-            Page("DASHBOARD_HOME","Dashboard","/dashboard","DASHBOARD"),
+            // Global Home (no page group – root level)
+            Page("DASHBOARD_HOME","Dashboard","/dashboard",null),
+            // Tenant Home (no page group – root level within tenant workspace)
+            Page("TENANT_HOME","Tenant Home","/tenants/{tenantId}",null),
 
             // Global Threat Analytics
             Page("TA_OVERVIEW","Overview","/threat-analytics/overview","THREAT_ANALYTICS"),
@@ -134,7 +136,7 @@ public class PageSeeder
                     Code = p.Code,
                     Name = p.Name,
                     Path = p.Path,
-                    PageGroupId = groupMap.TryGetValue(p.GroupCode, out var gid) ? gid : null,
+                    PageGroupId = p.GroupCode == null ? null : (groupMap.TryGetValue(p.GroupCode, out var gid) ? gid : null),
                     ParentId = p.ParentCode == null ? null : (await _pageRepository.FirstOrDefaultAsync(x => x.Code == p.ParentCode, ct))?.Id
                 }, ct);
                 _logger.LogInformation("Seeded page: {Code}", p.Code);
@@ -142,6 +144,6 @@ public class PageSeeder
         }
     }
 
-    private static (string Code, string Name, string Path, string GroupCode, string? ParentCode) Page(string code, string name, string path, string groupCode, string? parentCode = null)
+    private static (string Code, string Name, string Path, string? GroupCode, string? ParentCode) Page(string code, string name, string path, string? groupCode, string? parentCode = null)
         => (code, name, path, groupCode, parentCode);
 }
