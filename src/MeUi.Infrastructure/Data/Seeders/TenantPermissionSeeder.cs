@@ -9,18 +9,18 @@ public class TenantPermissionSeeder
 {
     private readonly IRepository<Resource> _resourceRepository;
     private readonly IRepository<Domain.Entities.Action> _actionRepository;
-    private readonly IRepository<Permission> _permissionRepository;
+    private readonly IRepository<TenantPermission> _tenantPermissionRepository;
     private readonly ILogger<TenantPermissionSeeder> _logger;
 
     public TenantPermissionSeeder(
         IRepository<Resource> resourceRepository,
         IRepository<Domain.Entities.Action> actionRepository,
-        IRepository<Permission> permissionRepository,
+    IRepository<TenantPermission> tenantPermissionRepository,
         ILogger<TenantPermissionSeeder> logger)
     {
         _resourceRepository = resourceRepository;
         _actionRepository = actionRepository;
-        _permissionRepository = permissionRepository;
+        _tenantPermissionRepository = tenantPermissionRepository;
         _logger = logger;
     }
 
@@ -57,22 +57,50 @@ public class TenantPermissionSeeder
 
         HashSet<string> discoveredTenantPermissions = new();
 
+        string[] nameCandidates = ["TenantPermission", "Permission"]; // allow both naming styles
+
         foreach (Type providerType in tenantPermissionProviders)
         {
             try
             {
-                PropertyInfo? permissionProperty = providerType.GetProperty("Permission",
-                    BindingFlags.Public | BindingFlags.Static);
-
-                if (permissionProperty != null)
+                bool foundAny = false;
+                // Static properties
+                foreach (var name in nameCandidates)
                 {
-                    string? permission = permissionProperty.GetValue(null) as string;
-                    if (!string.IsNullOrEmpty(permission))
+                    PropertyInfo? prop = providerType.GetProperty(name, BindingFlags.Public | BindingFlags.Static);
+                    if (prop != null && prop.PropertyType == typeof(string))
                     {
-                        discoveredTenantPermissions.Add(permission);
-                        _logger.LogDebug("Discovered tenant permission: {Permission} from {ProviderType}",
-                            permission, providerType.Name);
+                        if (prop.GetValue(null) is string value && !string.IsNullOrWhiteSpace(value))
+                        {
+                            if (discoveredTenantPermissions.Add(value))
+                            {
+                                _logger.LogDebug("Discovered tenant permission (property {Prop}): {Permission} from {ProviderType}", name, value, providerType.Name);
+                            }
+                            foundAny = true;
+                        }
                     }
+                }
+
+                // Static methods without parameters
+                foreach (var name in nameCandidates)
+                {
+                    MethodInfo? method = providerType.GetMethod(name, BindingFlags.Public | BindingFlags.Static, Array.Empty<Type>());
+                    if (method != null && method.ReturnType == typeof(string) && method.GetParameters().Length == 0)
+                    {
+                        if (method.Invoke(null, null) is string value && !string.IsNullOrWhiteSpace(value))
+                        {
+                            if (discoveredTenantPermissions.Add(value))
+                            {
+                                _logger.LogDebug("Discovered tenant permission (method {Method}): {Permission} from {ProviderType}", name, value, providerType.Name);
+                            }
+                            foundAny = true;
+                        }
+                    }
+                }
+
+                if (!foundAny)
+                {
+                    _logger.LogTrace("No tenant permission static member found on {ProviderType}", providerType.Name);
                 }
             }
             catch (Exception ex)
@@ -139,17 +167,17 @@ public class TenantPermissionSeeder
 
         foreach ((string actionCode, string resourceCode) in parsedTenantPermissions)
         {
-            Permission? existing = await _permissionRepository.FirstOrDefaultAsync(
+            TenantPermission? existing = await _tenantPermissionRepository.FirstOrDefaultAsync(
                 p => p.ResourceCode == resourceCode && p.ActionCode == actionCode, ct);
 
             if (existing == null)
             {
-                Permission permission = new()
+                TenantPermission tenantPermission = new()
                 {
                     ResourceCode = resourceCode,
                     ActionCode = actionCode
                 };
-                await _permissionRepository.AddAsync(permission, ct);
+                await _tenantPermissionRepository.AddAsync(tenantPermission, ct);
                 _logger.LogInformation("Created tenant permission: {ActionCode}:{ResourceCode}", actionCode, resourceCode);
             }
         }

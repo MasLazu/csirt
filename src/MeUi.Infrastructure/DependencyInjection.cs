@@ -45,8 +45,8 @@ public static class DependencyInjection
         services.AddScoped<SuperRolePermissionSeeder>();
         services.AddScoped<PageGroupSeeder>();
         services.AddScoped<PageSeeder>();
-    services.AddScoped<PagePermissionSeeder>();
-    services.AddScoped<PageTenantPermissionSeeder>();
+        services.AddScoped<PagePermissionSeeder>();
+        services.AddScoped<PageTenantPermissionSeeder>();
         services.AddScoped<SuperUserSeeder>();
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();

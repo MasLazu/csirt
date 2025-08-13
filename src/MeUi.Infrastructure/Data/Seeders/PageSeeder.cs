@@ -36,8 +36,8 @@ public class PageSeeder
         }
 
         // Define hierarchical pages (ParentCode optional)
-    var pages = new[]
-        {
+        var pages = new[]
+            {
             // Global Home (no page group – root level)
             Page("DASHBOARD_HOME","Dashboard","/dashboard",null),
             // Tenant Home (no page group – root level within tenant workspace)

@@ -7,18 +7,18 @@ namespace MeUi.Infrastructure.Data.Seeders;
 public class PageTenantPermissionSeeder
 {
     private readonly IRepository<Page> _pageRepo;
-    private readonly IRepository<Permission> _permissionRepo; // TEMP: using Permission until TenantPermission separation
+    private readonly IRepository<TenantPermission> _tenantPermissionRepo; // now correctly using TenantPermission
     private readonly IRepository<PageTenantPermission> _pageTenantPermissionRepo;
     private readonly ILogger<PageTenantPermissionSeeder> _logger;
 
     public PageTenantPermissionSeeder(
         IRepository<Page> pageRepo,
-        IRepository<Permission> permissionRepo,
+    IRepository<TenantPermission> tenantPermissionRepo,
         IRepository<PageTenantPermission> pageTenantPermissionRepo,
         ILogger<PageTenantPermissionSeeder> logger)
     {
         _pageRepo = pageRepo;
-        _permissionRepo = permissionRepo;
+        _tenantPermissionRepo = tenantPermissionRepo;
         _pageTenantPermissionRepo = pageTenantPermissionRepo;
         _logger = logger;
     }
@@ -38,8 +38,8 @@ public class PageTenantPermissionSeeder
         };
 
         var pages = (await _pageRepo.GetAllAsync(ct)).ToDictionary(p => p.Code, p => p.Id);
-        var permissions = await _permissionRepo.GetAllAsync(ct);
-        var permLookup = permissions.ToDictionary(p => $"{p.ActionCode}:{p.ResourceCode}", p => p.Id);
+        var tenantPermissions = await _tenantPermissionRepo.GetAllAsync(ct);
+        var permLookup = tenantPermissions.ToDictionary(p => $"{p.ActionCode}:{p.ResourceCode}", p => p.Id);
 
         foreach (var m in mappings)
         {
@@ -48,15 +48,15 @@ public class PageTenantPermissionSeeder
                 _logger.LogWarning("Tenant page code {PageCode} not found for tenant permission mapping {PermissionCode}", m.PageCode, m.TenantPermissionCode);
                 continue;
             }
-            if (!permLookup.TryGetValue(m.TenantPermissionCode, out var permId))
+            if (!permLookup.TryGetValue(m.TenantPermissionCode, out var tenantPermId))
             {
                 _logger.LogWarning("Tenant permission {PermissionCode} not found when mapping to page {PageCode}", m.TenantPermissionCode, m.PageCode);
                 continue;
             }
-            bool exists = await _pageTenantPermissionRepo.FirstOrDefaultAsync(pp => pp.PageId == pageId && pp.TenantPermissionId == permId, ct) != null;
+            bool exists = await _pageTenantPermissionRepo.FirstOrDefaultAsync(pp => pp.PageId == pageId && pp.TenantPermissionId == tenantPermId, ct) != null;
             if (!exists)
             {
-                await _pageTenantPermissionRepo.AddAsync(new PageTenantPermission { PageId = pageId, TenantPermissionId = permId }, ct);
+                await _pageTenantPermissionRepo.AddAsync(new PageTenantPermission { PageId = pageId, TenantPermissionId = tenantPermId }, ct);
                 _logger.LogInformation("Linked tenant page {PageCode} -> tenant permission {PermissionCode}", m.PageCode, m.TenantPermissionCode);
             }
         }
