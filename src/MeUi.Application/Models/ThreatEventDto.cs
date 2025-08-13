@@ -2,7 +2,7 @@ using System.Net;
 
 namespace MeUi.Application.Models;
 
-public class ThreatEvent : BaseDto
+public class ThreatEventDto : BaseDto
 {
     public Guid AsnRegistryId { get; set; }
     public IPAddress SourceAddress { get; set; } = IPAddress.None;

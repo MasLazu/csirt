@@ -10,7 +10,7 @@ public class GetCountriesPaginatedQueryValidator : AbstractValidator<GetCountrie
         Include(new BasePaginatedQueryValidator<CountryDto>());
 
         RuleFor(x => x.SortBy)
-            .Must(sortBy => string.IsNullOrEmpty(sortBy) || 
+            .Must(sortBy => string.IsNullOrEmpty(sortBy) ||
                            new[] { "code", "name", "createdat", "updatedat" }.Contains(sortBy.ToLowerInvariant()))
             .WithMessage("SortBy must be one of: Code, Name, CreatedAt, UpdatedAt");
     }

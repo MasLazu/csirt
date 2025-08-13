@@ -9,13 +9,16 @@ public class DeleteCountryCommandHandler : IRequestHandler<DeleteCountryCommand,
 {
     private readonly IRepository<Country> _countryRepository;
     private readonly IRepository<ThreatEvent> _threatEventRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public DeleteCountryCommandHandler(
         IRepository<Country> countryRepository,
-        IRepository<ThreatEvent> threatEventRepository)
+        IRepository<ThreatEvent> threatEventRepository,
+        IUnitOfWork unitOfWork)
     {
         _countryRepository = countryRepository;
         _threatEventRepository = threatEventRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> Handle(DeleteCountryCommand request, CancellationToken ct)
@@ -32,6 +35,7 @@ public class DeleteCountryCommandHandler : IRequestHandler<DeleteCountryCommand,
         }
 
         await _countryRepository.DeleteAsync(country, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
         return country.Id;
     }
 }

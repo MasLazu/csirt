@@ -6,4 +6,5 @@ public class AsnRegistry : BaseEntity
     public string Description { get; set; } = string.Empty;
 
     public virtual ICollection<ThreatEvent> ThreatEvents { get; set; } = [];
+    public virtual ICollection<TenantAsnRegistry> AsnRegistryTenants { get; set; } = [];
 }

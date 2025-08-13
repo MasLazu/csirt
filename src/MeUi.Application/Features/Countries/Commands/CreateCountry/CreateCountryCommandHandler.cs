@@ -9,10 +9,12 @@ namespace MeUi.Application.Features.Countries.Commands.CreateCountry;
 public class CreateCountryCommandHandler : IRequestHandler<CreateCountryCommand, Guid>
 {
     private readonly IRepository<Country> _countryRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CreateCountryCommandHandler(IRepository<Country> countryRepository)
+    public CreateCountryCommandHandler(IRepository<Country> countryRepository, IUnitOfWork unitOfWork)
     {
         _countryRepository = countryRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> Handle(CreateCountryCommand request, CancellationToken ct)
@@ -32,6 +34,7 @@ public class CreateCountryCommandHandler : IRequestHandler<CreateCountryCommand,
         country.CreatedAt = DateTime.UtcNow;
 
         await _countryRepository.AddAsync(country, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
         return country.Id;
     }
 }

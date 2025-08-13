@@ -32,6 +32,8 @@ public static class DependencyInjection
             }));
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped(typeof(IAnalyticsRepository<>), typeof(AnalyticsRepository<>));
+        services.AddScoped<IThreatEventAnalyticsRepository, ThreatEventAnalyticsRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         // Seeder registrations
         services.AddScoped<LoginMethodSeeder>();

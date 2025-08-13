@@ -8,10 +8,12 @@ namespace MeUi.Application.Features.Countries.Commands.UpdateCountry;
 public class UpdateCountryCommandHandler : IRequestHandler<UpdateCountryCommand, Guid>
 {
     private readonly IRepository<Country> _countryRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateCountryCommandHandler(IRepository<Country> countryRepository)
+    public UpdateCountryCommandHandler(IRepository<Country> countryRepository, IUnitOfWork unitOfWork)
     {
         _countryRepository = countryRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> Handle(UpdateCountryCommand request, CancellationToken ct)
@@ -34,6 +36,7 @@ public class UpdateCountryCommandHandler : IRequestHandler<UpdateCountryCommand,
         country.UpdatedAt = DateTime.UtcNow;
 
         await _countryRepository.UpdateAsync(country, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
         return country.Id;
     }
 }
