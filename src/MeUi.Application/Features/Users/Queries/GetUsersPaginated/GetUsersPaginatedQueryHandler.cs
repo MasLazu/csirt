@@ -4,6 +4,7 @@ using MeUi.Application.Interfaces;
 using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 using System.Linq.Expressions;
+using MeUi.Application.Utilities;
 
 namespace MeUi.Application.Features.Users.Queries.GetUsersPaginated;
 
@@ -23,24 +24,22 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
     public async Task<PaginatedDto<UserDto>> Handle(GetUsersPaginatedQuery request, CancellationToken ct)
     {
         // Build the predicate for filtering
-        Expression<Func<User, bool>>? predicate = null;
+        Expression<Func<User, bool>> predicate = u => true;
 
         if (!string.IsNullOrEmpty(request.Search))
         {
-            predicate = u => u.Name != null && u.Name.Contains(request.Search) ||
-                            u.Email != null && u.Email.Contains(request.Search) ||
-                            u.Username != null && u.Username.Contains(request.Search);
+            string search = request.Search;
+            Expression<Func<User, bool>> searchPredicate = u =>
+                (u.Name != null && u.Name.Contains(search)) ||
+                (u.Email != null && u.Email.Contains(search)) ||
+                (u.Username != null && u.Username.Contains(search));
+            predicate = predicate.And(searchPredicate);
         }
 
         if (request.IsSuspended.HasValue)
         {
             bool isSuspended = request.IsSuspended.Value;
-            predicate = predicate == null
-                ? u => u.IsSuspended == isSuspended
-                : u => u.IsSuspended == isSuspended &&
-                       (u.Name != null && u.Name.Contains(request.Search!) ||
-                        u.Email != null && u.Email.Contains(request.Search!) ||
-                        u.Username != null && u.Username.Contains(request.Search!));
+            predicate = predicate.And(u => u.IsSuspended == isSuspended);
         }
 
         // Determine sort field and direction
@@ -50,8 +49,8 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
             "username" => u => u.Username ?? string.Empty,
             "issuspended" => u => u.IsSuspended,
             "createdat" => u => u.CreatedAt,
-            "updatedat" => u => u.UpdatedAt,
-            _ => u => u.Name ?? string.Empty // Default sort by name
+            "updatedat" => u => (object)(u.UpdatedAt == null ? DateTime.MinValue : u.UpdatedAt),
+            _ => u => (object)(u.Name ?? string.Empty) // Default sort by name
         };
 
         (IEnumerable<User> Items, int TotalCount) result = await _userRepository.GetPaginatedAsync(
@@ -62,11 +61,12 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
             take: request.ValidatedPageSize,
             ct: ct);
 
-        IEnumerable<UserDto> userDtos = _mapper.Map<IEnumerable<UserDto>>(result.Items);
+        // Mapping should never return null; enforce materialization to satisfy nullable analysis
+        var userDtos = _mapper.Map<IEnumerable<UserDto>>(result.Items) ?? Enumerable.Empty<UserDto>();
 
         return new PaginatedDto<UserDto>
         {
-            Items = userDtos,
+            Items = userDtos.ToList(),
             Page = request.ValidatedPage,
             PageSize = request.ValidatedPageSize,
             TotalItems = result.TotalCount,

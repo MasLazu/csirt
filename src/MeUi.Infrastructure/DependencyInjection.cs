@@ -31,6 +31,8 @@ public static class DependencyInjection
                 npgsqlOptions.CommandTimeout(30);
             }));
 
+        // For parallel analytics needing isolated contexts, repository now creates scopes manually via IServiceScopeFactory.
+
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped(typeof(IAnalyticsRepository<>), typeof(AnalyticsRepository<>));
         services.AddScoped<IThreatEventAnalyticsRepository, ThreatEventAnalyticsRepository>();

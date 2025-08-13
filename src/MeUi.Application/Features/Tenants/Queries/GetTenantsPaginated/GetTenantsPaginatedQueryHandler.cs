@@ -44,8 +44,8 @@ public class GetTenantsPaginatedQueryHandler : IRequestHandler<GetTenantsPaginat
             "description" => t => t.Description ?? string.Empty,
             "isactive" => t => t.IsActive,
             "createdat" => t => t.CreatedAt,
-            "updatedat" => t => t.UpdatedAt,
-            _ => t => t.Name // Default sort by name
+            "updatedat" => t => (object)(t.UpdatedAt == null ? DateTime.MinValue : t.UpdatedAt),
+            _ => t => (object)(t.Name ?? string.Empty) // Default sort by name, ensure non-null object
         };
 
         (IEnumerable<Tenant> items, int totalCount) = await _tenantRepository.GetPaginatedAsync(
@@ -56,9 +56,10 @@ public class GetTenantsPaginatedQueryHandler : IRequestHandler<GetTenantsPaginat
             take: request.ValidatedPageSize,
             ct: ct);
 
+        var tenantDtos = items.Adapt<IEnumerable<TenantDto>>() ?? Enumerable.Empty<TenantDto>();
         return new PaginatedDto<TenantDto>
         {
-            Items = items.Adapt<IEnumerable<TenantDto>>(),
+            Items = tenantDtos.ToList(),
             Page = request.ValidatedPage,
             PageSize = request.ValidatedPageSize,
             TotalItems = totalCount,

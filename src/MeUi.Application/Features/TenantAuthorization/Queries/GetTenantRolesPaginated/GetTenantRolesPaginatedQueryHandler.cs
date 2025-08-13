@@ -32,8 +32,8 @@ public class GetTenantRolesPaginatedQueryHandler : IRequestHandler<GetTenantRole
         {
             "description" => tr => tr.Description ?? string.Empty,
             "createdat" => tr => tr.CreatedAt,
-            "updatedat" => tr => tr.UpdatedAt,
-            _ => tr => tr.Name // Default sort by name
+            "updatedat" => tr => (object)(tr.UpdatedAt == null ? DateTime.MinValue : tr.UpdatedAt),
+            _ => tr => (object)(tr.Name ?? string.Empty) // Default sort by name
         };
 
         // Use efficient database-level pagination
@@ -45,11 +45,11 @@ public class GetTenantRolesPaginatedQueryHandler : IRequestHandler<GetTenantRole
             take: request.ValidatedPageSize,
             ct: ct);
 
-        IEnumerable<RoleDto> rolesDtos = tenantRoles.Adapt<IEnumerable<RoleDto>>();
+        var rolesDtos = tenantRoles.Adapt<IEnumerable<RoleDto>>() ?? Enumerable.Empty<RoleDto>();
 
         return new PaginatedDto<RoleDto>
         {
-            Items = rolesDtos,
+            Items = rolesDtos.ToList(),
             TotalItems = totalItems,
             Page = request.ValidatedPage,
             PageSize = request.ValidatedPageSize,

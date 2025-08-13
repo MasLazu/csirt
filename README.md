@@ -191,6 +191,8 @@ Logs are written to both console and files:
 - Files: Located in `logs/` directory with daily rotation
 - Configurable log levels via `appsettings.json`
 
+> Threat analytics implementation progress has been moved to `THREAT_ANALYTICS_ROADMAP.md` for clarity.
+
 ## Contributing
 
 1. Fork the repository

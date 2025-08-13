@@ -37,6 +37,16 @@ public interface IThreatEventAnalyticsRepository
         Guid? tenantId = null,
         CancellationToken ct = default);
 
+    /// <summary>
+    /// Get malware family counts per time bucket (parallel to category timeline)
+    /// </summary>
+    Task<IEnumerable<MalwareTimelineDataPoint>> GetMalwareTimelineAnalyticsAsync(
+        DateTime startTime,
+        DateTime endTime,
+        string timeInterval,
+        Guid? tenantId = null,
+        CancellationToken ct = default);
+
     #endregion
 
     #region Summary Analytics
@@ -211,6 +221,13 @@ public class ComparativeTimelineDataPoint : TimelineDataPoint
     public int PreviousPeriodCount { get; set; }
     public double PercentageChange { get; set; }
     public string TrendDirection { get; set; } = string.Empty;
+}
+
+public class MalwareTimelineDataPoint
+{
+    public DateTime Timestamp { get; set; }
+    public string MalwareFamilyName { get; set; } = string.Empty;
+    public int Count { get; set; }
 }
 
 public class ThreatEventSummary

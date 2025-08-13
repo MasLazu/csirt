@@ -47,8 +47,8 @@ public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUser
             "username" => tu => tu.Username ?? string.Empty,
             "issuspended" => tu => tu.IsSuspended,
             "createdat" => tu => tu.CreatedAt,
-            "updatedat" => tu => tu.UpdatedAt,
-            _ => tu => tu.Name ?? string.Empty // Default sort by name
+            "updatedat" => tu => (object)(tu.UpdatedAt == null ? DateTime.MinValue : tu.UpdatedAt),
+            _ => tu => (object)(tu.Name ?? string.Empty) // Default sort by name
         };
 
         // Use efficient database-level pagination
@@ -60,11 +60,11 @@ public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUser
             take: request.ValidatedPageSize,
             ct: ct);
 
-        IEnumerable<TenantUserDto> tenantUserDtos = tenantUsers.Adapt<IEnumerable<TenantUserDto>>();
+        var tenantUserDtos = tenantUsers.Adapt<IEnumerable<TenantUserDto>>() ?? Enumerable.Empty<TenantUserDto>();
 
         return new PaginatedDto<TenantUserDto>
         {
-            Items = tenantUserDtos,
+            Items = tenantUserDtos.ToList(),
             TotalItems = totalItems,
             Page = request.ValidatedPage,
             PageSize = request.ValidatedPageSize,

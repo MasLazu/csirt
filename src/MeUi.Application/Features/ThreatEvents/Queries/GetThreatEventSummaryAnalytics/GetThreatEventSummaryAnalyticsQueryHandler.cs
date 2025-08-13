@@ -18,83 +18,47 @@ public class GetThreatEventSummaryAnalyticsQueryHandler : IRequestHandler<GetThr
         // Set default time range if not provided and ensure UTC
         DateTime endTime = request.EndTime ?? DateTime.UtcNow;
         DateTime startTime = request.StartTime ?? endTime.AddDays(-30);
-        
+
         // Ensure DateTime values are in UTC for PostgreSQL compatibility
         DateTime endTimeUtc = endTime.Kind == DateTimeKind.Utc ? endTime : endTime.ToUniversalTime();
         DateTime startTimeUtc = startTime.Kind == DateTimeKind.Utc ? startTime : startTime.ToUniversalTime();
+        int top = request.TopItemsLimit;
 
-        // Get dashboard metrics (includes recent activity)
-        ThreatEventDashboardMetrics dashboardMetrics = await _analyticsRepository.GetDashboardMetricsAsync(
-            tenantId: null, // TODO: Extract from claims/context
-            ct);
+        // Launch independent repository calls in parallel
+        Guid? tenantId = null;
+        var dashboardTask = _analyticsRepository.GetDashboardMetricsAsync(tenantId, ct);
+        var summaryTask = _analyticsRepository.GetSummaryAnalyticsAsync(startTimeUtc, endTimeUtc, tenantId, ct);
+        var categoriesTask = _analyticsRepository.GetTopCategoriesAsync(startTimeUtc, endTimeUtc, top, tenantId, ct);
+        var countriesTask = _analyticsRepository.GetGeographicalAnalyticsAsync(startTimeUtc, endTimeUtc, top, tenantId, ct);
+        var malwareFamiliesTask = _analyticsRepository.GetMalwareFamilyAnalyticsAsync(startTimeUtc, endTimeUtc, top, tenantId, ct);
+        var sourceIpsTask = _analyticsRepository.GetIpReputationAnalyticsAsync(startTimeUtc, endTimeUtc, top, isSourceIp: true, tenantId, ct);
+        var targetPortsTask = _analyticsRepository.GetPortAnalyticsAsync(startTimeUtc, endTimeUtc, isSourcePort: false, top, tenantId, ct);
 
-        // Get summary analytics for the specified period
-        ThreatEventSummary summary = await _analyticsRepository.GetSummaryAnalyticsAsync(
-            startTimeUtc,
-            endTimeUtc,
-            tenantId: null, // TODO: Extract from claims/context
-            ct);
-
-        // Get categorical analytics
-        IEnumerable<CategoryAnalytics> categories = await _analyticsRepository.GetTopCategoriesAsync(
-            startTimeUtc,
-            endTimeUtc,
-            request.TopItemsLimit,
-            tenantId: null, // TODO: Extract from claims/context
-            ct);
-
-        // Get geographical analytics
-        IEnumerable<GeographicalAnalytics> countries = await _analyticsRepository.GetGeographicalAnalyticsAsync(
-            startTimeUtc,
-            endTimeUtc,
-            request.TopItemsLimit,
-            tenantId: null, // TODO: Extract from claims/context
-            ct);
-
-        // Get malware family analytics
-        IEnumerable<MalwareFamilyAnalytics> malwareFamilies = await _analyticsRepository.GetMalwareFamilyAnalyticsAsync(
-            startTimeUtc,
-            endTimeUtc,
-            request.TopItemsLimit,
-            tenantId: null, // TODO: Extract from claims/context
-            ct);
-
-        // Get IP reputation analytics for top source IPs
-        IEnumerable<IpReputationAnalytics> sourceIPs = await _analyticsRepository.GetIpReputationAnalyticsAsync(
-            startTimeUtc,
-            endTimeUtc,
-            request.TopItemsLimit,
-            isSourceIp: true,
-            tenantId: null, // TODO: Extract from claims/context
-            ct);
-
-        // Get port analytics for top target ports
-        IEnumerable<PortAnalytics> targetPorts = await _analyticsRepository.GetPortAnalyticsAsync(
-            startTimeUtc,
-            endTimeUtc,
-            isSourcePort: false,
-            request.TopItemsLimit,
-            tenantId: null, // TODO: Extract from claims/context
-            ct);
-
-        // Calculate time periods for trend analysis
+        // Trend periods
         DateTime last24Hours = endTimeUtc.AddDays(-1);
         DateTime last7Days = endTimeUtc.AddDays(-7);
         DateTime last30Days = endTimeUtc.AddDays(-30);
+        var last24Task = _analyticsRepository.GetSummaryAnalyticsAsync(last24Hours, endTimeUtc, tenantId, ct);
+        var last7Task = _analyticsRepository.GetSummaryAnalyticsAsync(last7Days, endTimeUtc, tenantId, ct);
+        var last30Task = _analyticsRepository.GetSummaryAnalyticsAsync(last30Days, endTimeUtc, tenantId, ct);
 
-        // Get counts for different periods
-        ThreatEventSummary last24HoursSummary = await _analyticsRepository.GetSummaryAnalyticsAsync(
-            last24Hours, endTimeUtc, tenantId: null, ct);
-        
-        ThreatEventSummary last7DaysSummary = await _analyticsRepository.GetSummaryAnalyticsAsync(
-            last7Days, endTimeUtc, tenantId: null, ct);
-        
-        ThreatEventSummary last30DaysSummary = await _analyticsRepository.GetSummaryAnalyticsAsync(
-            last30Days, endTimeUtc, tenantId: null, ct);
+        await Task.WhenAll(dashboardTask, summaryTask, categoriesTask, countriesTask, malwareFamiliesTask,
+            sourceIpsTask, targetPortsTask, last24Task, last7Task, last30Task);
+
+        var dashboardMetrics = await dashboardTask;
+        var summary = await summaryTask;
+        var categories = await categoriesTask;
+        var countries = await countriesTask;
+        var malwareFamilies = await malwareFamiliesTask;
+        var sourceIPs = await sourceIpsTask;
+        var targetPorts = await targetPortsTask;
+        var last24HoursSummary = await last24Task;
+        var last7DaysSummary = await last7Task;
+        var last30DaysSummary = await last30Task;
 
         // Calculate trend changes
         double dailyChange = CalculatePercentageChange(dashboardMetrics.EventsLast24Hours, dashboardMetrics.EventsLastHour * 24);
-        string trendDirection = dashboardMetrics.PercentageChangeFromYesterday > 5 ? "up" : 
+        string trendDirection = dashboardMetrics.PercentageChangeFromYesterday > 5 ? "up" :
                                dashboardMetrics.PercentageChangeFromYesterday < -5 ? "down" : "stable";
 
         return new ThreatEventSummaryAnalyticsDto
@@ -126,7 +90,7 @@ public class GetThreatEventSummaryAnalyticsQueryHandler : IRequestHandler<GetThr
                     TopMalwareFamilies = new List<string>(), // Could be enhanced to get from repository
                     TopSourceCountries = new List<string>()  // Could be enhanced to get from repository
                 }),
-            CriticalAlerts = request.IncludeCriticalAlerts 
+            CriticalAlerts = request.IncludeCriticalAlerts
                 ? dashboardMetrics.RecentHighRiskEvents.Select(e => new CriticalAlertDto
                 {
                     Type = "high_risk_event",
@@ -185,7 +149,7 @@ public class GetThreatEventSummaryAnalyticsQueryHandler : IRequestHandler<GetThr
 
     private static double CalculatePercentageChange(int current, int previous)
     {
-        if (previous == 0) 
+        if (previous == 0)
         {
             return current > 0 ? 100.0 : 0.0;
         }

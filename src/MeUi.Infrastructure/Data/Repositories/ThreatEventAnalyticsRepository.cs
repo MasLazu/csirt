@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MeUi.Application.Interfaces;
 using MeUi.Domain.Entities;
 using MeUi.Infrastructure.Data;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MeUi.Infrastructure.Data.Repositories;
 
@@ -12,11 +13,18 @@ namespace MeUi.Infrastructure.Data.Repositories;
 /// </summary>
 public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public ThreatEventAnalyticsRepository(ApplicationDbContext context)
+    public ThreatEventAnalyticsRepository(IServiceScopeFactory scopeFactory)
     {
-        _context = context;
+        _scopeFactory = scopeFactory;
+    }
+
+    private (IAsyncDisposable scope, ApplicationDbContext context) CreateScopedContext()
+    {
+        var scope = _scopeFactory.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        return (scope, context);
     }
 
     #region Timeline Analytics
@@ -35,7 +43,9 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents.AsQueryable();
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents.AsQueryable();
 
         // Apply filters
         // TODO: Multi-tenancy - ThreatEvent doesn't have TenantId property
@@ -61,31 +71,31 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
             query = query.Where(te => te.SourceCountryId == sourceCountryId.Value);
         }
 
-        // Use TimescaleDB time_bucket function for optimal performance
-        string sql = $@"
-            SELECT 
-                time_bucket(INTERVAL '{GetIntervalString(timeInterval)}', ""Timestamp"") as ""Timestamp"",
-                COUNT(*) as ""Count"",
-                COALESCE(""Category"", 'Unknown') as ""Category"",
-                5.0 as ""AverageRiskScore"",
-                COUNT(DISTINCT ""SourceAddress"") as ""UniqueSourceIps"",
-                COUNT(DISTINCT ""DestinationAddress"") as ""UniqueDestinationIps""
-            FROM ""ThreatEvents""
-            WHERE ""Timestamp"" >= {{0}} AND ""Timestamp"" <= {{1}}
-            {(tenantId.HasValue ? "AND \"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = {2})" : "")}
-            {(!string.IsNullOrEmpty(category) ? $"AND \"Category\" = '{category}'" : "")}
-            {(malwareFamilyId.HasValue ? $"AND \"MalwareFamilyId\" = '{malwareFamilyId}'" : "")}
-            {(sourceCountryId.HasValue ? $"AND \"SourceCountryId\" = '{sourceCountryId}'" : "")}
-            GROUP BY time_bucket(INTERVAL '{GetIntervalString(timeInterval)}', ""Timestamp""), ""Category""
-            ORDER BY ""Timestamp"" ASC";
+        // Use TimescaleDB time_bucket function for optimal performance (category timeline)
+        var interval = GetIntervalString(timeInterval);
+        string sql = $@"SELECT 
+        time_bucket(INTERVAL '{interval}', ""Timestamp"") AS ""Timestamp"",
+        COUNT(*) AS ""Count"",
+        COALESCE(""Category"", 'Unknown') AS ""Category"",
+        5.0 AS ""AverageRiskScore"",
+        COUNT(DISTINCT ""SourceAddress"") AS ""UniqueSourceIps"",
+        COUNT(DISTINCT ""DestinationAddress"") AS ""UniqueDestinationIps""
+        FROM ""ThreatEvents""
+        WHERE ""Timestamp"" >= {{0}} AND ""Timestamp"" <= {{1}}
+        {(tenantId.HasValue ? "AND \"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = {2})" : string.Empty)}
+        {(!string.IsNullOrEmpty(category) ? $"AND \"Category\" = '{category}'" : string.Empty)}
+        {(malwareFamilyId.HasValue ? $"AND \"MalwareFamilyId\" = '{malwareFamilyId}'" : string.Empty)}
+        {(sourceCountryId.HasValue ? $"AND \"SourceCountryId\" = '{sourceCountryId}'" : string.Empty)}
+        GROUP BY time_bucket(INTERVAL '{interval}', ""Timestamp""), ""Category""
+        ORDER BY ""Timestamp"" ASC";
 
         object[] parameters = tenantId.HasValue
             ? new object[] { startTime, endTime, tenantId.Value }
             : new object[] { startTime, endTime };
 
-        List<TimelineDataPoint> results = await _context.Database
-            .SqlQueryRaw<TimelineDataPoint>(sql, parameters)
-            .ToListAsync(ct);
+        List<TimelineDataPoint> results = await context.Database
+                .SqlQueryRaw<TimelineDataPoint>(sql, parameters)
+                .ToListAsync(ct);
 
         return results;
     }
@@ -153,10 +163,46 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
             ? new object[] { currentStartTime, currentEndTime, comparisonStartTime, comparisonEndTime, tenantId.Value }
             : new object[] { currentStartTime, currentEndTime, comparisonStartTime, comparisonEndTime };
 
-        List<ComparativeTimelineDataPoint> results = await _context.Database
-            .SqlQueryRaw<ComparativeTimelineDataPoint>(sql, parameters)
-            .ToListAsync(ct);
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        List<ComparativeTimelineDataPoint> results = await context.Database
+                .SqlQueryRaw<ComparativeTimelineDataPoint>(sql, parameters)
+                .ToListAsync(ct);
 
+        return results;
+    }
+
+    public async Task<IEnumerable<MalwareTimelineDataPoint>> GetMalwareTimelineAnalyticsAsync(
+        DateTime startTime,
+        DateTime endTime,
+        string timeInterval,
+        Guid? tenantId = null,
+        CancellationToken ct = default)
+    {
+        startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+        endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
+
+        var interval2 = GetIntervalString(timeInterval);
+        string sql = $@"SELECT 
+        time_bucket(INTERVAL '{interval2}', ""Timestamp"") AS ""Timestamp"",
+        COALESCE(mf.""Name"", 'Unknown') AS ""MalwareFamilyName"",
+        COUNT(*) AS ""Count""
+        FROM ""ThreatEvents"" te
+        LEFT JOIN ""MalwareFamilies"" mf ON te.""MalwareFamilyId"" = mf.""Id""
+        WHERE te.""Timestamp"" >= {{0}} AND te.""Timestamp"" <= {{1}} AND te.""MalwareFamilyId"" IS NOT NULL
+        {(tenantId.HasValue ? "AND te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = {2})" : string.Empty)}
+        GROUP BY time_bucket(INTERVAL '{interval2}', ""Timestamp""), mf.""Name""
+        ORDER BY ""Timestamp"" ASC, ""Count"" DESC";
+
+        object[] parameters = tenantId.HasValue
+            ? new object[] { startTime, endTime, tenantId.Value }
+            : new object[] { startTime, endTime };
+
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        List<MalwareTimelineDataPoint> results = await context.Database
+            .SqlQueryRaw<MalwareTimelineDataPoint>(sql, parameters)
+            .ToListAsync(ct);
         return results;
     }
 
@@ -173,59 +219,89 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         // Ensure UTC timestamps for PostgreSQL compatibility
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
-
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
-            .Include(te => te.SourceCountry)
-            .Include(te => te.MalwareFamily)
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> baseQuery = context.ThreatEvents
             .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
 
-        // Filter by tenant's ASN registries
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
+            baseQuery = baseQuery.Where(te => context.TenantAsnRegistries
                 .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
-        List<ThreatEvent> events = await query.ToListAsync(ct);
+        // Aggregate core distinct counts via single raw SQL (more efficient than multiple subqueries EF might emit)
+        string aggregateSql = @"SELECT
+    COUNT(*) AS ""Total"",
+    COUNT(DISTINCT ""SourceAddress"") AS ""UniqueSourceIps"",
+    COUNT(DISTINCT ""DestinationAddress"") FILTER (WHERE ""DestinationAddress"" IS NOT NULL) AS ""UniqueDestinationIps"",
+    COUNT(DISTINCT ""MalwareFamilyId"") FILTER (WHERE ""MalwareFamilyId"" IS NOT NULL) AS ""UniqueMalwareFamilies"",
+    COUNT(DISTINCT ""SourceCountryId"") FILTER (WHERE ""SourceCountryId"" IS NOT NULL) AS ""UniqueCountries"",
+    COUNT(DISTINCT ""AsnRegistryId"") AS ""UniqueAsns""
+FROM ""ThreatEvents""
+WHERE ""Timestamp"" >= {0} AND ""Timestamp"" <= {1}
+{2}";
+
+        var tenantFilterClause = tenantId.HasValue ? "AND \"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = {2})" : string.Empty;
+        aggregateSql = aggregateSql.Replace("{2}", tenantFilterClause);
+
+        object[] aggParams = tenantId.HasValue ? new object[] { startTime, endTime, tenantId.Value } : new object[] { startTime, endTime };
+        SummaryAggregateRow? aggregate = await context.Database
+            .SqlQueryRaw<SummaryAggregateRow>(aggregateSql, aggParams)
+            .FirstOrDefaultAsync(ct);
+
+        // Category distribution (needed as dictionary + top category)
+        var categoryDistributionList = await baseQuery
+                .GroupBy(e => e.Category)
+                .Select(g => new { Category = g.Key, Count = g.Count() })
+                .ToListAsync(ct);
+
+        // Top destination country name
+        var topDestinationCountry = await baseQuery
+                .Where(e => e.DestinationCountryId != null)
+                .GroupBy(e => e.DestinationCountry!.Name)
+                .Select(g => new { Name = g.Key, C = g.Count() })
+                .OrderByDescending(x => x.C)
+                .Select(x => x.Name)
+                .FirstOrDefaultAsync(ct);
+
+        // Top malware family name
+        var topMalwareFamily = await baseQuery
+                .Where(e => e.MalwareFamilyId != null)
+                .GroupBy(e => e.MalwareFamily!.Name)
+                .Select(g => new { Name = g.Key, C = g.Count() })
+                .OrderByDescending(x => x.C)
+                .Select(x => x.Name)
+                .FirstOrDefaultAsync(ct);
+
+        // Peak activity hour via server-side grouping
+        var peakHour = await baseQuery
+                .GroupBy(e => new DateTime(e.Timestamp.Year, e.Timestamp.Month, e.Timestamp.Day, e.Timestamp.Hour, 0, 0))
+                .Select(g => new { Hour = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .FirstOrDefaultAsync(ct);
+
+        aggregate ??= new SummaryAggregateRow();
+        var categories = categoryDistributionList.ToDictionary(x => x.Category, x => x.Count);
 
         double totalHours = (endTime - startTime).TotalHours;
-        double avgEventsPerHour = totalHours > 0 ? events.Count / totalHours : 0;
-
-        // Find peak activity
-        IGrouping<DateTime, ThreatEvent>? hourlyGroups = events
-            .GroupBy(e => new DateTime(e.Timestamp.Year, e.Timestamp.Month, e.Timestamp.Day, e.Timestamp.Hour, 0, 0))
-            .OrderByDescending(g => g.Count())
-            .FirstOrDefault();
-
-        var categoryDistribution = events
-            .GroupBy(e => e.Category)
-            .ToDictionary(g => g.Key, g => g.Count());
+        double avgEventsPerHour = totalHours > 0 ? aggregate.Total / totalHours : 0;
 
         return new ThreatEventSummary
         {
-            TotalEvents = events.Count,
-            UniqueSourceIps = events.Select(e => e.SourceAddress).Distinct().Count(),
-            UniqueDestinationIps = events.Where(e => e.DestinationAddress != null)
-                .Select(e => e.DestinationAddress).Distinct().Count(),
-            UniqueMalwareFamilies = events.Where(e => e.MalwareFamilyId.HasValue)
-                .Select(e => e.MalwareFamilyId).Distinct().Count(),
-            UniqueCountries = events.Where(e => e.SourceCountryId.HasValue)
-                .Select(e => e.SourceCountryId).Distinct().Count(),
-            UniqueAsns = events.Select(e => e.AsnRegistryId).Distinct().Count(),
-            MostActiveCategory = categoryDistribution.OrderByDescending(kvp => kvp.Value)
-                .FirstOrDefault().Key ?? "Unknown",
-            MostTargetedCountry = events.Where(e => e.DestinationCountry != null)
-                .GroupBy(e => e.DestinationCountry!.Name)
-                .OrderByDescending(g => g.Count())
-                .FirstOrDefault()?.Key ?? "Unknown",
-            MostActiveMalwareFamily = events.Where(e => e.MalwareFamily != null)
-                .GroupBy(e => e.MalwareFamily!.Name)
-                .OrderByDescending(g => g.Count())
-                .FirstOrDefault()?.Key ?? "Unknown",
+            TotalEvents = aggregate.Total,
+            UniqueSourceIps = aggregate.UniqueSourceIps,
+            UniqueDestinationIps = aggregate.UniqueDestinationIps,
+            UniqueMalwareFamilies = aggregate.UniqueMalwareFamilies,
+            UniqueCountries = aggregate.UniqueCountries,
+            UniqueAsns = aggregate.UniqueAsns,
+            MostActiveCategory = categories.OrderByDescending(kvp => kvp.Value).FirstOrDefault().Key ?? "Unknown",
+            MostTargetedCountry = topDestinationCountry ?? "Unknown",
+            MostActiveMalwareFamily = topMalwareFamily ?? "Unknown",
             AverageEventsPerHour = avgEventsPerHour,
-            PeakActivityTime = hourlyGroups?.Key ?? DateTime.MinValue,
-            PeakActivityCount = hourlyGroups?.Count() ?? 0,
-            CategoryDistribution = categoryDistribution
+            PeakActivityTime = peakHour?.Hour ?? DateTime.MinValue,
+            PeakActivityCount = peakHour?.Count ?? 0,
+            CategoryDistribution = categories
         };
     }
 
@@ -238,16 +314,18 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         DateTime lastHour = now.AddHours(-1);
         DateTime yesterday = now.AddDays(-1);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents.AsQueryable();
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents.AsQueryable();
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
+            query = query.Where(te => context.TenantAsnRegistries
                 .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
 
         int eventsLast24Hours = await query
-            .CountAsync(te => te.Timestamp >= last24Hours, ct);
+                .CountAsync(te => te.Timestamp >= last24Hours, ct);
 
         int eventsLastHour = await query
             .CountAsync(te => te.Timestamp >= lastHour, ct);
@@ -260,11 +338,11 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
             : 0;
 
         string topCategory = await query
-            .Where(te => te.Timestamp >= last24Hours)
-            .GroupBy(te => te.Category)
-            .OrderByDescending(g => g.Count())
-            .Select(g => g.Key)
-            .FirstOrDefaultAsync(ct) ?? "Unknown";
+                .Where(te => te.Timestamp >= last24Hours)
+                .GroupBy(te => te.Category)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .FirstOrDefaultAsync(ct) ?? "Unknown";
 
         string topSourceCountry = await query
             .Where(te => te.Timestamp >= last24Hours && te.SourceCountry != null)
@@ -274,22 +352,22 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
             .FirstOrDefaultAsync(ct) ?? "Unknown";
 
         List<RecentHighRiskEvent> recentHighRiskEvents = await query
-            .Where(te => te.Timestamp >= lastHour)
-            .Include(te => te.SourceCountry)
-            .Include(te => te.MalwareFamily)
-            .OrderByDescending(te => te.Timestamp)
-            .Take(5)
-            .Select(te => new RecentHighRiskEvent
-            {
-                EventId = te.Id,
-                Timestamp = te.Timestamp,
-                SourceAddress = te.SourceAddress,
-                Category = te.Category,
-                MalwareFamilyName = te.MalwareFamily != null ? te.MalwareFamily.Name : "Unknown",
-                RiskScore = 7.5, // This would be calculated based on your risk scoring algorithm
-                CountryName = te.SourceCountry != null ? te.SourceCountry.Name : "Unknown"
-            })
-            .ToListAsync(ct);
+                .Where(te => te.Timestamp >= lastHour)
+                .Include(te => te.SourceCountry)
+                .Include(te => te.MalwareFamily)
+                .OrderByDescending(te => te.Timestamp)
+                .Take(5)
+                .Select(te => new RecentHighRiskEvent
+                {
+                    EventId = te.Id,
+                    Timestamp = te.Timestamp,
+                    SourceAddress = te.SourceAddress,
+                    Category = te.Category,
+                    MalwareFamilyName = te.MalwareFamily != null ? te.MalwareFamily.Name : "Unknown",
+                    RiskScore = 7.5, // This would be calculated based on your risk scoring algorithm
+                    CountryName = te.SourceCountry != null ? te.SourceCountry.Name : "Unknown"
+                })
+                .ToListAsync(ct);
 
         return new ThreatEventDashboardMetrics
         {
@@ -319,13 +397,15 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
-            .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents
+                .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
-                .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
+            query = query.Where(te => context.TenantAsnRegistries
+            .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
         int totalEvents = await query.CountAsync(ct);
@@ -348,9 +428,14 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         DateTime previousStartTime = startTime - periodLength;
         DateTime previousEndTime = startTime;
 
-        Dictionary<string, int> previousCounts = await _context.ThreatEvents
-            .Where(te => te.Timestamp >= previousStartTime && te.Timestamp <= previousEndTime)
-            // TODO: Multi-tenancy filter - add tenant filtering when available
+        IQueryable<ThreatEvent> previousQuery = context.ThreatEvents
+            .Where(te => te.Timestamp >= previousStartTime && te.Timestamp <= previousEndTime);
+        if (tenantId.HasValue)
+        {
+            previousQuery = previousQuery.Where(te => context.TenantAsnRegistries
+                .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
+        }
+        Dictionary<string, int> previousCounts = await previousQuery
             .GroupBy(te => te.Category)
             .Select(g => new { Category = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Category, x => x.Count, ct);
@@ -387,15 +472,17 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
-            .Include(te => te.MalwareFamily)
-            .Include(te => te.SourceCountry)
-            .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime && te.MalwareFamilyId.HasValue);
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents
+                .Include(te => te.MalwareFamily)
+                .Include(te => te.SourceCountry)
+                .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime && te.MalwareFamilyId.HasValue);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
-                .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
+            query = query.Where(te => context.TenantAsnRegistries
+            .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
         int totalEvents = await query.CountAsync(ct);
@@ -442,15 +529,17 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
-            .Include(te => te.SourceCountry)
-            .Include(te => te.MalwareFamily)
-            .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime && te.SourceCountryId.HasValue);
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents
+                .Include(te => te.SourceCountry)
+                .Include(te => te.MalwareFamily)
+                .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime && te.SourceCountryId.HasValue);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
-                .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
+            query = query.Where(te => context.TenantAsnRegistries
+            .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
         int totalEvents = await query.CountAsync(ct);
@@ -496,13 +585,15 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents
             .Include(te => te.AsnRegistry)
             .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
+            query = query.Where(te => context.TenantAsnRegistries
                 .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
@@ -552,13 +643,15 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
-            .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents
+                .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
-                .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
+            query = query.Where(te => context.TenantAsnRegistries
+            .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
         string portField = isSourcePort ? "SourcePort" : "DestinationPort";
@@ -610,41 +703,99 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> baseQuery = context.ThreatEvents
             .Include(te => te.Protocol)
             .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime && te.ProtocolId.HasValue);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
+            baseQuery = baseQuery.Where(te => context.TenantAsnRegistries
                 .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
-        int totalEvents = await query.CountAsync(ct);
+        // Total events for percentage calculation
+        int totalEvents = await baseQuery.CountAsync(ct);
 
-        var protocolStats = await query
+        // 1. Get protocol counts (server-side group only simple scalars to keep translation supported)
+        var protocolCounts = await baseQuery
             .GroupBy(te => new { te.ProtocolId, te.Protocol!.Name })
             .Select(g => new
             {
                 ProtocolId = g.Key.ProtocolId!.Value,
                 ProtocolName = g.Key.Name,
-                Count = g.Count(),
-                Categories = g.Select(te => te.Category).Distinct().Take(5).ToList(),
-                Ports = g.Where(te => te.SourcePort.HasValue || te.DestinationPort.HasValue)
-                    .Select(te => te.SourcePort ?? te.DestinationPort!.Value)
-                    .Distinct().Take(10).ToList()
+                Count = g.Count()
             })
             .OrderByDescending(x => x.Count)
             .ToListAsync(ct);
 
-        return protocolStats.Select(stat => new ProtocolAnalytics
+        if (protocolCounts.Count == 0)
         {
-            ProtocolId = stat.ProtocolId,
-            ProtocolName = stat.ProtocolName,
-            Count = stat.Count,
-            Percentage = totalEvents > 0 ? (double)stat.Count / totalEvents * 100 : 0,
-            TopPorts = stat.Ports,
-            TopCategories = stat.Categories
+            return Enumerable.Empty<ProtocolAnalytics>();
+        }
+
+        var protocolIds = protocolCounts.Select(p => p.ProtocolId).Distinct().ToList();
+
+        // 2. Gather category frequencies per protocol (so we can order by prevalence instead of arbitrary Distinct)
+        var categoryFrequencies = await baseQuery
+            .Where(te => te.Category != null && protocolIds.Contains(te.ProtocolId!.Value))
+            .GroupBy(te => new { te.ProtocolId, te.Category })
+            .Select(g => new
+            {
+                ProtocolId = g.Key.ProtocolId!.Value,
+                Category = g.Key.Category!,
+                Count = g.Count()
+            })
+            .ToListAsync(ct);
+
+        var topCategoriesPerProtocol = categoryFrequencies
+            .GroupBy(x => x.ProtocolId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(x => x.Count)
+                      .ThenBy(x => x.Category) // deterministic tie-break
+                      .Take(5)
+                      .Select(x => x.Category)
+                      .ToList());
+
+        // 3. Gather port frequencies per protocol
+        var portFrequencies = await baseQuery
+            .Where(te => (te.SourcePort.HasValue || te.DestinationPort.HasValue) && protocolIds.Contains(te.ProtocolId!.Value))
+            .Select(te => new
+            {
+                ProtocolId = te.ProtocolId!.Value,
+                Port = te.SourcePort ?? te.DestinationPort
+            })
+            .Where(x => x.Port.HasValue)
+            .GroupBy(x => new { x.ProtocolId, x.Port })
+            .Select(g => new
+            {
+                ProtocolId = g.Key.ProtocolId,
+                Port = g.Key.Port!.Value,
+                Count = g.Count()
+            })
+            .ToListAsync(ct);
+
+        var topPortsPerProtocol = portFrequencies
+            .GroupBy(x => x.ProtocolId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(x => x.Count)
+                      .ThenBy(x => x.Port)
+                      .Take(10)
+                      .Select(x => x.Port)
+                      .ToList());
+
+        // 4. Compose final results
+        return protocolCounts.Select(p => new ProtocolAnalytics
+        {
+            ProtocolId = p.ProtocolId,
+            ProtocolName = p.ProtocolName,
+            Count = p.Count,
+            Percentage = totalEvents > 0 ? (double)p.Count / totalEvents * 100 : 0,
+            TopPorts = topPortsPerProtocol.TryGetValue(p.ProtocolId, out var ports) ? ports : new List<int>(),
+            TopCategories = topCategoriesPerProtocol.TryGetValue(p.ProtocolId, out var cats) ? cats : new List<string>()
         });
     }
 
@@ -660,14 +811,16 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents
             .Include(te => te.SourceCountry)
             .Include(te => te.AsnRegistry)
             .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
+            query = query.Where(te => context.TenantAsnRegistries
                 .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
@@ -731,14 +884,16 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
+        var (scope, context) = CreateScopedContext();
+        await using var _ = scope;
+        IQueryable<ThreatEvent> query = context.ThreatEvents
             .Include(te => te.MalwareFamily)
             .Include(te => te.SourceCountry)
             .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
+            query = query.Where(te => context.TenantAsnRegistries
                 .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
@@ -765,12 +920,14 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
         endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
-        IQueryable<ThreatEvent> query = _context.ThreatEvents
-            .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
+        var (scope2, context2) = CreateScopedContext();
+        await using var __ = scope2;
+        IQueryable<ThreatEvent> query = context2.ThreatEvents
+                    .Where(te => te.Timestamp >= startTime && te.Timestamp <= endTime);
 
         if (tenantId.HasValue)
         {
-            query = query.Where(te => _context.TenantAsnRegistries
+            query = query.Where(te => context2.TenantAsnRegistries
                 .Any(tar => tar.AsnRegistryId == te.AsnRegistryId && tar.TenantId == tenantId.Value));
         }
 
@@ -848,26 +1005,25 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         Guid? tenantId = null,
         CancellationToken ct = default)
     {
-        // Execute analytics tasks in parallel
-        Task<ThreatEventSummary> summaryTask = GetSummaryAnalyticsAsync(startTime, endTime, tenantId, ct);
-        Task<IEnumerable<CategoryAnalytics>> categoriesTask = GetTopCategoriesAsync(startTime, endTime, 10, tenantId, ct);
-        Task<IEnumerable<GeographicalAnalytics>> geoTask = GetGeographicalAnalyticsAsync(startTime, endTime, 10, tenantId, ct);
-        Task<IEnumerable<MalwareFamilyAnalytics>> malwareTask = GetMalwareFamilyAnalyticsAsync(startTime, endTime, 10, tenantId, ct);
-        Task<IEnumerable<AsnAnalytics>> asnTask = GetAsnAnalyticsAsync(startTime, endTime, 10, tenantId, ct);
-        Task<IEnumerable<TimelineDataPoint>> timelineTask = GetTimelineAnalyticsAsync(startTime, endTime, "hour", tenantId, null, null, null, ct);
-        Task<IEnumerable<AnomalyDetectionResult>> anomalyTask = GetAnomalyDetectionAsync(startTime, endTime, "volume", 2.0, tenantId, ct);
-
-        await Task.WhenAll(summaryTask, categoriesTask, geoTask, malwareTask, asnTask, timelineTask, anomalyTask);
+        // Sequential execution to avoid DbContext concurrency issues. If performance becomes a concern,
+        // consider creating a dedicated short-lived context per parallel group or batching via raw SQL.
+        var summary = await GetSummaryAnalyticsAsync(startTime, endTime, tenantId, ct);
+        var topCategories = await GetTopCategoriesAsync(startTime, endTime, 10, tenantId, ct);
+        var geo = await GetGeographicalAnalyticsAsync(startTime, endTime, 10, tenantId, ct);
+        var malware = await GetMalwareFamilyAnalyticsAsync(startTime, endTime, 10, tenantId, ct);
+        var asns = await GetAsnAnalyticsAsync(startTime, endTime, 10, tenantId, ct);
+        var timeline = await GetTimelineAnalyticsAsync(startTime, endTime, "hour", tenantId, null, null, null, ct);
+        var anomalies = await GetAnomalyDetectionAsync(startTime, endTime, "volume", 2.0, tenantId, ct);
 
         return new ThreatLandscapeOverview
         {
-            Summary = await summaryTask,
-            TopCategories = await categoriesTask,
-            TopSourceCountries = await geoTask,
-            TopMalwareFamilies = await malwareTask,
-            TopAsns = await asnTask,
-            HourlyTimeline = await timelineTask,
-            RecentAnomalies = await anomalyTask,
+            Summary = summary,
+            TopCategories = topCategories,
+            TopSourceCountries = geo,
+            TopMalwareFamilies = malware,
+            TopAsns = asns,
+            HourlyTimeline = timeline,
+            RecentAnomalies = anomalies,
             GeneratedAt = DateTime.UtcNow,
             AnalysisPeriod = endTime - startTime
         };
@@ -925,6 +1081,17 @@ public class ThreatEventAnalyticsRepository : IThreatEventAnalyticsRepository
         double baseScore = Math.Min(eventCount / 20.0, 7.0);
         double diversityScore = Math.Min(categoryCount * 0.6, 3.0);
         return Math.Min(baseScore + diversityScore, 10.0);
+    }
+
+    // Raw SQL summary aggregation row mapping class
+    private class SummaryAggregateRow
+    {
+        public int Total { get; set; }
+        public int UniqueSourceIps { get; set; }
+        public int UniqueDestinationIps { get; set; }
+        public int UniqueMalwareFamilies { get; set; }
+        public int UniqueCountries { get; set; }
+        public int UniqueAsns { get; set; }
     }
 
     private List<string> GetKnownServices(int port)

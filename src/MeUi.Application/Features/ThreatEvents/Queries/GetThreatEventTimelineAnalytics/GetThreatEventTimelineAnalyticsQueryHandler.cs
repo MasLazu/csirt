@@ -18,75 +18,66 @@ public class GetThreatEventTimelineAnalyticsQueryHandler : IRequestHandler<GetTh
         DateTime startTimeUtc = request.StartTime.Kind == DateTimeKind.Utc ? request.StartTime : request.StartTime.ToUniversalTime();
         DateTime endTimeUtc = request.EndTime.Kind == DateTimeKind.Utc ? request.EndTime : request.EndTime.ToUniversalTime();
 
-        // Get timeline data using the dedicated analytics repository
-        IEnumerable<TimelineDataPoint> timelineData = await _analyticsRepository.GetTimelineAnalyticsAsync(
+        // Launch category and malware timeline in parallel
+        Guid? tenantId = null;
+        var categoryTimelineTask = _analyticsRepository.GetTimelineAnalyticsAsync(
             startTimeUtc,
             endTimeUtc,
             request.Interval,
-            tenantId: null, // TODO: Extract from claims/context
+            tenantId,
             category: request.Category,
             malwareFamilyId: request.MalwareFamilyId,
             sourceCountryId: request.SourceCountryId,
             ct);
+        var malwareTimelineTask = _analyticsRepository.GetMalwareTimelineAnalyticsAsync(
+            startTimeUtc,
+            endTimeUtc,
+            request.Interval,
+            tenantId,
+            ct);
+
+        await Task.WhenAll(categoryTimelineTask, malwareTimelineTask);
+        IEnumerable<TimelineDataPoint> timelineData = await categoryTimelineTask;
+        var malwareTimeline = (await malwareTimelineTask)
+            .GroupBy(m => m.Timestamp)
+            .ToDictionary(g => g.Key, g => g
+                .OrderByDescending(x => x.Count)
+                .Take(request.TopItemsLimit)
+                .ToDictionary(x => x.MalwareFamilyName, x => x.Count));
 
         // Get summary for total count
         ThreatEventSummary summary = await _analyticsRepository.GetSummaryAnalyticsAsync(
             startTimeUtc,
             endTimeUtc,
-            tenantId: null, // TODO: Extract from claims/context
+            tenantId,
             ct);
 
-        // Convert TimelineDataPoint to ThreatEventTimelineDto
-        var timeline = timelineData.Select(point => new ThreatEventTimelineDto
-        {
-            Timestamp = point.Timestamp,
-            EventCount = point.Count,
-            Categories = new Dictionary<string, int> { { point.Category, point.Count } },
-            MalwareFamilies = new Dictionary<string, int>() // Will be populated below
-        }).ToList();
-
-        // Get additional breakdowns if needed
-        if (request.TopItemsLimit > 0)
-        {
-            // Get category analytics for the timeline
-            IEnumerable<CategoryAnalytics> categoryAnalytics = await _analyticsRepository.GetTopCategoriesAsync(
-                request.StartTime,
-                request.EndTime,
-                request.TopItemsLimit,
-                tenantId: null,
-                ct);
-
-            // Get malware family analytics
-            IEnumerable<MalwareFamilyAnalytics> malwareFamilyAnalytics = await _analyticsRepository.GetMalwareFamilyAnalyticsAsync(
-                request.StartTime,
-                request.EndTime,
-                request.TopItemsLimit,
-                tenantId: null,
-                ct);
-
-            // Enhance timeline with category/malware breakdowns
-            foreach (ThreatEventTimelineDto timelineDto in timeline)
+        // Aggregate per time bucket (results currently one row per bucket & category)
+        var groupedTimeline = timelineData
+            .GroupBy(p => p.Timestamp)
+            .Select(g => new ThreatEventTimelineDto
             {
-                // Update categories
-                timelineDto.Categories = categoryAnalytics
-                    .ToDictionary(ca => ca.Category, ca => ca.Count);
-
-                // Update malware families
-                timelineDto.MalwareFamilies = malwareFamilyAnalytics
-                    .ToDictionary(mfa => mfa.FamilyName, mfa => mfa.Count);
-            }
-        }
+                Timestamp = g.Key,
+                EventCount = g.Sum(x => x.Count),
+                Categories = (request.TopItemsLimit > 0
+                    ? g.OrderByDescending(x => x.Count).Take(request.TopItemsLimit)
+                    : g)
+                    .ToDictionary(x => x.Category, x => x.Count),
+                MalwareFamilies = malwareTimeline.TryGetValue(g.Key, out var mDict) ? mDict : new Dictionary<string, int>()
+            })
+            .OrderBy(t => t.Timestamp)
+            .ToList();
 
         // Calculate trends if requested
         TrendAnalysisDto trends = new();
         if (request.IncludeTrends)
         {
-            trends = await CalculateTrendAnalysis(request, ct);
+            trends = await CalculateTrendAnalysis(request, tenantId, ct);
         }
 
         return new ThreatEventTimelineAnalyticsDto
         {
-            Timeline = timeline.ToList(),
+            Timeline = groupedTimeline,
             TotalEvents = summary.TotalEvents,
             TimeRange = new TimeRangeDto
             {
@@ -100,6 +91,7 @@ public class GetThreatEventTimelineAnalyticsQueryHandler : IRequestHandler<GetTh
 
     private async Task<TrendAnalysisDto> CalculateTrendAnalysis(
         GetThreatEventTimelineAnalyticsQuery request,
+        Guid? tenantId,
         CancellationToken ct)
     {
         TimeSpan timeRange = request.EndTime - request.StartTime;
@@ -113,7 +105,7 @@ public class GetThreatEventTimelineAnalyticsQueryHandler : IRequestHandler<GetTh
             comparisonStart,
             comparisonEnd,
             request.Interval,
-            tenantId: null, // TODO: Extract from claims/context
+            tenantId,
             ct);
 
         // Calculate overall percentage change
