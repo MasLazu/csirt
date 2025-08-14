@@ -57,25 +57,19 @@ public class PageSeeder
 
             // Threat Events
             Page("TE_LIST","Threat Events","/threat-events","THREAT_EVENTS"),
-            Page("TE_DETAIL","Threat Event Detail","/threat-events/{id}","THREAT_EVENTS","TE_LIST"),
 
             // Threat Intelligence
             Page("TI_MALWARE_FAMILIES","Malware Families","/threat-intel/malware-families","THREAT_INTELLIGENCE"),
-            Page("TI_MALWARE_FAMILY_DETAIL","Malware Family Detail","/threat-intel/malware-families/{id}","THREAT_INTELLIGENCE","TI_MALWARE_FAMILIES"),
 
             // Network
             Page("NET_PROTOCOLS","Protocols","/network/protocols","NETWORK"),
-            Page("NET_PROTOCOL_DETAIL","Protocol Detail","/network/protocols/{id}","NETWORK","NET_PROTOCOLS"),
             Page("NET_ASN_REGISTRIES","ASN Registries","/network/asn-registries","NETWORK"),
-            Page("NET_ASN_REGISTRY_DETAIL","ASN Registry Detail","/network/asn-registries/{id}","NETWORK","NET_ASN_REGISTRIES"),
 
             // Geography
             Page("GEO_COUNTRIES","Countries","/geo/countries","GEO"),
-            Page("GEO_COUNTRY_DETAIL","Country Detail","/geo/countries/{id}","GEO","GEO_COUNTRIES"),
 
             // Tenant Administration (global view)
             Page("TEN_TENANTS","Tenants","/tenants","TENANT_ADMIN"),
-            Page("TEN_TENANT_DETAIL","Tenant Detail","/tenants/{id}","TENANT_ADMIN","TEN_TENANTS"),
             Page("TEN_TENANT_ASNS","Tenant ASN Assignments","/tenants/{id}/asn-registries","TENANT_ADMIN","TEN_TENANT_DETAIL"),
             Page("TEN_TENANT_USERS","Tenant Users","/tenants/{id}/users","TENANT_ADMIN","TEN_TENANT_DETAIL"),
             Page("TEN_TENANT_ROLES","Tenant Roles","/tenants/{id}/roles","TENANT_ADMIN","TEN_TENANT_DETAIL"),
@@ -83,9 +77,7 @@ public class PageSeeder
 
             // User & Roles (global)
             Page("UR_USERS","Users","/users","USER_ADMIN"),
-            Page("UR_USER_DETAIL","User Detail","/users/{id}","USER_ADMIN","UR_USERS"),
             Page("UR_ROLES","Roles","/roles","USER_ADMIN"),
-            Page("UR_ROLE_DETAIL","Role Detail","/roles/{id}","USER_ADMIN","UR_ROLES"),
 
             // Authorization Model
             Page("AUTH_PAGE_GROUPS","Page Groups","/auth/page-groups","AUTHORIZATION"),
@@ -113,15 +105,11 @@ public class PageSeeder
 
             // Tenant data section
             Page("TD_THREAT_EVENTS","Tenant Threat Events","/tenants/{tenantId}/threat-events","TENANT_DATA"),
-            Page("TD_THREAT_EVENT_DETAIL","Tenant Threat Event Detail","/tenants/{tenantId}/threat-events/{id}","TENANT_DATA","TD_THREAT_EVENTS"),
             Page("TD_ASN_ASSIGNMENTS","Tenant ASN Registries","/tenants/{tenantId}/asn-registries","TENANT_DATA"),
-            Page("TD_ASN_ASSIGNMENT_DETAIL","Tenant ASN Registry Detail","/tenants/{tenantId}/asn-registries/{id}","TENANT_DATA","TD_ASN_ASSIGNMENTS"),
 
             // Tenant security section
             Page("TS_USERS","Tenant Users","/tenants/{tenantId}/users","TENANT_SECURITY"),
-            Page("TS_USER_DETAIL","Tenant User Detail","/tenants/{tenantId}/users/{id}","TENANT_SECURITY","TS_USERS"),
             Page("TS_ROLES","Tenant Roles","/tenants/{tenantId}/roles","TENANT_SECURITY"),
-            Page("TS_ROLE_DETAIL","Tenant Role Detail","/tenants/{tenantId}/roles/{id}","TENANT_SECURITY","TS_ROLES"),
             Page("TS_USER_ROLES","Tenant User Roles Assignment","/tenants/{tenantId}/users/{id}/roles","TENANT_SECURITY","TS_USER_DETAIL")
         };
 
