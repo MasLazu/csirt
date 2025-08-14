@@ -1,8 +1,10 @@
 using MediatR;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.TenantUsers.Commands.UpdateTenantUser;
 
 public record UpdateTenantUserCommand : IRequest<Unit>
+    , ITenantRequest
 {
     public Guid TenantId { get; set; }
     public Guid UserId { get; set; }

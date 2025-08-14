@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Tenants;
 
-public class DeleteTenantEndpoint : BaseEndpointWithoutResponse<DeleteTenantCommand>, IPermissionProvider
+public class DeleteTenantEndpoint : BaseAuthorizedEndpointWithoutResponse<DeleteTenantCommand, DeleteTenantEndpoint>, IPermissionProvider
 {
     public static string Permission => "DELETE:TENANT";
 
@@ -14,7 +14,7 @@ public class DeleteTenantEndpoint : BaseEndpointWithoutResponse<DeleteTenantComm
         Description(x => x.WithTags("Tenant Management").WithSummary("Delete a tenant"));
     }
 
-    public override async Task HandleAsync(DeleteTenantCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(DeleteTenantCommand req, Guid userId, CancellationToken ct)
     {
         await Mediator.Send(req, ct);
         await SendSuccessAsync("Tenant deleted successfully", ct);

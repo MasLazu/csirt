@@ -5,7 +5,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class GetThreatEventDashboardMetricsEndpoint : BaseEndpoint<GetThreatEventDashboardMetricsQuery, ThreatEventDashboardMetricsDto>, IPermissionProvider
+public class GetThreatEventDashboardMetricsEndpoint : BaseAuthorizedEndpoint<GetThreatEventDashboardMetricsQuery, ThreatEventDashboardMetricsDto, GetThreatEventDashboardMetricsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:THREAT_ANALYTICS";
 
@@ -17,9 +17,9 @@ public class GetThreatEventDashboardMetricsEndpoint : BaseEndpoint<GetThreatEven
             .WithDescription("Returns high-level dashboard metrics for the last 24h & hour."));
     }
 
-    public override async Task HandleAsync(GetThreatEventDashboardMetricsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventDashboardMetricsQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        ThreatEventDashboardMetricsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, "Retrieved dashboard metrics", ct);
     }
 }

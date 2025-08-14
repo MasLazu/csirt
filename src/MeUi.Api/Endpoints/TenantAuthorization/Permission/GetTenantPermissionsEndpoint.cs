@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Permission;
 
-public class GetTenantPermissionsEndpoint : BaseEndpointWithoutRequest<IEnumerable<PermissionDto>>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantPermissionsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantPermissionsQuery, IEnumerable<PermissionDto>, GetTenantPermissionsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:PERMISSION";
     public static string Permission => "READ:TENANT_PERMISSION";
@@ -16,9 +16,9 @@ public class GetTenantPermissionsEndpoint : BaseEndpointWithoutRequest<IEnumerab
         Description(x => x.WithTags("Tenant Authorization").WithSummary("Get permissions accessible in tenant context"));
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantPermissionsQuery req, Guid userId, CancellationToken ct)
     {
-        IEnumerable<PermissionDto> permissions = await Mediator.Send(new GetTenantPermissionsQuery(), ct);
+        IEnumerable<PermissionDto> permissions = await Mediator.Send(req, ct);
         await SendSuccessAsync(permissions, "Tenant permissions retrieved successfully", ct);
     }
 }

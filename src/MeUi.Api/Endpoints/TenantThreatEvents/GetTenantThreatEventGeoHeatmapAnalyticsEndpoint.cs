@@ -6,10 +6,10 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventGeoHeatmapAnalyticsEndpoint : BaseEndpoint<GetTenantThreatEventGeoHeatmapAnalyticsQuery, ThreatEventGeoAnalyticsDto>, IPermissionProvider
+public class GetTenantThreatEventGeoHeatmapAnalyticsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatEventGeoHeatmapAnalyticsQuery, ThreatEventGeoAnalyticsDto, GetTenantThreatEventGeoHeatmapAnalyticsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:THREAT_ANALYTICS";
-    public static string Permission => "READ:THREAT_ANALYTICS";
+    public static string Permission => "READ:TENANT_THREAT_ANALYTICS";
 
     public override void ConfigureEndpoint()
     {
@@ -19,11 +19,9 @@ public class GetTenantThreatEventGeoHeatmapAnalyticsEndpoint : BaseEndpoint<GetT
             .WithDescription("Returns tenant-scoped geographic distribution (heatmap) of threat event sources."));
     }
 
-    public override async Task HandleAsync(GetTenantThreatEventGeoHeatmapAnalyticsQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantThreatEventGeoHeatmapAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var tenantId = Route<Guid>("tenantId");
-        var enriched = req with { TenantId = tenantId };
-        var result = await Mediator.Send(enriched, ct);
+        ThreatEventGeoAnalyticsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved tenant geo heatmap with {result.SourceCountries.Count} countries", ct);
     }
 }

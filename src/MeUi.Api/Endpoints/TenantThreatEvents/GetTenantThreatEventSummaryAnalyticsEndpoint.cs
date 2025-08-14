@@ -6,10 +6,10 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventSummaryAnalyticsEndpoint : BaseEndpoint<GetTenantThreatEventSummaryAnalyticsQuery, ThreatEventSummaryAnalyticsDto>, IPermissionProvider
+public class GetTenantThreatEventSummaryAnalyticsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatEventSummaryAnalyticsQuery, ThreatEventSummaryAnalyticsDto, GetTenantThreatEventSummaryAnalyticsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:THREAT_ANALYTICS";
-    public static string Permission => "READ:THREAT_ANALYTICS";
+    public static string Permission => "READ:TENANT_THREAT_ANALYTICS";
 
     public override void ConfigureEndpoint()
     {
@@ -19,11 +19,9 @@ public class GetTenantThreatEventSummaryAnalyticsEndpoint : BaseEndpoint<GetTena
             .WithDescription("Retrieves tenant-scoped comprehensive threat intelligence summary including trends and top threats."));
     }
 
-    public override async Task HandleAsync(GetTenantThreatEventSummaryAnalyticsQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantThreatEventSummaryAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var tenantId = Route<Guid>("tenantId");
-        var enriched = req with { TenantId = tenantId };
-        var analytics = await Mediator.Send(enriched, ct);
+        ThreatEventSummaryAnalyticsDto analytics = await Mediator.Send(req, ct);
         await SendSuccessAsync(analytics, $"Retrieved tenant summary with {analytics.ThreatCategories.Count} categories", ct);
     }
 }

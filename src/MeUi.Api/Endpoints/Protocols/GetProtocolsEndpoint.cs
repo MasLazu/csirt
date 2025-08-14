@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Protocols;
 
-public class GetProtocolsEndpoint : BaseEndpoint<GetProtocolsPaginatedQuery, PaginatedDto<ProtocolDto>>, IPermissionProvider
+public class GetProtocolsEndpoint : BaseAuthorizedEndpoint<GetProtocolsPaginatedQuery, PaginatedDto<ProtocolDto>, GetProtocolsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:PROTOCOL";
 
@@ -16,8 +16,7 @@ public class GetProtocolsEndpoint : BaseEndpoint<GetProtocolsPaginatedQuery, Pag
             .WithSummary("Get paginated list of protocols")
             .WithDescription("Retrieves a paginated list of protocols with optional search & sorting. Requires READ:PROTOCOL permission."));
     }
-
-    public override async Task HandleAsync(GetProtocolsPaginatedQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetProtocolsPaginatedQuery req, Guid userId, CancellationToken ct)
     {
         PaginatedDto<ProtocolDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Items.Count()} protocols", ct);

@@ -5,15 +5,17 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Users;
 
-public class GetUserByIdEndpoint : BaseEndpoint<GetUserByIdQuery, UserDto>
+public class GetUserByIdEndpoint : BaseAuthorizedEndpoint<GetUserByIdQuery, UserDto, GetUserByIdEndpoint>, MeUi.Application.Interfaces.IPermissionProvider
 {
+    public static string Permission => "READ:USER";
+
     public override void ConfigureEndpoint()
     {
         Get("api/v1/users/{id}");
         Description(x => x.WithTags("User Management").WithSummary("Get user by ID"));
     }
 
-    public override async Task HandleAsync(GetUserByIdQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetUserByIdQuery req, Guid userId, CancellationToken ct)
     {
         UserDto user = await Mediator.Send(req, ct) ??
             throw new NotFoundException($"User with ID {req.Id} not found.");

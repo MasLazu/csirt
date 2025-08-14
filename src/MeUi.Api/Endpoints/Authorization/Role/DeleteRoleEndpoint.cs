@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Authorization.Role;
 
-public class DeleteRoleEndpoint : BaseEndpoint<DeleteRoleCommand, Guid>, IPermissionProvider
+public class DeleteRoleEndpoint : BaseAuthorizedEndpoint<DeleteRoleCommand, Guid, DeleteRoleEndpoint>, IPermissionProvider
 {
     public static string Permission => "DELETE:ROLE";
 
@@ -14,7 +14,7 @@ public class DeleteRoleEndpoint : BaseEndpoint<DeleteRoleCommand, Guid>, IPermis
         Description(x => x.WithTags("System Authorization").WithSummary("Delete a role"));
     }
 
-    public override async Task HandleAsync(DeleteRoleCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(DeleteRoleCommand req, Guid userId, CancellationToken ct)
     {
         Guid roleId = await Mediator.Send(req, ct);
         await SendSuccessAsync(roleId, "Role Deleted successfully", ct);

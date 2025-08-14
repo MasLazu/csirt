@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Role;
 
-public class GetTenantRoleByIdEndpoint : BaseEndpoint<GetTenantRoleByIdQuery, RoleDto>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantRoleByIdEndpoint : BaseTenantAuthorizedEndpoint<GetTenantRoleByIdQuery, RoleDto, GetTenantRoleByIdEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:ROLE";
     public static string Permission => "READ:TENANT_ROLE";
@@ -16,7 +16,7 @@ public class GetTenantRoleByIdEndpoint : BaseEndpoint<GetTenantRoleByIdQuery, Ro
         Description(x => x.WithTags("Tenant Role Management").WithSummary("Get a specific role by ID within a tenant context"));
     }
 
-    public override async Task HandleAsync(GetTenantRoleByIdQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantRoleByIdQuery req, Guid userId, CancellationToken ct)
     {
         RoleDto role = await Mediator.Send(req, ct);
         await SendSuccessAsync(role, "Tenant role retrieved successfully", ct);

@@ -61,12 +61,10 @@ public class PermissionSeeder
         {
             try
             {
-                MethodInfo? permissionMethod = providerType.GetMethod("Permission",
-                    BindingFlags.Public | BindingFlags.Static);
-
-                if (permissionMethod != null)
+                PropertyInfo? permissionProperty = providerType.GetProperty("Permission", BindingFlags.Public | BindingFlags.Static);
+                if (permissionProperty != null)
                 {
-                    string? permission = permissionMethod.Invoke(null, null) as string;
+                    string? permission = permissionProperty.GetValue(null) as string;
                     if (!string.IsNullOrEmpty(permission))
                     {
                         discoveredPermissions.Add(permission);

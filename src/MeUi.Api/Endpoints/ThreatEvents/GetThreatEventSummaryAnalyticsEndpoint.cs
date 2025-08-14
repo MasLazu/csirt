@@ -5,7 +5,7 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class GetThreatEventSummaryAnalyticsEndpoint : BaseEndpoint<GetThreatEventSummaryAnalyticsQuery, ThreatEventSummaryAnalyticsDto>, IPermissionProvider
+public class GetThreatEventSummaryAnalyticsEndpoint : BaseAuthorizedEndpoint<GetThreatEventSummaryAnalyticsQuery, ThreatEventSummaryAnalyticsDto, GetThreatEventSummaryAnalyticsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:THREAT_ANALYTICS";
 
@@ -17,7 +17,7 @@ public class GetThreatEventSummaryAnalyticsEndpoint : BaseEndpoint<GetThreatEven
             .WithDescription("Retrieves comprehensive threat intelligence summary including trends, top threats, and critical alerts. Ideal for executive dashboards. Requires READ:THREAT_ANALYTICS permission."));
     }
 
-    public override async Task HandleAsync(GetThreatEventSummaryAnalyticsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventSummaryAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
         ThreatEventSummaryAnalyticsDto analytics = await Mediator.Send(req, ct);
         await SendSuccessAsync(analytics, $"Retrieved threat summary analytics with {analytics.ThreatCategories.Count} categories and {analytics.CriticalAlerts.Count} alerts", ct);

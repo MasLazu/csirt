@@ -5,7 +5,7 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class GetThreatEventProtocolDistributionAnalyticsEndpoint : BaseEndpoint<GetThreatEventProtocolDistributionAnalyticsQuery, ThreatEventProtocolDistributionAnalyticsDto>, IPermissionProvider
+public class GetThreatEventProtocolDistributionAnalyticsEndpoint : BaseAuthorizedEndpoint<GetThreatEventProtocolDistributionAnalyticsQuery, ThreatEventProtocolDistributionAnalyticsDto, GetThreatEventProtocolDistributionAnalyticsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:THREAT_ANALYTICS";
 
@@ -17,9 +17,9 @@ public class GetThreatEventProtocolDistributionAnalyticsEndpoint : BaseEndpoint<
             .WithDescription("Returns distribution of network protocols involved in threat events with top ports & categories. Requires READ:THREAT_ANALYTICS permission."));
     }
 
-    public override async Task HandleAsync(GetThreatEventProtocolDistributionAnalyticsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventProtocolDistributionAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        ThreatEventProtocolDistributionAnalyticsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Protocols.Count} protocol entries", ct);
     }
 }

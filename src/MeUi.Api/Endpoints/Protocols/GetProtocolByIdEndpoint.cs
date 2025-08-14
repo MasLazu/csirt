@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Protocols;
 
-public class GetProtocolByIdEndpoint : BaseEndpoint<GetProtocolQuery, ProtocolDto>, IPermissionProvider
+public class GetProtocolByIdEndpoint : BaseAuthorizedEndpoint<GetProtocolQuery, ProtocolDto, GetProtocolByIdEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:PROTOCOL";
 
@@ -16,8 +16,7 @@ public class GetProtocolByIdEndpoint : BaseEndpoint<GetProtocolQuery, ProtocolDt
             .WithSummary("Get protocol by ID")
             .WithDescription("Retrieves a specific protocol by ID. Requires READ:PROTOCOL permission."));
     }
-
-    public override async Task HandleAsync(GetProtocolQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetProtocolQuery req, Guid userId, CancellationToken ct)
     {
         ProtocolDto protocol = await Mediator.Send(req, ct);
         await SendSuccessAsync(protocol, "Protocol retrieved successfully", ct);

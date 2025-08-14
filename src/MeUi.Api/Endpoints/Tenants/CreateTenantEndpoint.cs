@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Tenants;
 
-public class CreateTenantEndpoint : BaseEndpoint<CreateTenantCommand, Guid>, IPermissionProvider
+public class CreateTenantEndpoint : BaseAuthorizedEndpoint<CreateTenantCommand, Guid, CreateTenantEndpoint>, IPermissionProvider
 {
     public static string Permission => "CREATE:TENANT";
 
@@ -14,7 +14,7 @@ public class CreateTenantEndpoint : BaseEndpoint<CreateTenantCommand, Guid>, IPe
         Description(x => x.WithTags("Tenant Management").WithSummary("Create a new tenant"));
     }
 
-    public override async Task HandleAsync(CreateTenantCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(CreateTenantCommand req, Guid userId, CancellationToken ct)
     {
         Guid tenantId = await Mediator.Send(req, ct);
         await SendSuccessAsync(tenantId, "Tenant created successfully", ct);

@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Protocols;
 
-public class DeleteProtocolEndpoint : BaseEndpoint<DeleteProtocolCommand, Guid>, IPermissionProvider
+public class DeleteProtocolEndpoint : BaseAuthorizedEndpoint<DeleteProtocolCommand, Guid, DeleteProtocolEndpoint>, IPermissionProvider
 {
     public static string Permission => "DELETE:PROTOCOL";
 
@@ -15,8 +15,7 @@ public class DeleteProtocolEndpoint : BaseEndpoint<DeleteProtocolCommand, Guid>,
             .WithSummary("Delete a protocol")
             .WithDescription("Deletes a protocol if not referenced by threat events. Requires DELETE:PROTOCOL permission."));
     }
-
-    public override async Task HandleAsync(DeleteProtocolCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(DeleteProtocolCommand req, Guid userId, CancellationToken ct)
     {
         Guid id = await Mediator.Send(req, ct);
         await SendSuccessAsync(id, "Protocol deleted successfully", ct);

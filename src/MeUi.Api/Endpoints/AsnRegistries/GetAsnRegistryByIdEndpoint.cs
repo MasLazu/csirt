@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.AsnRegistries;
 
-public class GetAsnRegistryByIdEndpoint : BaseEndpoint<GetAsnRegistryQuery, AsnRegistryDto>, IPermissionProvider
+public class GetAsnRegistryByIdEndpoint : BaseAuthorizedEndpoint<GetAsnRegistryQuery, AsnRegistryDto, GetAsnRegistryByIdEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:ASN_REGISTRY";
 
@@ -16,8 +16,7 @@ public class GetAsnRegistryByIdEndpoint : BaseEndpoint<GetAsnRegistryQuery, AsnR
             .WithSummary("Get ASN registry by ID")
             .WithDescription("Retrieves a specific ASN registry by its unique identifier. Requires READ:ASN_REGISTRY permission."));
     }
-
-    public override async Task HandleAsync(GetAsnRegistryQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetAsnRegistryQuery req, Guid userId, CancellationToken ct)
     {
         AsnRegistryDto asnRegistry = await Mediator.Send(req, ct);
         await SendSuccessAsync(asnRegistry, "ASN Registry retrieved successfully", ct);

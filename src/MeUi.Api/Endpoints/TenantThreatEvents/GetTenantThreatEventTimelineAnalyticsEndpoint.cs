@@ -6,9 +6,10 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventTimelineAnalyticsEndpoint : BaseEndpoint<GetTenantThreatEventTimelineAnalyticsQuery, ThreatEventTimelineAnalyticsDto>, ITenantPermissionProvider
+public class GetTenantThreatEventTimelineAnalyticsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatEventTimelineAnalyticsQuery, ThreatEventTimelineAnalyticsDto, GetTenantThreatEventTimelineAnalyticsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:THREAT_ANALYTICS";
+    public static string Permission => "READ:TENANT_THREAT_ANALYTICS";
 
     public override void ConfigureEndpoint()
     {
@@ -18,11 +19,9 @@ public class GetTenantThreatEventTimelineAnalyticsEndpoint : BaseEndpoint<GetTen
             .WithDescription("Retrieves tenant-scoped time-series analytics with configurable intervals and filtering."));
     }
 
-    public override async Task HandleAsync(GetTenantThreatEventTimelineAnalyticsQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantThreatEventTimelineAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var tenantId = Route<Guid>("tenantId");
-        var enriched = req with { TenantId = tenantId };
-        var analytics = await Mediator.Send(enriched, ct);
+        ThreatEventTimelineAnalyticsDto analytics = await Mediator.Send(req, ct);
         await SendSuccessAsync(analytics, $"Retrieved tenant timeline analytics with {analytics.Timeline.Count} data points", ct);
     }
 }

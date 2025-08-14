@@ -3,9 +3,9 @@ using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.ThreatEvents.Queries.GetTenantThreatEventsPaginated;
 
-public record GetTenantThreatEventsPaginatedQuery : BasePaginatedQuery<ThreatEventDto>
+public record GetTenantThreatEventsPaginatedQuery : BasePaginatedQuery<ThreatEventDto>, ITenantRequest
 {
-    public Guid TenantId { get; init; }
+    public Guid TenantId { get; set; }
 
     // Time range filtering (critical for TimescaleDB performance)
     public DateTime? StartTime { get; init; }

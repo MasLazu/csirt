@@ -1,11 +1,13 @@
+
 using MediatR;
 using MeUi.Application.Models.Analytics;
+using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.ThreatEvents.Queries.GetTenantThreatEventComparativeTimelineAnalytics;
 
-public record GetTenantThreatEventComparativeTimelineAnalyticsQuery : IRequest<ThreatEventTimelineAnalyticsDto>
+public record GetTenantThreatEventComparativeTimelineAnalyticsQuery : IRequest<ThreatEventTimelineAnalyticsDto>, ITenantRequest
 {
-    public Guid TenantId { get; init; }
+    public Guid TenantId { get; set; }
     public DateTime? CurrentStart { get; init; }
     public DateTime? CurrentEnd { get; init; }
     public DateTime? PreviousStart { get; init; }

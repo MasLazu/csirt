@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.AsnRegistries;
 
-public class GetAsnRegistriesEndpoint : BaseEndpoint<GetAsnRegistriesPaginatedQuery, PaginatedDto<AsnRegistryDto>>, IPermissionProvider
+public class GetAsnRegistriesEndpoint : BaseAuthorizedEndpoint<GetAsnRegistriesPaginatedQuery, PaginatedDto<AsnRegistryDto>, GetAsnRegistriesEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:ASN_REGISTRY";
 
@@ -17,7 +17,7 @@ public class GetAsnRegistriesEndpoint : BaseEndpoint<GetAsnRegistriesPaginatedQu
             .WithDescription("Retrieves a paginated list of all ASN registries with optional search and sorting. Requires READ:ASN_REGISTRY permission."));
     }
 
-    public override async Task HandleAsync(GetAsnRegistriesPaginatedQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetAsnRegistriesPaginatedQuery req, Guid userId, CancellationToken ct)
     {
         PaginatedDto<AsnRegistryDto> asnRegistries = await Mediator.Send(req, ct);
         await SendSuccessAsync(asnRegistries, "ASN Registries retrieved successfully", ct);

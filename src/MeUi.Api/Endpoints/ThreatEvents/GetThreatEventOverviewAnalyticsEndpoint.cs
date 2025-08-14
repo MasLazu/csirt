@@ -5,7 +5,7 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class GetThreatEventOverviewAnalyticsEndpoint : BaseEndpoint<GetThreatEventOverviewAnalyticsQuery, ThreatEventOverviewAnalyticsDto>, IPermissionProvider
+public class GetThreatEventOverviewAnalyticsEndpoint : BaseAuthorizedEndpoint<GetThreatEventOverviewAnalyticsQuery, ThreatEventOverviewAnalyticsDto, GetThreatEventOverviewAnalyticsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:THREAT_ANALYTICS";
 
@@ -17,7 +17,7 @@ public class GetThreatEventOverviewAnalyticsEndpoint : BaseEndpoint<GetThreatEve
             .WithDescription("Retrieves lightweight high-level overview metrics (fast load) including core counts and top entities. Requires READ:THREAT_ANALYTICS permission."));
     }
 
-    public override async Task HandleAsync(GetThreatEventOverviewAnalyticsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventOverviewAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
         ThreatEventOverviewAnalyticsDto analytics = await Mediator.Send(req, ct);
         await SendSuccessAsync(analytics, $"Retrieved threat overview analytics with {analytics.TopCategories.Count} categories, {analytics.TopMalwareFamilies.Count} malware families", ct);

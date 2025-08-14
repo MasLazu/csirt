@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Role;
 
-public class DeleteTenantRoleEndpoint : BaseEndpointWithoutResponse<DeleteTenantRoleCommand>, ITenantPermissionProvider, IPermissionProvider
+public class DeleteTenantRoleEndpoint : BaseTenantAuthorizedEndpointWithoutResponse<DeleteTenantRoleCommand, DeleteTenantRoleEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "DELETE:ROLE";
     public static string Permission => "DELETE:TENANT_ROLE";
@@ -15,7 +15,7 @@ public class DeleteTenantRoleEndpoint : BaseEndpointWithoutResponse<DeleteTenant
         Description(x => x.WithTags("Tenant Role Management").WithSummary("Delete a role within a tenant context"));
     }
 
-    public override async Task HandleAsync(DeleteTenantRoleCommand req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(DeleteTenantRoleCommand req, Guid userId, CancellationToken ct)
     {
         await Mediator.Send(req, ct);
         await SendSuccessAsync("Tenant role deleted successfully", ct);

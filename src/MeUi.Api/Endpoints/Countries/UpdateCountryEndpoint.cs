@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Countries;
 
-public class UpdateCountryEndpoint : BaseEndpoint<UpdateCountryCommand, Guid>, IPermissionProvider
+public class UpdateCountryEndpoint : BaseAuthorizedEndpoint<UpdateCountryCommand, Guid, UpdateCountryEndpoint>, IPermissionProvider
 {
     public static string Permission => "UPDATE:COUNTRY";
 
@@ -16,7 +16,7 @@ public class UpdateCountryEndpoint : BaseEndpoint<UpdateCountryCommand, Guid>, I
             .WithDescription("Updates an existing country's information. Requires UPDATE:COUNTRY permission."));
     }
 
-    public override async Task HandleAsync(UpdateCountryCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(UpdateCountryCommand req, Guid userId, CancellationToken ct)
     {
         Guid countryId = await Mediator.Send(req, ct);
         await SendSuccessAsync(countryId, "Country updated successfully", ct);

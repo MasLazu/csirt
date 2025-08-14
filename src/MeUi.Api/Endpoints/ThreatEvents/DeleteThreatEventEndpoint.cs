@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class DeleteThreatEventEndpoint : BaseEndpointWithoutResponse<DeleteThreatEventCommand>, IPermissionProvider
+public class DeleteThreatEventEndpoint : BaseAuthorizedEndpointWithoutResponse<DeleteThreatEventCommand, DeleteThreatEventEndpoint>, IPermissionProvider
 {
     public static string Permission => "DELETE:THREAT_EVENT";
 
@@ -16,7 +16,7 @@ public class DeleteThreatEventEndpoint : BaseEndpointWithoutResponse<DeleteThrea
             .WithDescription("Deletes a threat event from the time-series database. This operation is permanent. Requires DELETE:THREAT_EVENT permission."));
     }
 
-    public override async Task HandleAsync(DeleteThreatEventCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(DeleteThreatEventCommand req, Guid userId, CancellationToken ct)
     {
         await Mediator.Send(req, ct);
         await SendSuccessAsync("Threat event deleted successfully", ct);

@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Page;
 
-public class GetTenantPagesEndpoint : BaseEndpointWithoutRequest<IEnumerable<PageDto>>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantPagesEndpoint : BaseTenantAuthorizedEndpoint<GetTenantPagesQuery, IEnumerable<PageDto>, GetTenantPagesEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:PAGE";
     public static string Permission => "READ:TENANT_PAGE";
@@ -16,9 +16,9 @@ public class GetTenantPagesEndpoint : BaseEndpointWithoutRequest<IEnumerable<Pag
         Description(x => x.WithTags("Tenant Authorization").WithSummary("Get pages accessible in tenant context"));
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantPagesQuery req, Guid userId, CancellationToken ct)
     {
-        IEnumerable<PageDto> pages = await Mediator.Send(new GetTenantPagesQuery(), ct);
+        IEnumerable<PageDto> pages = await Mediator.Send(req, ct);
         await SendSuccessAsync(pages, "Tenant pages retrieved successfully", ct);
     }
 }

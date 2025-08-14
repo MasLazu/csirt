@@ -5,7 +5,7 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class GetThreatEventSourceCountriesTopAnalyticsEndpoint : BaseEndpoint<GetThreatEventSourceCountriesTopAnalyticsQuery, ThreatEventGeoAnalyticsDto>, IPermissionProvider
+public class GetThreatEventSourceCountriesTopAnalyticsEndpoint : BaseAuthorizedEndpoint<GetThreatEventSourceCountriesTopAnalyticsQuery, ThreatEventGeoAnalyticsDto, GetThreatEventSourceCountriesTopAnalyticsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:THREAT_ANALYTICS";
 
@@ -17,9 +17,9 @@ public class GetThreatEventSourceCountriesTopAnalyticsEndpoint : BaseEndpoint<Ge
             .WithDescription("Returns top source countries with counts, percentages, top categories, and top malware families. Requires READ:THREAT_ANALYTICS permission."));
     }
 
-    public override async Task HandleAsync(GetThreatEventSourceCountriesTopAnalyticsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventSourceCountriesTopAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        ThreatEventGeoAnalyticsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.SourceCountries.Count} source countries", ct);
     }
 }

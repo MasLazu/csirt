@@ -5,7 +5,7 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class GetThreatEventCategoryTimelineAnalyticsEndpoint : BaseEndpoint<GetThreatEventCategoryTimelineAnalyticsQuery, ThreatEventTimelineAnalyticsDto>, IPermissionProvider
+public class GetThreatEventCategoryTimelineAnalyticsEndpoint : BaseAuthorizedEndpoint<GetThreatEventCategoryTimelineAnalyticsQuery, ThreatEventTimelineAnalyticsDto, GetThreatEventCategoryTimelineAnalyticsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:THREAT_ANALYTICS";
 
@@ -17,9 +17,9 @@ public class GetThreatEventCategoryTimelineAnalyticsEndpoint : BaseEndpoint<GetT
             .WithDescription("Returns per-bucket event counts filtered (optionally) to a specific category with category distribution per bucket. Requires READ:THREAT_ANALYTICS permission."));
     }
 
-    public override async Task HandleAsync(GetThreatEventCategoryTimelineAnalyticsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventCategoryTimelineAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        ThreatEventTimelineAnalyticsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Timeline.Count} category timeline buckets", ct);
     }
 }

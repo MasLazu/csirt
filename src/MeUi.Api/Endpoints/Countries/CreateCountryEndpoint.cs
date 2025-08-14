@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Countries;
 
-public class CreateCountryEndpoint : BaseEndpoint<CreateCountryCommand, Guid>, IPermissionProvider
+public class CreateCountryEndpoint : BaseAuthorizedEndpoint<CreateCountryCommand, Guid, CreateCountryEndpoint>, IPermissionProvider
 {
     public static string Permission => "CREATE:COUNTRY";
 
@@ -16,7 +16,7 @@ public class CreateCountryEndpoint : BaseEndpoint<CreateCountryCommand, Guid>, I
             .WithDescription("Creates a new country entry. Requires CREATE:COUNTRY permission."));
     }
 
-    public override async Task HandleAsync(CreateCountryCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(CreateCountryCommand req, Guid userId, CancellationToken ct)
     {
         Guid countryId = await Mediator.Send(req, ct);
         await SendSuccessAsync(countryId, "Country created successfully", ct);

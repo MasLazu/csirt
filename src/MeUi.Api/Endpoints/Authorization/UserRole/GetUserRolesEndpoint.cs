@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Authorization.UserRole;
 
-public class GetUserRolesEndpoint : BaseEndpoint<GetUserRolesQuery, IEnumerable<RoleDto>>, IPermissionProvider
+public class GetUserRolesEndpoint : BaseAuthorizedEndpoint<GetUserRolesQuery, IEnumerable<RoleDto>, GetUserRolesEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:USER_ROLE";
 
@@ -14,8 +14,7 @@ public class GetUserRolesEndpoint : BaseEndpoint<GetUserRolesQuery, IEnumerable<
         Get("api/v1/users/{userId}/roles");
         Description(x => x.WithTags("User Authorization").WithSummary("Get roles assigned to a user"));
     }
-
-    public override async Task HandleAsync(GetUserRolesQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetUserRolesQuery req, Guid userId, CancellationToken ct)
     {
         IEnumerable<RoleDto> roles = await Mediator.Send(req, ct);
         await SendSuccessAsync(roles, "User roles retrieved successfully", ct);

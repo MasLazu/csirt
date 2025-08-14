@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Authorization.User;
 
-public class GetUserPermissionsEndpoint : BaseEndpoint<GetSpecificUserPermissionsQuery, IEnumerable<PermissionDto>>, IPermissionProvider
+public class GetUserPermissionsEndpoint : BaseAuthorizedEndpoint<GetSpecificUserPermissionsQuery, IEnumerable<PermissionDto>, GetUserPermissionsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:USER_PERMISSIONS";
 
@@ -14,8 +14,7 @@ public class GetUserPermissionsEndpoint : BaseEndpoint<GetSpecificUserPermission
         Get("api/v1/users/{userId}/permissions");
         Description(x => x.WithTags("User Authorization").WithSummary("Get permissions for a specific user"));
     }
-
-    public override async Task HandleAsync(GetSpecificUserPermissionsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetSpecificUserPermissionsQuery req, Guid userId, CancellationToken ct)
     {
         IEnumerable<PermissionDto> permissions = await Mediator.Send(req, ct);
         await SendSuccessAsync(permissions, "User permissions retrieved successfully", ct);

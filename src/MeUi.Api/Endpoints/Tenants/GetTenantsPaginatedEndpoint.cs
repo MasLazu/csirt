@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Tenants;
 
-public class GetTenantsPaginatedEndpoint : BaseEndpoint<GetTenantsPaginatedQuery, PaginatedDto<TenantDto>>, IPermissionProvider
+public class GetTenantsPaginatedEndpoint : BaseAuthorizedEndpoint<GetTenantsPaginatedQuery, PaginatedDto<TenantDto>, GetTenantsPaginatedEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:TENANT";
 
@@ -15,7 +15,7 @@ public class GetTenantsPaginatedEndpoint : BaseEndpoint<GetTenantsPaginatedQuery
         Description(x => x.WithTags("Tenant Management").WithSummary("Get paginated list of tenants"));
     }
 
-    public override async Task HandleAsync(GetTenantsPaginatedQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetTenantsPaginatedQuery req, Guid userId, CancellationToken ct)
     {
         PaginatedDto<TenantDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, "Tenants retrieved successfully", ct);

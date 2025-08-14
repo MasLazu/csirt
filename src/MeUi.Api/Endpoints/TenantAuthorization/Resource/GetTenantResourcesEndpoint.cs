@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Resource;
 
-public class GetTenantResourcesEndpoint : BaseEndpointWithoutRequest<IEnumerable<ResourceDto>>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantResourcesEndpoint : BaseTenantAuthorizedEndpoint<GetTenantResourcesQuery, IEnumerable<ResourceDto>, GetTenantResourcesEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:RESOURCE";
     public static string Permission => "READ:TENANT_RESOURCE";
@@ -16,9 +16,9 @@ public class GetTenantResourcesEndpoint : BaseEndpointWithoutRequest<IEnumerable
         Description(x => x.WithTags("Tenant Authorization").WithSummary("Get resources accessible in tenant context"));
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantResourcesQuery req, Guid userId, CancellationToken ct)
     {
-        IEnumerable<ResourceDto> resources = await Mediator.Send(new GetTenantResourcesQuery(), ct);
+        IEnumerable<ResourceDto> resources = await Mediator.Send(req, ct);
         await SendSuccessAsync(resources, "Tenant resources retrieved successfully", ct);
     }
 }

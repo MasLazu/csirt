@@ -1,40 +1,23 @@
-using FastEndpoints;
-using MediatR;
+using MeUi.Api.Endpoints;
 using MeUi.Application.Features.ThreatEvents.Queries.GetThreatEventTopIpReputationAnalytics;
 
 namespace MeUi.Api.Endpoints.ThreatEvents.IpReputation;
 
-public class GetThreatEventTopIpReputationRequest
+public class GetThreatEventTopIpReputationEndpoint : BaseAuthorizedEndpoint<GetThreatEventTopIpReputationAnalyticsQuery, object, GetThreatEventTopIpReputationEndpoint>, MeUi.Application.Interfaces.IPermissionProvider
 {
-    public DateTime? StartTime { get; set; }
-    public DateTime? EndTime { get; set; }
-    public int Top { get; set; } = 20;
-    public bool IncludeDestination { get; set; } = true;
-}
+    public static string Permission => "READ:THREAT_ANALYTICS";
 
-public class GetThreatEventTopIpReputationEndpoint : Endpoint<GetThreatEventTopIpReputationRequest>
-{
-    private readonly IMediator _mediator;
-
-    public GetThreatEventTopIpReputationEndpoint(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
-    public override void Configure()
+    public override void ConfigureEndpoint()
     {
         Get("/api/v1/threat-events/analytics/ip-reputation/top");
-        AllowAnonymous();
-        Summary(s =>
-        {
-            s.Summary = "Get top source (and optionally destination) IP addresses by reputation frequency in threat events.";
-            s.Description = "Returns the most frequent source IPs (and destination IPs if requested) participating in threat events within the time window.";
-        });
+        Description(x => x.WithTags("Threat Event Analytics")
+            .WithSummary("Get top source (and optionally destination) IP addresses by reputation frequency in threat events.")
+            .WithDescription("Returns the most frequent source IPs (and destination IPs if requested) participating in threat events within the time window."));
     }
 
-    public override async Task HandleAsync(GetThreatEventTopIpReputationRequest req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventTopIpReputationAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await _mediator.Send(new GetThreatEventTopIpReputationAnalyticsQuery
+        object result = await Mediator.Send(new GetThreatEventTopIpReputationAnalyticsQuery
         {
             StartTime = req.StartTime,
             EndTime = req.EndTime,
@@ -42,6 +25,6 @@ public class GetThreatEventTopIpReputationEndpoint : Endpoint<GetThreatEventTopI
             IncludeDestination = req.IncludeDestination
         }, ct);
 
-        await SendOkAsync(result, ct);
+        await SendSuccessAsync(result, "Retrieved top IP reputation analytics", ct);
     }
 }

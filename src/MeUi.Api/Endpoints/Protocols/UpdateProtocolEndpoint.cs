@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Protocols;
 
-public class UpdateProtocolEndpoint : BaseEndpoint<UpdateProtocolCommand, Guid>, IPermissionProvider
+public class UpdateProtocolEndpoint : BaseAuthorizedEndpoint<UpdateProtocolCommand, Guid, UpdateProtocolEndpoint>, IPermissionProvider
 {
     public static string Permission => "UPDATE:PROTOCOL";
 
@@ -15,8 +15,7 @@ public class UpdateProtocolEndpoint : BaseEndpoint<UpdateProtocolCommand, Guid>,
             .WithSummary("Update an existing protocol")
             .WithDescription("Updates an existing protocol's name. Requires UPDATE:PROTOCOL permission."));
     }
-
-    public override async Task HandleAsync(UpdateProtocolCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(UpdateProtocolCommand req, Guid userId, CancellationToken ct)
     {
         Guid id = await Mediator.Send(req, ct);
         await SendSuccessAsync(id, "Protocol updated successfully", ct);

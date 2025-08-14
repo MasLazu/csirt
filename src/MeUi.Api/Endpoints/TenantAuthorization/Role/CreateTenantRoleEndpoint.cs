@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Role;
 
-public class CreateTenantRoleEndpoint : BaseEndpoint<CreateTenantRoleCommand, Guid>, ITenantPermissionProvider, IPermissionProvider
+public class CreateTenantRoleEndpoint : BaseTenantAuthorizedEndpoint<CreateTenantRoleCommand, Guid, CreateTenantRoleEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "CREATE:ROLE";
     public static string Permission => "CREATE:TENANT_ROLE";
@@ -15,7 +15,7 @@ public class CreateTenantRoleEndpoint : BaseEndpoint<CreateTenantRoleCommand, Gu
         Description(x => x.WithTags("Tenant Role Management").WithSummary("Create a new role within a tenant context"));
     }
 
-    public override async Task HandleAsync(CreateTenantRoleCommand req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(CreateTenantRoleCommand req, Guid userId, CancellationToken ct)
     {
         Guid roleId = await Mediator.Send(req, ct);
         await SendSuccessAsync(roleId, "Tenant role created successfully", ct);

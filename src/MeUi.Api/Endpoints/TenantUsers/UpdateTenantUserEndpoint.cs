@@ -4,9 +4,10 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantUsers;
 
-public class UpdateTenantUserEndpoint : BaseEndpointWithoutResponse<UpdateTenantUserCommand>, ITenantPermissionProvider
+public class UpdateTenantUserEndpoint : BaseTenantAuthorizedEndpointWithoutResponse<UpdateTenantUserCommand, UpdateTenantUserEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "UPDATE:USER";
+    public static string Permission => "UPDATE:TENANT_USER";
 
     public override void ConfigureEndpoint()
     {
@@ -14,7 +15,7 @@ public class UpdateTenantUserEndpoint : BaseEndpointWithoutResponse<UpdateTenant
         Description(x => x.WithTags("Tenant User Management").WithSummary("Update a tenant user"));
     }
 
-    public override async Task HandleAsync(UpdateTenantUserCommand req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(UpdateTenantUserCommand req, Guid userId, CancellationToken ct)
     {
         await Mediator.Send(req, ct);
         await SendSuccessAsync("Tenant user updated successfully", ct);

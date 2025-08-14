@@ -5,7 +5,7 @@ using MeUi.Application.Interfaces;
 namespace MeUi.Api.Endpoints.Authorization.Role;
 
 
-public class UpdateRoleEndpoint : BaseEndpoint<UpdateRoleCommand, Guid>, IPermissionProvider
+public class UpdateRoleEndpoint : BaseAuthorizedEndpoint<UpdateRoleCommand, Guid, UpdateRoleEndpoint>, IPermissionProvider
 {
     public static string Permission => "UPDATE:ROLE";
 
@@ -15,7 +15,7 @@ public class UpdateRoleEndpoint : BaseEndpoint<UpdateRoleCommand, Guid>, IPermis
         Description(x => x.WithTags("System Authorization").WithSummary("Update a role"));
     }
 
-    public override async Task HandleAsync(UpdateRoleCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(UpdateRoleCommand req, Guid userId, CancellationToken ct)
     {
         Guid roleId = await Mediator.Send(req, ct);
         await SendSuccessAsync(roleId, "Role updated successfully", ct);

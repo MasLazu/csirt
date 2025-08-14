@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class UpdateThreatEventEndpoint : BaseEndpointWithoutResponse<UpdateThreatEventCommand>, IPermissionProvider
+public class UpdateThreatEventEndpoint : BaseAuthorizedEndpointWithoutResponse<UpdateThreatEventCommand, UpdateThreatEventEndpoint>, IPermissionProvider
 {
     public static string Permission => "UPDATE:THREAT_EVENT";
 
@@ -16,7 +16,7 @@ public class UpdateThreatEventEndpoint : BaseEndpointWithoutResponse<UpdateThrea
             .WithDescription("Updates an existing threat event. Note: Updating historical time-series data should be done carefully. Requires UPDATE:THREAT_EVENT permission."));
     }
 
-    public override async Task HandleAsync(UpdateThreatEventCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(UpdateThreatEventCommand req, Guid userId, CancellationToken ct)
     {
         await Mediator.Send(req, ct);
         await SendSuccessAsync("Threat event updated successfully", ct);

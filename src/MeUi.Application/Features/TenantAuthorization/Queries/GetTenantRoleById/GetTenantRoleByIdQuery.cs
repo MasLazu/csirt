@@ -4,7 +4,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.TenantAuthorization.Queries.GetTenantRoleById;
 
-public record GetTenantRoleByIdQuery : BaseTenantCommand, IRequest<RoleDto>
+public record GetTenantRoleByIdQuery : BaseTenantCommand, IRequest<RoleDto>, ITenantRequest
 {
-    public Guid Id { get; set; }
+	public Guid Id { get; set; }
 }

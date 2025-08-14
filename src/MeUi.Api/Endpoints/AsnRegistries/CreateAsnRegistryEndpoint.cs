@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.AsnRegistries;
 
-public class CreateAsnRegistryEndpoint : BaseEndpoint<CreateAsnRegistryCommand, Guid>, IPermissionProvider
+public class CreateAsnRegistryEndpoint : BaseAuthorizedEndpoint<CreateAsnRegistryCommand, Guid, CreateAsnRegistryEndpoint>, IPermissionProvider
 {
     public static string Permission => "CREATE:ASN_REGISTRY";
 
@@ -16,7 +16,7 @@ public class CreateAsnRegistryEndpoint : BaseEndpoint<CreateAsnRegistryCommand, 
             .WithDescription("Creates a new ASN registry entry. Requires CREATE:ASN_REGISTRY permission."));
     }
 
-    public override async Task HandleAsync(CreateAsnRegistryCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(CreateAsnRegistryCommand req, Guid userId, CancellationToken ct)
     {
         Guid asnRegistryId = await Mediator.Send(req, ct);
         await SendSuccessAsync(asnRegistryId, "ASN Registry created successfully", ct);

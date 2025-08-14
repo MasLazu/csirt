@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Authorization.Action;
 
-public class GetActionsEndpoint : BaseEndpointWithoutRequest<IEnumerable<ActionDto>>, IPermissionProvider
+public class GetActionsEndpoint : BaseAuthorizedEndpointWithoutRequest<IEnumerable<ActionDto>, GetActionsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:ACTION";
 
@@ -15,7 +15,7 @@ public class GetActionsEndpoint : BaseEndpointWithoutRequest<IEnumerable<ActionD
         Description(x => x.WithTags("System Authorization").WithSummary("Get all actions"));
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(Guid userId, CancellationToken ct)
     {
         IEnumerable<ActionDto> actions = await Mediator.Send(new GetActionsQuery(), ct);
         await SendSuccessAsync(actions, "Actions retrieved successfully", ct);

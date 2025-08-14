@@ -5,8 +5,9 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantProtocols;
 
-public class GetTenantProtocolByIdEndpoint : BaseEndpoint<GetProtocolQuery, ProtocolDto>, IPermissionProvider
+public class GetTenantProtocolByIdEndpoint : BaseTenantAuthorizedEndpoint<GetProtocolQuery, ProtocolDto, GetTenantProtocolByIdEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
+    public static string TenantPermission => "READ:PROTOCOL";
     public static string Permission => "READ:PROTOCOL";
 
     public override void ConfigureEndpoint()
@@ -17,7 +18,7 @@ public class GetTenantProtocolByIdEndpoint : BaseEndpoint<GetProtocolQuery, Prot
             .WithDescription("Retrieves a protocol by ID. Protocols are global; tenant scope adds auth context. Requires READ:PROTOCOL permission."));
     }
 
-    public override async Task HandleAsync(GetProtocolQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetProtocolQuery req, Guid userId, CancellationToken ct)
     {
         ProtocolDto protocol = await Mediator.Send(req, ct);
         await SendSuccessAsync(protocol, "Protocol retrieved successfully", ct);

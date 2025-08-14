@@ -4,9 +4,9 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantUsers.Roles;
 
-public class RemoveTenantUserRoleEndpoint : BaseEndpointWithoutResponse<RemoveRoleFromTenantUserV2Command>, ITenantPermissionProvider, IPermissionProvider
+public class RemoveTenantUserRoleEndpoint : BaseTenantAuthorizedEndpointWithoutResponse<RemoveRoleFromTenantUserV2Command, RemoveTenantUserRoleEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string TenantPermission => "REMOVE_ROLE:TENANT_USER";
+    public static string TenantPermission => "REMOVE_ROLE:USER";
     public static string Permission => "REMOVE_ROLE:TENANT_USER";
 
     public override void ConfigureEndpoint()
@@ -15,7 +15,7 @@ public class RemoveTenantUserRoleEndpoint : BaseEndpointWithoutResponse<RemoveRo
         Description(x => x.WithTags("Tenant User Roles").WithSummary("Remove a role from a tenant user"));
     }
 
-    public override async Task HandleAsync(RemoveRoleFromTenantUserV2Command req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(RemoveRoleFromTenantUserV2Command req, Guid userId, CancellationToken ct)
     {
         await Mediator.Send(req, ct);
         await SendSuccessAsync("Role removed from tenant user successfully", ct);

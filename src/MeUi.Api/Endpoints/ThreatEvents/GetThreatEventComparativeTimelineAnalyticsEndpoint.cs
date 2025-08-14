@@ -5,7 +5,7 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class GetThreatEventComparativeTimelineAnalyticsEndpoint : BaseEndpoint<GetThreatEventComparativeTimelineAnalyticsQuery, ThreatEventTimelineAnalyticsDto>, IPermissionProvider
+public class GetThreatEventComparativeTimelineAnalyticsEndpoint : BaseAuthorizedEndpoint<GetThreatEventComparativeTimelineAnalyticsQuery, ThreatEventTimelineAnalyticsDto, GetThreatEventComparativeTimelineAnalyticsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:THREAT_ANALYTICS";
 
@@ -17,9 +17,9 @@ public class GetThreatEventComparativeTimelineAnalyticsEndpoint : BaseEndpoint<G
             .WithDescription("Returns current vs previous period bucketed counts and trend direction. Requires READ:THREAT_ANALYTICS permission."));
     }
 
-    public override async Task HandleAsync(GetThreatEventComparativeTimelineAnalyticsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventComparativeTimelineAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        ThreatEventTimelineAnalyticsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Timeline.Count} comparative timeline buckets", ct);
     }
 }

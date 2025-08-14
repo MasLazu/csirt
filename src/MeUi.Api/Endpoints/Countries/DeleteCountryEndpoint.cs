@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Countries;
 
-public class DeleteCountryEndpoint : BaseEndpoint<DeleteCountryCommand, Guid>, IPermissionProvider
+public class DeleteCountryEndpoint : BaseAuthorizedEndpoint<DeleteCountryCommand, Guid, DeleteCountryEndpoint>, IPermissionProvider
 {
     public static string Permission => "DELETE:COUNTRY";
 
@@ -16,7 +16,7 @@ public class DeleteCountryEndpoint : BaseEndpoint<DeleteCountryCommand, Guid>, I
             .WithDescription("Deletes an existing country. Cannot delete countries referenced by threat events. Requires DELETE:COUNTRY permission."));
     }
 
-    public override async Task HandleAsync(DeleteCountryCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(DeleteCountryCommand req, Guid userId, CancellationToken ct)
     {
         Guid countryId = await Mediator.Send(req, ct);
         await SendSuccessAsync(countryId, "Country deleted successfully", ct);

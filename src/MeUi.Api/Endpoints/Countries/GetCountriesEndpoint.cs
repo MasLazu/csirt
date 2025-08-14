@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Countries;
 
-public class GetCountriesEndpoint : BaseEndpoint<GetCountriesPaginatedQuery, PaginatedDto<CountryDto>>, IPermissionProvider
+public class GetCountriesEndpoint : BaseAuthorizedEndpoint<GetCountriesPaginatedQuery, PaginatedDto<CountryDto>, GetCountriesEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:COUNTRY";
 
@@ -17,7 +17,7 @@ public class GetCountriesEndpoint : BaseEndpoint<GetCountriesPaginatedQuery, Pag
             .WithDescription("Retrieves a paginated list of countries with optional search and sorting. Requires READ:COUNTRY permission."));
     }
 
-    public override async Task HandleAsync(GetCountriesPaginatedQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetCountriesPaginatedQuery req, Guid userId, CancellationToken ct)
     {
         PaginatedDto<CountryDto> countries = await Mediator.Send(req, ct);
         await SendSuccessAsync(countries, $"Retrieved {countries.Items.Count()} countries successfully", ct);

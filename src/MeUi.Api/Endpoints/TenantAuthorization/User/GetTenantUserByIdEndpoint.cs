@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.User;
 
-public class GetTenantUserByIdEndpoint : BaseEndpoint<GetTenantUserByIdQuery, TenantUserDto>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantUserByIdEndpoint : BaseTenantAuthorizedEndpoint<GetTenantUserByIdQuery, TenantUserDto, GetTenantUserByIdEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:USER";
     public static string Permission => "READ:TENANT_USER";
@@ -16,7 +16,7 @@ public class GetTenantUserByIdEndpoint : BaseEndpoint<GetTenantUserByIdQuery, Te
         Description(x => x.WithTags("Tenant User Management").WithSummary("Get a specific user by ID within a tenant context"));
     }
 
-    public override async Task HandleAsync(GetTenantUserByIdQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantUserByIdQuery req, Guid userId, CancellationToken ct)
     {
         TenantUserDto user = await Mediator.Send(req, ct);
         await SendSuccessAsync(user, "Tenant user retrieved successfully", ct);

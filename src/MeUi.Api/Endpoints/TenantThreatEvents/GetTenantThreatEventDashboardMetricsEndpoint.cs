@@ -6,9 +6,10 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventDashboardMetricsEndpoint : BaseEndpoint<GetTenantThreatEventDashboardMetricsQuery, ThreatEventDashboardMetricsDto>, ITenantPermissionProvider
+public class GetTenantThreatEventDashboardMetricsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatEventDashboardMetricsQuery, ThreatEventDashboardMetricsDto, GetTenantThreatEventDashboardMetricsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:THREAT_ANALYTICS";
+    public static string Permission => "READ:TENANT_THREAT_ANALYTICS";
 
     public override void ConfigureEndpoint()
     {
@@ -18,18 +19,9 @@ public class GetTenantThreatEventDashboardMetricsEndpoint : BaseEndpoint<GetTena
             .WithDescription("Returns high-level dashboard metrics for a specific tenant (last 24h & hour)."));
     }
 
-    public override async Task HandleAsync(GetTenantThreatEventDashboardMetricsQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantThreatEventDashboardMetricsQuery req, Guid userId, CancellationToken ct)
     {
-        var tenantId = Route<Guid>("tenantId");
-        if (tenantId == Guid.Empty)
-        {
-            AddError("tenantId", "Invalid tenant id.");
-            await SendErrorsAsync(cancellation: ct);
-            return;
-        }
-
-        req = new GetTenantThreatEventDashboardMetricsQuery { TenantId = tenantId };
-        var result = await Mediator.Send(req, ct);
+        ThreatEventDashboardMetricsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, "Retrieved tenant dashboard metrics", ct);
     }
 }

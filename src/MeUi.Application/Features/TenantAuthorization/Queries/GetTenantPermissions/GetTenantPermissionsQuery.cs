@@ -3,4 +3,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.TenantAuthorization.Queries.GetTenantPermissions;
 
-public record GetTenantPermissionsQuery : IRequest<IEnumerable<PermissionDto>>;
+public record GetTenantPermissionsQuery : IRequest<IEnumerable<PermissionDto>>, ITenantRequest
+{
+    public Guid TenantId { get; set; }
+}

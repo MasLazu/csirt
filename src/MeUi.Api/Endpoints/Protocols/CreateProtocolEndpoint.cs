@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Protocols;
 
-public class CreateProtocolEndpoint : BaseEndpoint<CreateProtocolCommand, Guid>, IPermissionProvider
+public class CreateProtocolEndpoint : BaseAuthorizedEndpoint<CreateProtocolCommand, Guid, CreateProtocolEndpoint>, IPermissionProvider
 {
     public static string Permission => "CREATE:PROTOCOL";
 
@@ -15,8 +15,7 @@ public class CreateProtocolEndpoint : BaseEndpoint<CreateProtocolCommand, Guid>,
             .WithSummary("Create a new protocol")
             .WithDescription("Creates a new protocol. Requires CREATE:PROTOCOL permission."));
     }
-
-    public override async Task HandleAsync(CreateProtocolCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(CreateProtocolCommand req, Guid userId, CancellationToken ct)
     {
         Guid id = await Mediator.Send(req, ct);
         await SendSuccessAsync(id, "Protocol created successfully", ct);

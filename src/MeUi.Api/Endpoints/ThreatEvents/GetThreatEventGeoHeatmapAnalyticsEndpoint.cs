@@ -5,7 +5,7 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.ThreatEvents;
 
-public class GetThreatEventGeoHeatmapAnalyticsEndpoint : BaseEndpoint<GetThreatEventGeoHeatmapAnalyticsQuery, ThreatEventGeoAnalyticsDto>, IPermissionProvider
+public class GetThreatEventGeoHeatmapAnalyticsEndpoint : BaseAuthorizedEndpoint<GetThreatEventGeoHeatmapAnalyticsQuery, ThreatEventGeoAnalyticsDto, GetThreatEventGeoHeatmapAnalyticsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:THREAT_ANALYTICS";
 
@@ -17,9 +17,9 @@ public class GetThreatEventGeoHeatmapAnalyticsEndpoint : BaseEndpoint<GetThreatE
             .WithDescription("Returns geographic distribution of threat event sources (heatmap data). Requires READ:THREAT_ANALYTICS permission."));
     }
 
-    public override async Task HandleAsync(GetThreatEventGeoHeatmapAnalyticsQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetThreatEventGeoHeatmapAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        ThreatEventGeoAnalyticsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved geo heatmap with {result.SourceCountries.Count} countries", ct);
     }
 }

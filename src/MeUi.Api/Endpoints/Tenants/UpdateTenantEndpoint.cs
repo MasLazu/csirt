@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Tenants;
 
-public class UpdateTenantEndpoint : BaseEndpointWithoutResponse<UpdateTenantCommand>, IPermissionProvider
+public class UpdateTenantEndpoint : BaseAuthorizedEndpointWithoutResponse<UpdateTenantCommand, UpdateTenantEndpoint>, IPermissionProvider
 {
     public static string Permission => "UPDATE:TENANT";
 
@@ -14,7 +14,7 @@ public class UpdateTenantEndpoint : BaseEndpointWithoutResponse<UpdateTenantComm
         Description(x => x.WithTags("Tenant Management").WithSummary("Update an existing tenant"));
     }
 
-    public override async Task HandleAsync(UpdateTenantCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(UpdateTenantCommand req, Guid userId, CancellationToken ct)
     {
         await Mediator.Send(req, ct);
         await SendSuccessAsync("Tenant updated successfully", ct);

@@ -64,8 +64,7 @@ public class TenantPermissionSeeder
             try
             {
                 bool foundAny = false;
-                // Static properties
-                foreach (var name in nameCandidates)
+                foreach (string name in nameCandidates)
                 {
                     PropertyInfo? prop = providerType.GetProperty(name, BindingFlags.Public | BindingFlags.Static);
                     if (prop != null && prop.PropertyType == typeof(string))
@@ -81,8 +80,7 @@ public class TenantPermissionSeeder
                     }
                 }
 
-                // Static methods without parameters
-                foreach (var name in nameCandidates)
+                foreach (string name in nameCandidates)
                 {
                     MethodInfo? method = providerType.GetMethod(name, BindingFlags.Public | BindingFlags.Static, Array.Empty<Type>());
                     if (method != null && method.ReturnType == typeof(string) && method.GetParameters().Length == 0)

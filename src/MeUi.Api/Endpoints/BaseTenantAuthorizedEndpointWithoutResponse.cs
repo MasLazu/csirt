@@ -1,5 +1,4 @@
 using FastEndpoints;
-using FastEndpoints.Security;
 using MediatR;
 using MeUi.Api.Models;
 using MeUi.Application.Features.Authorization.Queries.CheckTenantPermission;
@@ -10,7 +9,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints;
 
-public abstract class BaseTenantAuthorizedEndpoint<TRequest, TResponse, TPermissionProvider> : BaseEndpoint<TRequest, TResponse>
+public abstract class BaseTenantAuthorizedEndpointWithoutResponse<TRequest, TPermissionProvider> : BaseEndpointWithoutResponse<TRequest>
     where TRequest : notnull, ITenantRequest, new()
     where TPermissionProvider : notnull, ITenantPermissionProvider, IPermissionProvider
 {
@@ -36,9 +35,9 @@ public abstract class BaseTenantAuthorizedEndpoint<TRequest, TResponse, TPermiss
 
     protected abstract Task HandleAuthorizedAsync(TRequest req, Guid userId, CancellationToken ct);
 
-    private Guid GetUserId()
+    protected Guid GetUserId()
     {
-        string? claim = User.ClaimValue("sub");
+        string? claim = User.FindFirst("sub")?.Value;
         if (string.IsNullOrWhiteSpace(claim) || !Guid.TryParse(claim, out Guid id))
         {
             throw new UnauthorizedException("User is not authenticated");
@@ -48,7 +47,7 @@ public abstract class BaseTenantAuthorizedEndpoint<TRequest, TResponse, TPermiss
 
     private Guid GetTenantIdFromClaim()
     {
-        string? claim = User.ClaimValue("tenant_id");
+        string? claim = User.FindFirst("tenant_id")?.Value;
         if (string.IsNullOrWhiteSpace(claim) || !Guid.TryParse(claim, out Guid id))
         {
             throw new UnauthorizedException("Tenant is not authenticated");

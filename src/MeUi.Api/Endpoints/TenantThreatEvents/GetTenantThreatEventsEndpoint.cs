@@ -5,10 +5,10 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventsEndpoint : BaseEndpoint<GetTenantThreatEventsPaginatedQuery, PaginatedDto<ThreatEventDto>>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantThreatEventsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatEventsPaginatedQuery, PaginatedDto<ThreatEventDto>, GetTenantThreatEventsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:THREAT_EVENT";
-    public static string Permission => "READ:THREAT_EVENT";
+    public static string Permission => "READ:TENANT_THREAT_EVENT";
 
     public override void ConfigureEndpoint()
     {
@@ -18,7 +18,7 @@ public class GetTenantThreatEventsEndpoint : BaseEndpoint<GetTenantThreatEventsP
             .WithDescription("Retrieves a paginated list of threat events scoped to a specific tenant's ASN registries. Includes time-range filtering, search, and sorting capabilities. Requires READ:TENANT_THREAT_EVENT permission."));
     }
 
-    public override async Task HandleAsync(GetTenantThreatEventsPaginatedQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantThreatEventsPaginatedQuery req, Guid userId, CancellationToken ct)
     {
         PaginatedDto<ThreatEventDto> threatEvents = await Mediator.Send(req, ct);
         await SendSuccessAsync(threatEvents, $"Retrieved {threatEvents.Items.Count()} tenant threat events successfully", ct);

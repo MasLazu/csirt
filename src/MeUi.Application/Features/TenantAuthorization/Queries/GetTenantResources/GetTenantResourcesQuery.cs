@@ -3,4 +3,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Application.Features.TenantAuthorization.Queries.GetTenantResources;
 
-public record GetTenantResourcesQuery : IRequest<IEnumerable<ResourceDto>>;
+public record GetTenantResourcesQuery : IRequest<IEnumerable<ResourceDto>>, ITenantRequest
+{
+    public Guid TenantId { get; set; }
+}

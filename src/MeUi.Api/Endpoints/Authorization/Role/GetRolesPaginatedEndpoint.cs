@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Authorization.Role;
 
-public class GetRolesPaginatedEndpoint : BaseEndpoint<GetRolesPaginatedQuery, PaginatedDto<RoleDto>>, IPermissionProvider
+public class GetRolesPaginatedEndpoint : BaseAuthorizedEndpoint<GetRolesPaginatedQuery, PaginatedDto<RoleDto>, GetRolesPaginatedEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:ROLE";
 
@@ -15,7 +15,7 @@ public class GetRolesPaginatedEndpoint : BaseEndpoint<GetRolesPaginatedQuery, Pa
         Description(x => x.WithTags("System Authorization").WithSummary("Get paginated list of roles"));
     }
 
-    public override async Task HandleAsync(GetRolesPaginatedQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetRolesPaginatedQuery req, Guid userId, CancellationToken ct)
     {
         PaginatedDto<RoleDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, "Roles retrieved successfully", ct);

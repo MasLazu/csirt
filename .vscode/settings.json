@@ -2,7 +2,7 @@
   "mcp": {
     "servers": {
       "postgres": {
-        "command": "mpx",
+        "command": "npx",
         "args": [
           "-y",
           "@modelcontextprotocol/server-postgres",

@@ -6,9 +6,10 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventComparativeTimelineAnalyticsEndpoint : BaseEndpoint<GetTenantThreatEventComparativeTimelineAnalyticsQuery, ThreatEventTimelineAnalyticsDto>, ITenantPermissionProvider
+public class GetTenantThreatEventComparativeTimelineAnalyticsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatEventComparativeTimelineAnalyticsQuery, ThreatEventTimelineAnalyticsDto, GetTenantThreatEventComparativeTimelineAnalyticsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:THREAT_ANALYTICS";
+    public static string Permission => "READ:TENANT_THREAT_ANALYTICS";
 
     public override void ConfigureEndpoint()
     {
@@ -18,11 +19,9 @@ public class GetTenantThreatEventComparativeTimelineAnalyticsEndpoint : BaseEndp
             .WithDescription("Returns current vs previous period bucketed counts and trend direction for a tenant."));
     }
 
-    public override async Task HandleAsync(GetTenantThreatEventComparativeTimelineAnalyticsQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantThreatEventComparativeTimelineAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var tenantId = Route<Guid>("tenantId");
-        var enriched = req with { TenantId = tenantId };
-        var result = await Mediator.Send(enriched, ct);
+        ThreatEventTimelineAnalyticsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Timeline.Count} tenant comparative timeline buckets", ct);
     }
 }

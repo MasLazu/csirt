@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Authorization.PageGroup;
 
-public class GetPageGroupsEndpoint : BaseEndpointWithoutRequest<IEnumerable<PageGroupDto>>, IPermissionProvider
+public class GetPageGroupsEndpoint : BaseAuthorizedEndpointWithoutRequest<IEnumerable<PageGroupDto>, GetPageGroupsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:PAGE_GROUP";
 
@@ -15,7 +15,7 @@ public class GetPageGroupsEndpoint : BaseEndpointWithoutRequest<IEnumerable<Page
         Description(x => x.WithTags("System Authorization").WithSummary("Get all page groups"));
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(Guid userId, CancellationToken ct)
     {
         IEnumerable<PageGroupDto> result = await Mediator.Send(new GetPageGroupsQuery(), ct);
         await SendSuccessAsync(result, "Page groups retrieved successfully", ct);

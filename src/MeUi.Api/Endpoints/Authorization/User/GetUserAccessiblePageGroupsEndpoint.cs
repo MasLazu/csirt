@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.Authorization.User;
 
-public class GetUserAccessiblePageGroupsEndpoint : BaseEndpoint<GetUserAccessiblePagesQuery, IEnumerable<PageGroupDto>>, IPermissionProvider
+public class GetUserAccessiblePageGroupsEndpoint : BaseAuthorizedEndpoint<GetUserAccessiblePagesQuery, IEnumerable<PageGroupDto>, GetUserAccessiblePageGroupsEndpoint>, IPermissionProvider
 {
     public static string Permission => "READ:USER_ACCESSIBLE_PAGES";
 
@@ -14,8 +14,7 @@ public class GetUserAccessiblePageGroupsEndpoint : BaseEndpoint<GetUserAccessibl
         Get("api/v1/users/{userId}/accessible-page-groups");
         Description(x => x.WithTags("User Authorization").WithSummary("Get accessible page groups for a specific user"));
     }
-
-    public override async Task HandleAsync(GetUserAccessiblePagesQuery req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(GetUserAccessiblePagesQuery req, Guid userId, CancellationToken ct)
     {
         IEnumerable<PageGroupDto> pageGroups = await Mediator.Send(req, ct);
         await SendSuccessAsync(pageGroups, "User accessible page groups retrieved successfully", ct);

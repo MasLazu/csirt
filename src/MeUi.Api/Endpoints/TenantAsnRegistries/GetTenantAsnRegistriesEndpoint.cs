@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantAsnRegistries;
 
-public class GetTenantAsnRegistriesEndpoint : BaseEndpoint<GetTenantAsnRegistriesPaginatedQuery, PaginatedDto<AsnRegistryDto>>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantAsnRegistriesEndpoint : BaseTenantAuthorizedEndpoint<GetTenantAsnRegistriesPaginatedQuery, PaginatedDto<AsnRegistryDto>, GetTenantAsnRegistriesEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:ASN_REGISTRY";
     public static string Permission => "READ:TENANT_ASN";
@@ -18,7 +18,7 @@ public class GetTenantAsnRegistriesEndpoint : BaseEndpoint<GetTenantAsnRegistrie
             .WithDescription("Retrieves a paginated list of ASN registries assigned to the specified tenant. Global admins can access any tenant's ASN registries with READ:TENANT_ASN permission. Tenant users can only access their own tenant's ASN registries with READ:ASN_REGISTRY permission."));
     }
 
-    public override async Task HandleAsync(GetTenantAsnRegistriesPaginatedQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantAsnRegistriesPaginatedQuery req, Guid userId, CancellationToken ct)
     {
         PaginatedDto<AsnRegistryDto> asnRegistries = await Mediator.Send(req, ct);
         await SendSuccessAsync(asnRegistries, "Tenant ASN Registries retrieved successfully", ct);

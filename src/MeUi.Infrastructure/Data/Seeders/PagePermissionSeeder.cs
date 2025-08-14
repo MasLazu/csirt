@@ -72,17 +72,17 @@ public class PagePermissionSeeder
         };
 
         var pages = (await _pageRepo.GetAllAsync(ct)).ToDictionary(p => p.Code, p => p.Id);
-        var permissions = await _permissionRepo.GetAllAsync(ct);
+        IEnumerable<Permission> permissions = await _permissionRepo.GetAllAsync(ct);
         var permLookup = permissions.ToDictionary(p => $"{p.ActionCode}:{p.ResourceCode}", p => p.Id);
 
         foreach (var m in mappings)
         {
-            if (!pages.TryGetValue(m.PageCode, out var pageId))
+            if (!pages.TryGetValue(m.PageCode, out Guid pageId))
             {
                 _logger.LogWarning("Page code {PageCode} not found for permission mapping {PermissionCode}", m.PageCode, m.PermissionCode);
                 continue;
             }
-            if (!permLookup.TryGetValue(m.PermissionCode, out var permId))
+            if (!permLookup.TryGetValue(m.PermissionCode, out Guid permId))
             {
                 _logger.LogWarning("Permission {PermissionCode} not found when mapping to page {PageCode}", m.PermissionCode, m.PageCode);
                 continue;

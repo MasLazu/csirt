@@ -6,10 +6,10 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventSourceCountriesTopAnalyticsEndpoint : BaseEndpoint<GetTenantThreatEventSourceCountriesTopAnalyticsQuery, ThreatEventGeoAnalyticsDto>, IPermissionProvider
+public class GetTenantThreatEventSourceCountriesTopAnalyticsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatEventSourceCountriesTopAnalyticsQuery, ThreatEventGeoAnalyticsDto, GetTenantThreatEventSourceCountriesTopAnalyticsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:THREAT_ANALYTICS";
-    public static string Permission => "READ:THREAT_ANALYTICS";
+    public static string Permission => "READ:TENANT_THREAT_ANALYTICS";
 
     public override void ConfigureEndpoint()
     {
@@ -19,11 +19,9 @@ public class GetTenantThreatEventSourceCountriesTopAnalyticsEndpoint : BaseEndpo
             .WithDescription("Returns tenant-scoped top source countries with counts, percentages, top categories, and top malware families."));
     }
 
-    public override async Task HandleAsync(GetTenantThreatEventSourceCountriesTopAnalyticsQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantThreatEventSourceCountriesTopAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var tenantId = Route<Guid>("tenantId");
-        var enriched = req with { TenantId = tenantId };
-        var result = await Mediator.Send(enriched, ct);
+        ThreatEventGeoAnalyticsDto result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.SourceCountries.Count} tenant source countries", ct);
     }
 }

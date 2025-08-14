@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Role;
 
-public class GetTenantRolesPaginatedEndpoint : BaseEndpoint<GetTenantRolesPaginatedQuery, PaginatedDto<RoleDto>>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantRolesPaginatedEndpoint : BaseTenantAuthorizedEndpoint<GetTenantRolesPaginatedQuery, PaginatedDto<RoleDto>, GetTenantRolesPaginatedEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:ROLE";
     public static string Permission => "READ:TENANT_ROLE";
@@ -16,7 +16,7 @@ public class GetTenantRolesPaginatedEndpoint : BaseEndpoint<GetTenantRolesPagina
         Description(x => x.WithTags("Tenant Role Management").WithSummary("Get paginated list of roles within a tenant context with search and sorting"));
     }
 
-    public override async Task HandleAsync(GetTenantRolesPaginatedQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantRolesPaginatedQuery req, Guid userId, CancellationToken ct)
     {
         PaginatedDto<RoleDto> roles = await Mediator.Send(req, ct);
         await SendSuccessAsync(roles, "Tenant roles retrieved successfully", ct);

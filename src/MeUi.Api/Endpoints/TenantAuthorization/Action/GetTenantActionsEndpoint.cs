@@ -5,7 +5,7 @@ using MeUi.Application.Models;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Action;
 
-public class GetTenantActionsEndpoint : BaseEndpointWithoutRequest<IEnumerable<ActionDto>>, ITenantPermissionProvider, IPermissionProvider
+public class GetTenantActionsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantActionsQuery, IEnumerable<ActionDto>, GetTenantActionsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "READ:ACTION";
     public static string Permission => "READ:TENANT_ACTION";
@@ -16,9 +16,9 @@ public class GetTenantActionsEndpoint : BaseEndpointWithoutRequest<IEnumerable<A
         Description(x => x.WithTags("Tenant Authorization").WithSummary("Get actions accessible in tenant context"));
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantActionsQuery req, Guid userId, CancellationToken ct)
     {
-        IEnumerable<ActionDto> actions = await Mediator.Send(new GetTenantActionsQuery(), ct);
+        IEnumerable<ActionDto> actions = await Mediator.Send(req, ct);
         await SendSuccessAsync(actions, "Tenant actions retrieved successfully", ct);
     }
 }

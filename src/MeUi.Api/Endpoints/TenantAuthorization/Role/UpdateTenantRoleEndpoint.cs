@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantAuthorization.Role;
 
-public class UpdateTenantRoleEndpoint : BaseEndpointWithoutResponse<UpdateTenantRoleCommand>, ITenantPermissionProvider, IPermissionProvider
+public class UpdateTenantRoleEndpoint : BaseTenantAuthorizedEndpointWithoutResponse<UpdateTenantRoleCommand, UpdateTenantRoleEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
     public static string TenantPermission => "UPDATE:ROLE";
     public static string Permission => "UPDATE:TENANT_ROLE";
@@ -15,7 +15,7 @@ public class UpdateTenantRoleEndpoint : BaseEndpointWithoutResponse<UpdateTenant
         Description(x => x.WithTags("Tenant Role Management").WithSummary("Update an existing role within a tenant context"));
     }
 
-    public override async Task HandleAsync(UpdateTenantRoleCommand req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(UpdateTenantRoleCommand req, Guid userId, CancellationToken ct)
     {
         await Mediator.Send(req, ct);
         await SendSuccessAsync("Tenant role updated successfully", ct);

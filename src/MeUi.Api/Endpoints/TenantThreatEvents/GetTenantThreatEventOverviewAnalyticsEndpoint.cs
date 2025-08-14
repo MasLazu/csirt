@@ -6,10 +6,10 @@ using MeUi.Application.Models.Analytics;
 
 namespace MeUi.Api.Endpoints.TenantThreatEvents;
 
-public class GetTenantThreatEventOverviewAnalyticsEndpoint : BaseEndpoint<GetTenantThreatEventOverviewAnalyticsQuery, ThreatEventOverviewAnalyticsDto>, IPermissionProvider
+public class GetTenantThreatEventOverviewAnalyticsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatEventOverviewAnalyticsQuery, ThreatEventOverviewAnalyticsDto, GetTenantThreatEventOverviewAnalyticsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string TenantPermission => "READ:THREAT_ANALYTICS"; // tenant-scoped grant
-    public static string Permission => "READ:THREAT_ANALYTICS";       // global override
+    public static string TenantPermission => "READ:THREAT_ANALYTICS";
+    public static string Permission => "READ:TENANT_THREAT_ANALYTICS";
 
     public override void ConfigureEndpoint()
     {
@@ -19,11 +19,9 @@ public class GetTenantThreatEventOverviewAnalyticsEndpoint : BaseEndpoint<GetTen
             .WithDescription("Retrieves tenant-scoped lightweight overview metrics including core counts and top entities."));
     }
 
-    public override async Task HandleAsync(GetTenantThreatEventOverviewAnalyticsQuery req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(GetTenantThreatEventOverviewAnalyticsQuery req, Guid userId, CancellationToken ct)
     {
-        var tenantId = Route<Guid>("tenantId");
-        var enriched = req with { TenantId = tenantId };
-        var analytics = await Mediator.Send(enriched, ct);
+        ThreatEventOverviewAnalyticsDto analytics = await Mediator.Send(req, ct);
         await SendSuccessAsync(analytics, $"Retrieved tenant overview with {analytics.TopCategories.Count} categories", ct);
     }
 }

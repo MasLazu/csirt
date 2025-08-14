@@ -4,7 +4,7 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.Authorization.Role;
 
-public class CreateRoleEndpoint : BaseEndpoint<CreateRoleCommand, Guid>, IPermissionProvider
+public class CreateRoleEndpoint : BaseAuthorizedEndpoint<CreateRoleCommand, Guid, CreateRoleEndpoint>, IPermissionProvider
 {
     public static string Permission => "CREATE:ROLE";
 
@@ -14,7 +14,7 @@ public class CreateRoleEndpoint : BaseEndpoint<CreateRoleCommand, Guid>, IPermis
         Description(x => x.WithTags("System Authorization").WithSummary("Create a new role"));
     }
 
-    public override async Task HandleAsync(CreateRoleCommand req, CancellationToken ct)
+    public override async Task HandleAuthorizedAsync(CreateRoleCommand req, Guid userId, CancellationToken ct)
     {
         Guid roleId = await Mediator.Send(req, ct);
         await SendSuccessAsync(roleId, "Role created successfully", ct);

@@ -4,9 +4,9 @@ using MeUi.Application.Interfaces;
 
 namespace MeUi.Api.Endpoints.TenantUsers.Roles;
 
-public class AssignTenantUserRolesEndpoint : BaseEndpoint<AssignRolesToTenantUserCommand, IEnumerable<Guid>>, ITenantPermissionProvider, IPermissionProvider
+public class AssignTenantUserRolesEndpoint : BaseTenantAuthorizedEndpoint<AssignRolesToTenantUserCommand, IEnumerable<Guid>, AssignTenantUserRolesEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string TenantPermission => "ASSIGN_ROLES:TENANT_USER";
+    public static string TenantPermission => "ASSIGN_ROLES:USER";
     public static string Permission => "ASSIGN_ROLES:TENANT_USER";
 
     public override void ConfigureEndpoint()
@@ -15,7 +15,7 @@ public class AssignTenantUserRolesEndpoint : BaseEndpoint<AssignRolesToTenantUse
         Description(x => x.WithTags("Tenant User Roles").WithSummary("Assign roles to a tenant user"));
     }
 
-    public override async Task HandleAsync(AssignRolesToTenantUserCommand req, CancellationToken ct)
+    protected override async Task HandleAuthorizedAsync(AssignRolesToTenantUserCommand req, Guid userId, CancellationToken ct)
     {
         IEnumerable<Guid> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, "Roles assigned to tenant user successfully", ct);
