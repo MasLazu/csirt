@@ -39,9 +39,9 @@ public class PageSeeder
         var pages = new[]
             {
             // Global Home (no page group – root level)
-            Page("DASHBOARD_HOME","Dashboard","/dashboard",null),
+            Page("DASHBOARD_HOME","Dashboard","/dashboard", "DASHBOARD"),
             // Tenant Home (no page group – root level within tenant workspace)
-            Page("TENANT_HOME","Tenant Home","/tenants/{tenantId}",null),
+            Page("TENANT_HOME","Tenant Home","/tenants/{tenantId}","DASHBOARD"),
 
             // Global Threat Analytics
             Page("TA_OVERVIEW","Overview","/threat-analytics/overview","THREAT_ANALYTICS"),
