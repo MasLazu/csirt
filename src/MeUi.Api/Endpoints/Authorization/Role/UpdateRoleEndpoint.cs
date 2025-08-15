@@ -11,8 +11,8 @@ public class UpdateRoleEndpoint : BaseAuthorizedEndpoint<UpdateRoleCommand, Guid
 
     public override void ConfigureEndpoint()
     {
-        Put("api/v1/authorization/roles/{id}");
-        Description(x => x.WithTags("System Authorization").WithSummary("Update a role"));
+        Put("api/v1/roles/{id}");
+        Description(x => x.WithTags("Role Management").WithSummary("Update a role"));
     }
 
     public override async Task HandleAuthorizedAsync(UpdateRoleCommand req, Guid userId, CancellationToken ct)

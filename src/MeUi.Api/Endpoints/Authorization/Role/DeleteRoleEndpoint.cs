@@ -10,8 +10,8 @@ public class DeleteRoleEndpoint : BaseAuthorizedEndpoint<DeleteRoleCommand, Guid
 
     public override void ConfigureEndpoint()
     {
-        Delete("api/v1/authorization/roles/{id}");
-        Description(x => x.WithTags("System Authorization").WithSummary("Delete a role"));
+        Delete("api/v1/roles/{id}");
+        Description(x => x.WithTags("Role Management").WithSummary("Delete a role"));
     }
 
     public override async Task HandleAuthorizedAsync(DeleteRoleCommand req, Guid userId, CancellationToken ct)

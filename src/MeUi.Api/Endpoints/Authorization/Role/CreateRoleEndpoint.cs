@@ -10,8 +10,8 @@ public class CreateRoleEndpoint : BaseAuthorizedEndpoint<CreateRoleCommand, Guid
 
     public override void ConfigureEndpoint()
     {
-        Post("api/v1/authorization/roles");
-        Description(x => x.WithTags("System Authorization").WithSummary("Create a new role"));
+        Post("api/v1/roles");
+        Description(x => x.WithTags("Role Management").WithSummary("Create a new role"));
     }
 
     public override async Task HandleAuthorizedAsync(CreateRoleCommand req, Guid userId, CancellationToken ct)

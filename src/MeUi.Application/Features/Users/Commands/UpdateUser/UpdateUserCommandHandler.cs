@@ -26,7 +26,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Guid>
         User user = await _userRepository.GetByIdAsync(request.Id, ct) ??
             throw new NotFoundException($"User with ID '{request.Id}' not found.");
 
-        if (await _userRepository.ExistsAsync(u => u.Email == request.Email || u.Username == request.Username, ct))
+        if (await _userRepository.ExistsAsync(u => (u.Email == request.Email || u.Username == request.Username) && u.Id != request.Id, ct))
         {
             throw new BadRequestException("User with this email already exists.");
         }

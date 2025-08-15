@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using MeUi.Application.Exceptions;
 using MeUi.Api.Models;
+using Newtonsoft.Json;
 
 namespace MeUi.Api.Middlewares;
 
@@ -24,6 +25,14 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         (ErrorResponse response, int statusCode) = exception switch
         {
+            JsonReaderException ex => (new ErrorResponse(
+                message: "Invalid JSON format.",
+                errorCode: "INVALID_JSON",
+                errors: new[] { ex.Message }), (int)HttpStatusCode.BadRequest),
+            System.Text.Json.JsonException ex => (new ErrorResponse(
+                message: "Invalid JSON format.",
+                errorCode: "INVALID_JSON",
+                errors: new[] { ex.Message }), (int)HttpStatusCode.BadRequest),
             FluentValidation.ValidationException ex => (new ErrorResponse(
                 message: "One or more validation errors occurred.",
                 errorCode: "VALIDATION_ERROR",
@@ -56,7 +65,7 @@ public class GlobalExceptionHandler : IExceptionHandler
         };
 
         await httpContext.Response.WriteAsync(
-            JsonSerializer.Serialize(response, jsonOptions),
+            System.Text.Json.JsonSerializer.Serialize(response, jsonOptions),
             cancellationToken);
 
         return true;
