@@ -46,6 +46,14 @@ public class GetTenantUserAccessiblePagesQueryHandler : IRequestHandler<GetTenan
         IEnumerable<PageGroup> pageGroups = await _pageGroupRepository
             .FindAsync(pg => pages.Select(p => p.PageGroupId).Contains(pg.Id), ct);
 
-        return pageGroups.Adapt<IEnumerable<PageGroupDto>>();
+        foreach (PageGroup pageGroup in pageGroups)
+        {
+            pageGroup.Pages = pages.Where(p => p.PageGroupId == pageGroup.Id)
+                .OrderBy(p => p.Code)
+                .ToList();
+        }
+
+        IEnumerable<PageGroup> orderedGroups = pageGroups.OrderBy(pg => pg.Code);
+        return orderedGroups.Adapt<IEnumerable<PageGroupDto>>();
     }
 }

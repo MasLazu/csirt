@@ -32,10 +32,13 @@ public class GetTenantPageGroupsQueryHandler : IRequestHandler<GetTenantPageGrou
 
         pageGroups = pageGroups.Select(pg =>
         {
-            pg.Pages = pg.Pages.Where(p => p.PageGroupId == pg.Id).ToHashSet();
+            pg.Pages = pg.Pages.Where(p => p.PageGroupId == pg.Id)
+                .OrderBy(p => p.Code)
+                .ToList();
             return pg;
         });
 
-        return pageGroups.Adapt<IEnumerable<PageGroupDto>>();
+        IEnumerable<PageGroup> orderedGroups = pageGroups.OrderBy(pg => pg.Code);
+        return orderedGroups.Adapt<IEnumerable<PageGroupDto>>();
     }
 }

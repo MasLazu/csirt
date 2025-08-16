@@ -17,24 +17,22 @@ public class PageGroupSeeder
 
     public async Task SeedAsync(CancellationToken ct = default)
     {
-        // NOTE: Previous seed introduced legacy groups (USER_MANAGEMENT, SYSTEM, REPORTS). We do not delete them here.
-        // New normalized navigation groups (global + tenant-context) based on refined IA design.
         var pageGroups = new[]
         {
-            new { Code = "DASHBOARD",          Name = "Dashboard",             Icon = "dashboard" },
-            new { Code = "THREAT_ANALYTICS",   Name = "Threat Analytics",      Icon = "activity" },
-            new { Code = "THREAT_EVENTS",      Name = "Threat Events",         Icon = "pulse" },
-            new { Code = "THREAT_INTELLIGENCE",Name = "Threat Intelligence",   Icon = "shield-virus" },
-            new { Code = "NETWORK",            Name = "Network Intelligence",  Icon = "network" },
-            new { Code = "GEO",                Name = "Geography",             Icon = "globe" },
-            new { Code = "TENANT_ADMIN",       Name = "Tenant Administration", Icon = "building" },
-            new { Code = "USER_ADMIN",         Name = "Users & Roles",         Icon = "users" },
-            new { Code = "AUTHORIZATION",      Name = "Authorization Model",   Icon = "key" },
-            new { Code = "SETTINGS",           Name = "Settings",              Icon = "settings" },
-            // Tenant contextual groupings (optional in UI, kept for segmentation)
-            new { Code = "TENANT_ANALYTICS",   Name = "Tenant Analytics",      Icon = "activity" },
-            new { Code = "TENANT_DATA",        Name = "Tenant Data",           Icon = "database" },
-            new { Code = "TENANT_SECURITY",    Name = "Tenant Security",       Icon = "users-cog" }
+            // Global sidebar (1)
+            new { Code = "1.1", Name = "Overview", Icon = "home" },
+            new { Code = "1.2", Name = "Threat Intelligence", Icon = "shield-virus" },
+            new { Code = "1.3", Name = "Users & Access", Icon = "users" },
+            new { Code = "1.4", Name = "Tenants", Icon = "building" },
+            new { Code = "1.5", Name = "Resources", Icon = "database" },
+            new { Code = "1.6", Name = "Settings & Audit", Icon = "settings" },
+
+            // Tenant sidebar (2)
+            new { Code = "2.1", Name = "Overview", Icon = "home" },
+            new { Code = "2.2", Name = "Threat Intelligence", Icon = "shield-virus" },
+            new { Code = "2.3", Name = "Users & Access", Icon = "users" },
+            new { Code = "2.4", Name = "Resources", Icon = "database" },
+            new { Code = "2.5", Name = "Settings & Audit", Icon = "settings" }
         };
 
         foreach (var group in pageGroups)

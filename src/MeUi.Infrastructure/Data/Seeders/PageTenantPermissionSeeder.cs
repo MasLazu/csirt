@@ -25,39 +25,53 @@ public class PageTenantPermissionSeeder
 
     public async Task SeedAsync(CancellationToken ct = default)
     {
-        var mappings = new (string PageCode, string TenantPermissionCode)[]
+        var pageTenantPermissionMap = new Dictionary<string, string[]>
         {
-            ("TENANT_HOME","READ:THREAT_ANALYTICS"),
-            ("TTA_OVERVIEW","READ:THREAT_ANALYTICS"),("TTA_SUMMARY","READ:THREAT_ANALYTICS"),("TTA_TIMELINE","READ:THREAT_ANALYTICS"),
-            ("TTA_TIMELINE_COMPARATIVE","READ:THREAT_ANALYTICS"),("TTA_TIMELINE_CATEGORY","READ:THREAT_ANALYTICS"),("TTA_TIMELINE_MALWARE","READ:THREAT_ANALYTICS"),
-            ("TTA_PROTOCOL_DISTRIBUTION","READ:THREAT_ANALYTICS"),("TTA_GEO_HEATMAP","READ:THREAT_ANALYTICS"),("TTA_TOP_ASNS","READ:THREAT_ANALYTICS"),("TTA_TOP_SOURCE_COUNTRIES","READ:THREAT_ANALYTICS"),
-            ("TD_THREAT_EVENTS","READ:THREAT_EVENT"),
-            ("TD_ASN_ASSIGNMENTS","READ:TENANT_ASN"),
-            ("TS_USERS","READ:TENANT_USER"),
-            ("TS_ROLES","READ:TENANT_ROLE")
+            { "2.1.1", new[] { "READ:THREAT_ANALYTICS" } },
+            { "2.2.1", new[] { "READ:THREAT_ANALYTICS" } },
+            { "2.2.2", new[] { "READ:THREAT_ANALYTICS" } },
+            { "2.2.3", new[] { "READ:THREAT_ANALYTICS" } },
+            { "2.2.4", new[] { "READ:THREAT_ANALYTICS" } },
+            { "2.3.1", new[] { "READ:USER" } },
+            { "2.3.2", new[] { "READ:ROLE" } },
+            { "2.3.3", new[] { "READ:PERMISSION" } },
+            { "2.4.1", new[] { "READ:TENANT" } },
+            { "2.4.2", new[] { "READ:TENANT_ROLE" } },
+            { "2.4.3", new[] { "READ:TENANT_USER" } },
+            { "2.4.4", new[] { "READ:COUNTRY" } },
+            { "2.5.1", new[] { "READ:PROTOCOL" } },
+            { "2.5.2", new[] { "READ:ASN_REGISTRY" } },
+            { "2.5.3", new[] { "READ:MALWARE_FAMILY" } },
+            { "2.5.4", new[] { "READ:LOGIN_METHOD" } },
+            { "2.5.5", new[] { "READ:PAGES" } },
         };
 
         var pages = (await _pageRepo.GetAllAsync(ct)).ToDictionary(p => p.Code, p => p.Id);
-        var tenantPermissions = await _tenantPermissionRepo.GetAllAsync(ct);
+        IEnumerable<TenantPermission> tenantPermissions = await _tenantPermissionRepo.GetAllAsync(ct);
         var permLookup = tenantPermissions.ToDictionary(p => $"{p.ActionCode}:{p.ResourceCode}", p => p.Id);
 
-        foreach (var m in mappings)
+        foreach (KeyValuePair<string, string[]> kvp in pageTenantPermissionMap)
         {
-            if (!pages.TryGetValue(m.PageCode, out var pageId))
+            string pageCode = kvp.Key;
+            string[] permissionCodes = kvp.Value;
+            if (!pages.TryGetValue(pageCode, out Guid pageId))
             {
-                _logger.LogWarning("Tenant page code {PageCode} not found for tenant permission mapping {PermissionCode}", m.PageCode, m.TenantPermissionCode);
+                _logger.LogWarning("Tenant page code {PageCode} not found for tenant permission mapping", pageCode);
                 continue;
             }
-            if (!permLookup.TryGetValue(m.TenantPermissionCode, out var tenantPermId))
+            foreach (string permissionCode in permissionCodes)
             {
-                _logger.LogWarning("Tenant permission {PermissionCode} not found when mapping to page {PageCode}", m.TenantPermissionCode, m.PageCode);
-                continue;
-            }
-            bool exists = await _pageTenantPermissionRepo.FirstOrDefaultAsync(pp => pp.PageId == pageId && pp.TenantPermissionId == tenantPermId, ct) != null;
-            if (!exists)
-            {
-                await _pageTenantPermissionRepo.AddAsync(new PageTenantPermission { PageId = pageId, TenantPermissionId = tenantPermId }, ct);
-                _logger.LogInformation("Linked tenant page {PageCode} -> tenant permission {PermissionCode}", m.PageCode, m.TenantPermissionCode);
+                if (!permLookup.TryGetValue(permissionCode, out Guid tenantPermId))
+                {
+                    _logger.LogWarning("Tenant permission {PermissionCode} not found when mapping to page {PageCode}", permissionCode, pageCode);
+                    continue;
+                }
+                bool exists = await _pageTenantPermissionRepo.FirstOrDefaultAsync(pp => pp.PageId == pageId && pp.TenantPermissionId == tenantPermId, ct) != null;
+                if (!exists)
+                {
+                    await _pageTenantPermissionRepo.AddAsync(new PageTenantPermission { PageId = pageId, TenantPermissionId = tenantPermId }, ct);
+                    _logger.LogInformation("Linked tenant page {PageCode} -> tenant permission {PermissionCode}", pageCode, permissionCode);
+                }
             }
         }
     }

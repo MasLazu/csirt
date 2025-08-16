@@ -54,9 +54,12 @@ public class GetAccessiblePagesQueryHandler : IRequestHandler<GetAccessiblePages
 
         foreach (PageGroup pageGroup in pageGroups)
         {
-            pageGroup.Pages = accessiblePages.Where(p => p.PageGroupId == pageGroup.Id).ToHashSet();
+            pageGroup.Pages = accessiblePages.Where(p => p.PageGroupId == pageGroup.Id)
+                .OrderBy(p => p.Code)
+                .ToList();
         }
 
-        return pageGroups.Adapt<IEnumerable<PageGroupDto>>();
+        IEnumerable<PageGroup> orderedGroups = pageGroups.OrderBy(pg => pg.Code);
+        return orderedGroups.Adapt<IEnumerable<PageGroupDto>>();
     }
 }

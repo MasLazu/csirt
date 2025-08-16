@@ -45,7 +45,7 @@ public class GetTenantRolesPaginatedQueryHandler : IRequestHandler<GetTenantRole
             take: request.ValidatedPageSize,
             ct: ct);
 
-        var rolesDtos = tenantRoles.Adapt<IEnumerable<RoleDto>>() ?? Enumerable.Empty<RoleDto>();
+        IEnumerable<RoleDto> rolesDtos = tenantRoles.Adapt<IEnumerable<RoleDto>>() ?? Enumerable.Empty<RoleDto>();
 
         return new PaginatedDto<RoleDto>
         {

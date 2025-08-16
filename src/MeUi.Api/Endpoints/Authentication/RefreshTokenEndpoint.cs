@@ -30,6 +30,14 @@ public class RefreshTokenEndpoint : BaseEndpointWithoutRequest<AccessTokenRespon
 
         TokenRefreshResponse tokenResponse = await Mediator.Send(command, ct);
 
+        HttpContext.Response.Cookies.Append("refreshToken", tokenResponse.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddDays(30)
+        });
+
         await SendSuccessAsync(new AccessTokenResponseData()
         {
             AccessToken = tokenResponse.AccessToken,
