@@ -10,6 +10,8 @@ public class GetProtocolsPaginatedQueryValidator : AbstractValidator<GetProtocol
         RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
         RuleFor(x => x.SortBy).Must(BeValidSort).When(x => !string.IsNullOrWhiteSpace(x.SortBy))
             .WithMessage("SortBy must be one of: name, createdAt, updatedAt");
+        RuleFor(x => x.SortDirection).Must(sd => sd.ToLowerInvariant() is "asc" or "desc")
+            .WithMessage("SortDirection must be either 'asc' or 'desc'");
     }
 
     private static bool BeValidSort(string? sort) => sort?.ToLowerInvariant() is "name" or "createdat" or "updatedat";

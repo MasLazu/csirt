@@ -9,7 +9,7 @@ public class GetProtocolsPaginatedQuery : IRequest<PaginatedDto<ProtocolDto>>, I
     public int PageSize { get; set; } = 25;
     public string? Search { get; set; }
     public string? SortBy { get; set; }
-    public bool IsDescending { get; set; }
+    public string SortDirection { get; set; }
     public Guid TenantId { get; set; }
 
     public int ValidatedPage => Page < 1 ? 1 : Page;
