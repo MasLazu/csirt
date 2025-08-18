@@ -1,0 +1,584 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["threat-intelligence"],
+      "title": "Threat Intelligence Sections",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  $__timeGroup(\"Timestamp\", '1h') as time,\n  EXTRACT(HOUR FROM \"Timestamp\") as \"Hour\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\"\nWHERE \"DeletedAt\" IS NULL \n  AND $__timeFilter(\"Timestamp\")\nGROUP BY time, EXTRACT(HOUR FROM \"Timestamp\")\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "⏰ 24-Hour Attack Pattern Analysis",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  CASE \n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 0 THEN 'Sunday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 1 THEN 'Monday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 2 THEN 'Tuesday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 3 THEN 'Wednesday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 4 THEN 'Thursday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 5 THEN 'Friday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 6 THEN 'Saturday'\n  END as \"Day of Week\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\"\nWHERE \"DeletedAt\" IS NULL \n  AND $__timeFilter(\"Timestamp\")\nGROUP BY EXTRACT(DOW FROM \"Timestamp\")\nORDER BY EXTRACT(DOW FROM \"Timestamp\")",
+          "refId": "A"
+        }
+      ],
+      "title": "📅 Weekly Attack Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "color": {
+          "mode": "scheme",
+          "scheme": "Oranges",
+          "steps": 64
+        },
+        "legend": {
+          "show": true
+        },
+        "tooltip": {
+          "show": true
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "unit": "short"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  EXTRACT(HOUR FROM \"Timestamp\") as \"Hour\",\n  CASE \n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 0 THEN 'Sunday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 1 THEN 'Monday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 2 THEN 'Tuesday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 3 THEN 'Wednesday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 4 THEN 'Thursday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 5 THEN 'Friday'\n    WHEN EXTRACT(DOW FROM \"Timestamp\") = 6 THEN 'Saturday'\n  END as \"Day of Week\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\"\nWHERE \"DeletedAt\" IS NULL \n  AND $__timeFilter(\"Timestamp\")\nGROUP BY EXTRACT(HOUR FROM \"Timestamp\"), EXTRACT(DOW FROM \"Timestamp\")\nORDER BY \"Hour\", EXTRACT(DOW FROM \"Timestamp\")",
+          "refId": "A"
+        }
+      ],
+      "title": "🔥 Threat Activity Heatmap (Hour vs Day)",
+      "type": "heatmap"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 5000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg Events/Hour"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  EXTRACT(HOUR FROM \"Timestamp\") as \"Hour (24H Format)\",\n  \"Category\" as \"Attack Category\",\n  COUNT(*) as \"Total Events\",\n  COUNT(DISTINCT \"SourceAddress\") as \"Unique Sources\",\n  COUNT(DISTINCT \"DestinationPort\") as \"Ports Targeted\",\n  ROUND(COUNT(*)::numeric / 7, 2) as \"Avg Events/Hour\"\nFROM \"ThreatEvents\"\nWHERE \"DeletedAt\" IS NULL \n  AND $__timeFilter(\"Timestamp\")\nGROUP BY EXTRACT(HOUR FROM \"Timestamp\"), \"Category\"\nHAVING COUNT(*) > 5\nORDER BY \"Total Events\" DESC\nLIMIT 50",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Peak Activity Hours by Attack Category",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH time_patterns AS (\n  SELECT \n    $__timeGroup(\"Timestamp\", $__interval) as time,\n    CASE \n      WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 6 AND 12 THEN 'Morning (6-12)'\n      WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 13 AND 18 THEN 'Afternoon (13-18)'\n      WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 19 AND 23 THEN 'Evening (19-23)'\n      ELSE 'Night (0-5)'\n    END as \"Time Period\",\n    COUNT(*) as \"Events\"\n  FROM \"ThreatEvents\"\n  WHERE \"DeletedAt\" IS NULL \n    AND $__timeFilter(\"Timestamp\")\n  GROUP BY time, EXTRACT(HOUR FROM \"Timestamp\")\n)\nSELECT \n  time,\n  \"Time Period\",\n  SUM(\"Events\") as \"Events\"\nFROM time_patterns\nGROUP BY time, \"Time Period\"\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "🌅 Attack Patterns by Time of Day",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  $__timeGroup(\"Timestamp\", '1d') as time,\n  CASE \n    WHEN EXTRACT(DOW FROM \"Timestamp\") IN (0, 6) THEN 'Weekend'\n    ELSE 'Weekday'\n  END as \"Day Type\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\"\nWHERE \"DeletedAt\" IS NULL \n  AND $__timeFilter(\"Timestamp\")\nGROUP BY time, EXTRACT(DOW FROM \"Timestamp\")\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "📈 Weekday vs Weekend Attack Trends",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 7,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH campaign_duration AS (\n  SELECT \n    te.\"SourceAddress\",\n    c.\"Name\" as \"Country\",\n    MIN(te.\"Timestamp\") as first_seen,\n    MAX(te.\"Timestamp\") as last_seen,\n    COUNT(*) as total_events,\n    EXTRACT(EPOCH FROM (MAX(te.\"Timestamp\") - MIN(te.\"Timestamp\"))) / 3600 as duration_hours\n  FROM \"ThreatEvents\" te\n  JOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\n  WHERE te.\"DeletedAt\" IS NULL \n    AND $__timeFilter(te.\"Timestamp\")\n  GROUP BY te.\"SourceAddress\", c.\"Name\"\n  HAVING COUNT(*) > 20\n)\nSELECT \n  \"SourceAddress\" as \"Source IP\",\n  \"Country\",\n  total_events as \"Total Events\",\n  ROUND(duration_hours::numeric, 2) as \"Campaign Duration (Hours)\",\n  ROUND((total_events::numeric / GREATEST(duration_hours, 1))::numeric, 2) as \"Events per Hour\",\n  first_seen as \"Campaign Start\",\n  last_seen as \"Campaign End\"\nFROM campaign_duration\nWHERE duration_hours > 1\nORDER BY \"Events per Hour\" DESC\nLIMIT 30",
+          "refId": "A"
+        }
+      ],
+      "title": "⏱️ Attack Campaign Duration Analysis",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 8,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH monthly_trends AS (\n  SELECT \n    DATE_TRUNC('month', \"Timestamp\") as month,\n    \"Category\",\n    COUNT(*) as events\n  FROM \"ThreatEvents\"\n  WHERE \"DeletedAt\" IS NULL \n    AND \"Timestamp\" >= NOW() - INTERVAL '12 months'\n  GROUP BY DATE_TRUNC('month', \"Timestamp\"), \"Category\"\n),\nmonthly_growth AS (\n  SELECT \n    month,\n    \"Category\",\n    events,\n    LAG(events) OVER (PARTITION BY \"Category\" ORDER BY month) as prev_month_events,\n    CASE \n      WHEN LAG(events) OVER (PARTITION BY \"Category\" ORDER BY month) > 0 THEN\n        ROUND(((events - LAG(events) OVER (PARTITION BY \"Category\" ORDER BY month))::numeric / \n               LAG(events) OVER (PARTITION BY \"Category\" ORDER BY month) * 100)::numeric, 2)\n      ELSE 0\n    END as growth_rate\n  FROM monthly_trends\n)\nSELECT \n  TO_CHAR(month, 'YYYY-MM') as \"Month\",\n  \"Category\" as \"Attack Category\",\n  events as \"Events\",\n  prev_month_events as \"Previous Month\",\n  growth_rate as \"Growth Rate (%)\"\nFROM monthly_growth\nWHERE prev_month_events IS NOT NULL\n  AND events > 50\nORDER BY month DESC, \"Growth Rate (%)\" DESC\nLIMIT 40",
+          "refId": "A"
+        }
+      ],
+      "title": "📈 Monthly Growth Rate Analysis",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["threat-intelligence", "temporal"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "⏰ Threat Intelligence - Temporal Analysis",
+  "uid": "threat-intel-temporal",
+  "version": 0,
+  "weekStart": ""
+}

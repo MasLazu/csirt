@@ -1,0 +1,452 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["threat-intelligence"],
+      "title": "Threat Intelligence Sections",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  $__timeGroup(te.\"Timestamp\", $__interval) as time,\n  c.\"Name\" as \"Country\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY time, c.\"Name\"\nHAVING COUNT(*) > 5\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "🌍 Geographic Attack Trends Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  c.\"Name\" as \"Country\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY c.\"Name\"\nORDER BY \"Events\" DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "🏆 Country Attack Rankings",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Events"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 3,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  c.\"Name\" as \"Country\",\n  ar.\"Number\" as \"ASN\",\n  ar.\"Description\" as \"ASN Description\",\n  COUNT(*) as \"Events\",\n  COUNT(DISTINCT \"SourceAddress\") as \"Unique IPs\",\n  COUNT(DISTINCT \"Category\") as \"Categories\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nJOIN \"AsnRegistries\" ar ON te.\"AsnRegistryId\" = ar.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY c.\"Name\", ar.\"Number\", ar.\"Description\"\nORDER BY \"Events\" DESC\nLIMIT 25",
+          "refId": "A"
+        }
+      ],
+      "title": "🔗 Country-ASN Correlation Matrix",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  CASE \n    WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 0 AND 5 THEN 'Night Hours (00-05 UTC)'\n    WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 6 AND 11 THEN 'Morning Hours (06-11 UTC)'\n    WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 12 AND 17 THEN 'Afternoon Hours (12-17 UTC)'\n    WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 18 AND 23 THEN 'Evening Hours (18-23 UTC)'\n  END as \"Time Period (UTC)\",\n  c.\"Name\" as \"Country\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY \n  CASE \n    WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 0 AND 5 THEN 'Night Hours (00-05 UTC)'\n    WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 6 AND 11 THEN 'Morning Hours (06-11 UTC)'\n    WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 12 AND 17 THEN 'Afternoon Hours (12-17 UTC)'\n    WHEN EXTRACT(HOUR FROM \"Timestamp\") BETWEEN 18 AND 23 THEN 'Evening Hours (18-23 UTC)'\n  END, c.\"Name\"\nHAVING COUNT(*) > 10\nORDER BY \"Events\" DESC\nLIMIT 40",
+          "refId": "A"
+        }
+      ],
+      "title": "🕐 Regional Time Zone Activity",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH country_category AS (\n  SELECT \n    c.\"Name\" as \"Source Country\",\n    dc.\"Name\" as \"Destination Country\",\n    \"Category\",\n    COUNT(*) as \"Events\"\n  FROM \"ThreatEvents\" te\n  JOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\n  LEFT JOIN \"Countries\" dc ON te.\"DestinationCountryId\" = dc.\"Id\"\n  WHERE te.\"DeletedAt\" IS NULL \n    AND $__timeFilter(te.\"Timestamp\")\n    AND te.\"DestinationCountryId\" IS NOT NULL\n  GROUP BY c.\"Name\", dc.\"Name\", \"Category\"\n  HAVING COUNT(*) > 10\n)\nSELECT \n  \"Source Country\",\n  \"Destination Country\", \n  \"Category\",\n  \"Events\"\nFROM country_category\nORDER BY \"Events\" DESC\nLIMIT 30",
+          "refId": "A"
+        }
+      ],
+      "title": "🌐 Cross-Border Attack Flows",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  $__timeGroup(te.\"Timestamp\", $__interval) as time,\n  \"Category\",\n  c.\"Name\" as \"Country\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND c.\"Name\" IN (\n    SELECT c2.\"Name\" \n    FROM \"ThreatEvents\" te2\n    JOIN \"Countries\" c2 ON te2.\"SourceCountryId\" = c2.\"Id\"\n    WHERE te2.\"DeletedAt\" IS NULL \n      AND $__timeFilter(te2.\"Timestamp\")\n    GROUP BY c2.\"Name\"\n    ORDER BY COUNT(*) DESC\n    LIMIT 5\n  )\nGROUP BY time, \"Category\", c.\"Name\"\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Top Countries - Category Timeline Analysis",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["threat-intelligence", "geographic"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "🌍 Threat Intelligence - Geographic Intelligence",
+  "uid": "threat-intel-geographic",
+  "version": 0,
+  "weekStart": ""
+}

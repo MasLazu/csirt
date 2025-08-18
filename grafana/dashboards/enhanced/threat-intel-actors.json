@@ -1,0 +1,604 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["threat-intelligence"],
+      "title": "Threat Intelligence Sections",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Actor Threat Score"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH actor_profiles AS (\n  SELECT \n    \"SourceAddress\",\n    c.\"Name\" as source_country,\n    ar.\"Number\" as asn,\n    COUNT(*) as total_events,\n    COUNT(DISTINCT \"DestinationPort\") as ports_targeted,\n    COUNT(DISTINCT \"Category\") as attack_categories,\n    COUNT(DISTINCT \"DestinationAddress\") as targets,\n    COUNT(DISTINCT te.\"MalwareFamilyId\") as malware_families,\n    MIN(\"Timestamp\") as first_seen,\n    MAX(\"Timestamp\") as last_seen,\n    EXTRACT(EPOCH FROM (MAX(\"Timestamp\") - MIN(\"Timestamp\"))) / 86400 as campaign_days\n  FROM \"ThreatEvents\" te\n  JOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\n  JOIN \"AsnRegistries\" ar ON te.\"AsnRegistryId\" = ar.\"Id\"\n  WHERE te.\"DeletedAt\" IS NULL \n    AND $__timeFilter(te.\"Timestamp\")\n  GROUP BY \"SourceAddress\", c.\"Name\", ar.\"Number\"\n  HAVING COUNT(*) > 20\n)\nSELECT \n  \"SourceAddress\" as \"Actor IP\",\n  source_country as \"Origin Country\",\n  asn as \"ASN\",\n  total_events as \"Total Attacks\",\n  ports_targeted as \"Ports Targeted\",\n  attack_categories as \"Attack Types\",\n  targets as \"Unique Targets\",\n  malware_families as \"Malware Used\",\n  ROUND(campaign_days::numeric, 1) as \"Campaign Duration (Days)\",\n  (total_events * ports_targeted * attack_categories + targets * malware_families) as \"Actor Threat Score\",\n  first_seen as \"First Seen\",\n  last_seen as \"Last Seen\"\nFROM actor_profiles\nORDER BY \"Actor Threat Score\" DESC\nLIMIT 30",
+          "refId": "A"
+        }
+      ],
+      "title": "🎭 Threat Actor Profiling & Attribution",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH actor_countries AS (\n  SELECT \n    c.\"Name\" as \"Country\",\n    COUNT(DISTINCT \"SourceAddress\") as \"Unique Actors\"\n  FROM \"ThreatEvents\" te\n  JOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\n  WHERE te.\"DeletedAt\" IS NULL \n    AND $__timeFilter(te.\"Timestamp\")\n  GROUP BY c.\"Name\"\n  HAVING COUNT(DISTINCT \"SourceAddress\") > 5\n)\nSELECT \"Country\", \"Unique Actors\"\nFROM actor_countries\nORDER BY \"Unique Actors\" DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "🌍 Actor Distribution by Country",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH actor_asn AS (\n  SELECT \n    ar.\"Number\" as \"ASN\",\n    COUNT(DISTINCT \"SourceAddress\") as \"Actors\"\n  FROM \"ThreatEvents\" te\n  JOIN \"AsnRegistries\" ar ON te.\"AsnRegistryId\" = ar.\"Id\"\n  WHERE te.\"DeletedAt\" IS NULL \n    AND $__timeFilter(te.\"Timestamp\")\n  GROUP BY ar.\"Number\"\n  HAVING COUNT(DISTINCT \"SourceAddress\") > 3\n)\nSELECT \n  CAST(\"ASN\" as TEXT) as \"ASN\",\n  \"Actors\"\nFROM actor_asn\nORDER BY \"Actors\" DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "🏢 Most Active ASNs (Actor Concentration)",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH top_actors AS (\n  SELECT \"SourceAddress\"\n  FROM \"ThreatEvents\"\n  WHERE \"DeletedAt\" IS NULL \n    AND $__timeFilter(\"Timestamp\")\n  GROUP BY \"SourceAddress\"\n  HAVING COUNT(*) > 100\n  ORDER BY COUNT(*) DESC\n  LIMIT 10\n)\nSELECT \n  $__timeGroup(te.\"Timestamp\", $__interval) as time,\n  te.\"SourceAddress\" as \"Actor IP\",\n  COUNT(*) as \"Activity\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND te.\"SourceAddress\" IN (SELECT \"SourceAddress\" FROM top_actors)\nGROUP BY time, te.\"SourceAddress\"\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Top Threat Actor Activity Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH actor_profiles AS (\n  SELECT \n    te.\"SourceAddress\",\n    COUNT(*) as total_events,\n    COUNT(DISTINCT te.\"Category\") as attack_types,\n    COUNT(DISTINCT te.\"DestinationPort\") as ports_used,\n    COUNT(DISTINCT COALESCE(mf.\"Name\", 'Unknown')) as malware_families,\n    STRING_AGG(DISTINCT te.\"Category\", ',') as attack_signature,\n    STRING_AGG(DISTINCT te.\"DestinationPort\"::text, ',') as port_signature\n  FROM \"ThreatEvents\" te\n  LEFT JOIN \"MalwareFamilies\" mf ON te.\"MalwareFamilyId\" = mf.\"Id\"\n  WHERE te.\"DeletedAt\" IS NULL \n    AND $__timeFilter(te.\"Timestamp\")\n  GROUP BY te.\"SourceAddress\"\n  HAVING COUNT(*) > 15\n),\nactor_similarity AS (\n  SELECT \n    a1.\"SourceAddress\" as \"Actor 1\",\n    a2.\"SourceAddress\" as \"Actor 2\",\n    a1.attack_types as \"A1 Attack Types\",\n    a2.attack_types as \"A2 Attack Types\",\n    a1.ports_used as \"A1 Ports\",\n    a2.ports_used as \"A2 Ports\",\n    a1.malware_families as \"A1 Malware\",\n    a2.malware_families as \"A2 Malware\",\n    LEAST(a1.attack_types, a2.attack_types) as \"Common Attack Types\",\n    LEAST(a1.ports_used, a2.ports_used) as \"Common Ports\",\n    LEAST(a1.malware_families, a2.malware_families) as \"Common Malware\",\n    (LEAST(a1.attack_types, a2.attack_types) + LEAST(a1.ports_used, a2.ports_used) + LEAST(a1.malware_families, a2.malware_families)) as \"Similarity Score\"\n  FROM actor_profiles a1\n  JOIN actor_profiles a2 ON a1.\"SourceAddress\" < a2.\"SourceAddress\"\n  WHERE a1.attack_types > 1 AND a2.attack_types > 1\n)\nSELECT *\nFROM actor_similarity\nWHERE \"Similarity Score\" > 2\nORDER BY \"Similarity Score\" DESC\nLIMIT 25",
+          "refId": "A"
+        }
+      ],
+      "title": "🔗 Actor Behavior Correlation & Clustering",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "id": 6,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH actor_ttp AS (\n  SELECT \n    \"SourceAddress\",\n    CASE \n      WHEN \"Category\" LIKE '%scan%' OR \"Category\" LIKE '%recon%' THEN 'Reconnaissance'\n      WHEN \"Category\" LIKE '%brute%' OR \"Category\" LIKE '%login%' THEN 'Credential Access'\n      WHEN \"Category\" LIKE '%malware%' OR \"Category\" LIKE '%trojan%' THEN 'Malware Deployment'\n      WHEN \"Category\" LIKE '%ddos%' OR \"Category\" LIKE '%dos%' THEN 'Impact/DoS'\n      WHEN \"Category\" LIKE '%exploit%' OR \"Category\" LIKE '%vulnerability%' THEN 'Exploitation'\n      ELSE 'Other'\n    END as ttp_category,\n    COUNT(*) as events\n  FROM \"ThreatEvents\"\n  WHERE \"DeletedAt\" IS NULL \n    AND $__timeFilter(\"Timestamp\")\n  GROUP BY \"SourceAddress\", ttp_category\n  HAVING COUNT(*) > 10\n),\nactor_ttp_profile AS (\n  SELECT \n    \"SourceAddress\",\n    STRING_AGG(ttp_category || ' (' || events || ')', ', ' ORDER BY events DESC) as ttp_profile,\n    COUNT(DISTINCT ttp_category) as ttp_diversity,\n    SUM(events) as total_events\n  FROM actor_ttp\n  GROUP BY \"SourceAddress\"\n)\nSELECT \n  \"SourceAddress\" as \"Actor IP\",\n  ttp_profile as \"TTP Profile (Events)\",\n  ttp_diversity as \"TTP Diversity\",\n  total_events as \"Total Events\"\nFROM actor_ttp_profile\nORDER BY ttp_diversity DESC, total_events DESC\nLIMIT 25",
+          "refId": "A"
+        }
+      ],
+      "title": "⚔️ Actor TTP (Tactics, Techniques, Procedures) Analysis",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH actor_persistence AS (\n  SELECT \n    \"SourceAddress\",\n    EXTRACT(EPOCH FROM (MAX(\"Timestamp\") - MIN(\"Timestamp\"))) / 86400 as campaign_days,\n    COUNT(*) as total_events\n  FROM \"ThreatEvents\"\n  WHERE \"DeletedAt\" IS NULL \n    AND $__timeFilter(\"Timestamp\")\n  GROUP BY \"SourceAddress\"\n  HAVING COUNT(*) > 10\n),\npersistence_categories AS (\n  SELECT \n    CASE \n      WHEN campaign_days < 1 THEN 'Short-term (< 1 day)'\n      WHEN campaign_days < 7 THEN 'Medium-term (1-7 days)'\n      WHEN campaign_days < 30 THEN 'Long-term (1-4 weeks)'\n      ELSE 'Persistent (> 1 month)'\n    END as \"Persistence Type\",\n    COUNT(*) as \"Actors\"\n  FROM actor_persistence\n  GROUP BY \n    CASE \n      WHEN campaign_days < 1 THEN 'Short-term (< 1 day)'\n      WHEN campaign_days < 7 THEN 'Medium-term (1-7 days)'\n      WHEN campaign_days < 30 THEN 'Long-term (1-4 weeks)'\n      ELSE 'Persistent (> 1 month)'\n    END\n)\nSELECT \"Persistence Type\", \"Actors\"\nFROM persistence_categories\nORDER BY \"Actors\" DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "🔄 Actor Persistence Patterns",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 5000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "id": 8,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH actor_evolution AS (\n  SELECT \n    \"SourceAddress\",\n    DATE_TRUNC('day', \"Timestamp\") as attack_day,\n    COUNT(*) as daily_events,\n    COUNT(DISTINCT \"DestinationPort\") as daily_ports,\n    COUNT(DISTINCT \"Category\") as daily_categories\n  FROM \"ThreatEvents\"\n  WHERE \"DeletedAt\" IS NULL \n    AND $__timeFilter(\"Timestamp\")\n  GROUP BY \"SourceAddress\", DATE_TRUNC('day', \"Timestamp\")\n  HAVING COUNT(*) > 5\n),\nevolution_metrics AS (\n  SELECT \n    \"SourceAddress\",\n    COUNT(DISTINCT attack_day) as active_days,\n    AVG(daily_events) as avg_daily_events,\n    MAX(daily_events) as peak_daily_events,\n    AVG(daily_ports) as avg_ports_per_day,\n    AVG(daily_categories) as avg_categories_per_day,\n    STDDEV(daily_events) as event_variance\n  FROM actor_evolution\n  GROUP BY \"SourceAddress\"\n  HAVING COUNT(DISTINCT attack_day) > 2\n)\nSELECT \n  \"SourceAddress\" as \"Actor IP\",\n  active_days as \"Active Days\",\n  ROUND(avg_daily_events::numeric, 1) as \"Avg Events/Day\",\n  peak_daily_events as \"Peak Events/Day\",\n  ROUND(avg_ports_per_day::numeric, 1) as \"Avg Ports/Day\",\n  ROUND(avg_categories_per_day::numeric, 1) as \"Avg Categories/Day\",\n  ROUND(COALESCE(event_variance, 0)::numeric, 1) as \"Event Variance\"\nFROM evolution_metrics\nORDER BY \"Peak Events/Day\" DESC\nLIMIT 25",
+          "refId": "A"
+        }
+      ],
+      "title": "📈 Actor Campaign Evolution & Intensity",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["threat-intelligence", "attribution"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "🎭 Threat Intelligence - Threat Actors & Attribution",
+  "uid": "threat-intel-actors",
+  "version": 0,
+  "weekStart": ""
+}

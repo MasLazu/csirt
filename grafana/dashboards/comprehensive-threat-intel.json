@@ -727,7 +727,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH this_week AS (\n  SELECT \"Category\", COUNT(*) as current_count\n  FROM \"ThreatEvents\" \n  WHERE \"DeletedAt\" IS NULL \n    AND \"Timestamp\" >= DATE_TRUNC('week', NOW())\n  GROUP BY \"Category\"\n),\nlast_week AS (\n  SELECT \"Category\", COUNT(*) as previous_count\n  FROM \"ThreatEvents\" \n  WHERE \"DeletedAt\" IS NULL \n    AND \"Timestamp\" >= DATE_TRUNC('week', NOW()) - INTERVAL '7 days'\n    AND \"Timestamp\" < DATE_TRUNC('week', NOW())\n  GROUP BY \"Category\"\n)\nSELECT \n  COALESCE(tw.\"Category\", lw.\"Category\") as \"Category\",\n  COALESCE(tw.current_count, 0) as \"This Week\",\n  COALESCE(lw.previous_count, 0) as \"Last Week\",\n  CASE \n    WHEN COALESCE(lw.previous_count, 0) = 0 THEN 999\n    ELSE ROUND(((COALESCE(tw.current_count, 0) - COALESCE(lw.previous_count, 0)) * 100.0 / lw.previous_count), 2)\n  END as \"Growth Rate %\"\nFROM this_week tw\nFULL OUTER JOIN last_week lw ON tw.\"Category\" = lw.\"Category\"\nORDER BY \"Growth Rate %\" DESC\nLIMIT 5",
+          "rawSql": "SELECT \n  \"Category\",\n  COUNT(*) as \"Current Period Events\",\n  LAG(COUNT(*), 1) OVER (PARTITION BY \"Category\" ORDER BY DATE_TRUNC('week', \"Timestamp\")) as \"Previous Period\",\n  CASE \n    WHEN LAG(COUNT(*), 1) OVER (PARTITION BY \"Category\" ORDER BY DATE_TRUNC('week', \"Timestamp\")) = 0 THEN 100\n    ELSE ROUND(((COUNT(*) - LAG(COUNT(*), 1) OVER (PARTITION BY \"Category\" ORDER BY DATE_TRUNC('week', \"Timestamp\"))) * 100.0 / LAG(COUNT(*), 1) OVER (PARTITION BY \"Category\" ORDER BY DATE_TRUNC('week', \"Timestamp\"))), 2)\n  END as \"Growth Rate %\"\nFROM \"ThreatEvents\" \nWHERE \"DeletedAt\" IS NULL \n  AND $__timeFilter(\"Timestamp\")\nGROUP BY \"Category\", DATE_TRUNC('week', \"Timestamp\")\nHAVING COUNT(*) > 100\nORDER BY \"Growth Rate %\" DESC NULLS LAST\nLIMIT 10",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1805,7 +1805,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  mf.\"Name\" as \"Malware Family\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"MalwareFamilies\" mf ON te.\"MalwareFamilyId\" = mf.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND te.\"Timestamp\" >= NOW() - INTERVAL '30 days'\nGROUP BY mf.\"Name\"\nORDER BY \"Events\" DESC",
+          "rawSql": "SELECT \n  mf.\"Name\" as \"Malware Family\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"MalwareFamilies\" mf ON te.\"MalwareFamilyId\" = mf.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY mf.\"Name\"\nORDER BY \"Events\" DESC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1959,7 +1959,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  mf.\"Name\" as \"Malware Family\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"MalwareFamilies\" mf ON te.\"MalwareFamilyId\" = mf.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND te.\"Timestamp\" >= NOW() - INTERVAL '30 days'\nGROUP BY mf.\"Name\"\nORDER BY \"Events\" DESC\nLIMIT 10",
+          "rawSql": "SELECT \n  mf.\"Name\" as \"Malware Family\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"MalwareFamilies\" mf ON te.\"MalwareFamilyId\" = mf.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY mf.\"Name\"\nORDER BY \"Events\" DESC\nLIMIT 10",
           "refId": "A",
           "sql": {
             "columns": [
@@ -2055,7 +2055,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  te.\"Category\",\n  mf.\"Name\" as \"Malware Family\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"MalwareFamilies\" mf ON te.\"MalwareFamilyId\" = mf.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND te.\"Timestamp\" >= NOW() - INTERVAL '30 days'\nGROUP BY te.\"Category\", mf.\"Name\"\nHAVING COUNT(*) > 10\nORDER BY \"Events\" DESC",
+          "rawSql": "SELECT \n  te.\"Category\",\n  mf.\"Name\" as \"Malware Family\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"MalwareFamilies\" mf ON te.\"MalwareFamilyId\" = mf.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY te.\"Category\", mf.\"Name\"\nHAVING COUNT(*) > 1\nORDER BY \"Events\" DESC",
           "refId": "A",
           "sql": {
             "columns": [

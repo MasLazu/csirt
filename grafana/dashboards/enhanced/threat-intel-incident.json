@@ -1,0 +1,259 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["threat-intelligence"],
+      "title": "Threat Intelligence Sections",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Priority"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  te.\"SourceAddress\" as \"Source IP\",\n  c.\"Name\" as \"Source Country\",\n  te.\"Category\" as \"Incident Type\",\n  COUNT(*) as \"Event Count\",\n  MIN(te.\"Timestamp\") as \"First Detected\",\n  MAX(te.\"Timestamp\") as \"Last Activity\",\n  EXTRACT(EPOCH FROM (MAX(te.\"Timestamp\") - MIN(te.\"Timestamp\"))) / 3600 as \"Duration (Hours)\",\n  CASE \n    WHEN COUNT(*) > 100 THEN 'Critical'\n    WHEN COUNT(*) > 50 THEN 'High'\n    WHEN COUNT(*) > 20 THEN 'Medium'\n    ELSE 'Low'\n  END as \"Severity\",\n  CASE \n    WHEN MAX(te.\"Timestamp\") > NOW() - INTERVAL '4 hours' THEN 'Active'\n    WHEN MAX(te.\"Timestamp\") > NOW() - INTERVAL '24 hours' THEN 'Recent'\n    ELSE 'Historical'\n  END as \"Status\",\n  COUNT(*) as \"Priority\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY te.\"SourceAddress\", c.\"Name\", te.\"Category\"\nHAVING COUNT(*) > 5\nORDER BY \"Priority\" DESC, \"Last Activity\" DESC\nLIMIT 30",
+          "refId": "A"
+        }
+      ],
+      "title": "🚨 Active Incident Status Board",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH severity_counts AS (\n  SELECT \n    te.\"SourceAddress\",\n    COUNT(*) as event_count,\n    CASE \n      WHEN COUNT(*) > 100 THEN 'Critical'\n      WHEN COUNT(*) > 50 THEN 'High'\n      WHEN COUNT(*) > 20 THEN 'Medium'\n      ELSE 'Low'\n    END as severity_level\n  FROM \"ThreatEvents\" te\n  WHERE te.\"DeletedAt\" IS NULL \n    AND $__timeFilter(te.\"Timestamp\")\n  GROUP BY te.\"SourceAddress\"\n  HAVING COUNT(*) > 5\n)\nSELECT \n  severity_level as \"Severity Level\",\n  COUNT(*) as \"Incidents\"\nFROM severity_counts\nGROUP BY severity_level\nORDER BY \n  CASE severity_level\n    WHEN 'Critical' THEN 1\n    WHEN 'High' THEN 2\n    WHEN 'Medium' THEN 3\n    WHEN 'Low' THEN 4\n  END",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Incident Severity Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "h"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  $__timeGroup(te.\"Timestamp\", $__interval) as time,\n  'Detection to Initial Response' as metric,\n  AVG(EXTRACT(EPOCH FROM (te.\"Timestamp\" + INTERVAL '2 hours' - te.\"Timestamp\")) / 3600) as \"Hours\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY time\n\nUNION ALL\n\nSELECT \n  $__timeGroup(te.\"Timestamp\", $__interval) as time,\n  'Full Resolution Time' as metric,\n  AVG(EXTRACT(EPOCH FROM (te.\"Timestamp\" + INTERVAL '8 hours' - te.\"Timestamp\")) / 3600) as \"Hours\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "⏱️ Response Time Metrics (MTTR Simulation)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["threat-intelligence", "incident-response"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "🚨 Threat Intelligence - Incident Response",
+  "uid": "threat-intel-incident",
+  "version": 0,
+  "weekStart": ""
+}
