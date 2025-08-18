@@ -10,4 +10,5 @@ public record UpdateUserCommand : IRequest<Guid>
     public string? Email { get; set; }
     public string Name { get; set; } = string.Empty;
     public bool IsSuspended { get; set; }
+    public IEnumerable<Guid> RoleIds { get; set; } = [];
 }

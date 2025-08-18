@@ -37,10 +37,12 @@ public class GetProtocolsPaginatedQueryHandler : IRequestHandler<GetProtocolsPag
         (IEnumerable<Protocol> protocols, int total) = await _protocolRepository.GetPaginatedAsync(
             predicate: predicate,
             orderBy: orderBy,
-            orderByDescending: request.SortDirection switch
+            orderByDescending: request.SortDirection?.ToLowerInvariant() switch
             {
                 "desc" => true,
                 "asc" => false,
+                null => false,
+                "" => false,
                 _ => throw new ArgumentException("Invalid sort direction", nameof(request.SortDirection))
             },
             skip: (request.ValidatedPage - 1) * request.ValidatedPageSize,

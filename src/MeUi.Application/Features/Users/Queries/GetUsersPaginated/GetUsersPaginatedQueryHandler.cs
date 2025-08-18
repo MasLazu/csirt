@@ -5,34 +5,37 @@ using MeUi.Application.Models;
 using MeUi.Domain.Entities;
 using System.Linq.Expressions;
 using MeUi.Application.Utilities;
+using Mapster;
 
 namespace MeUi.Application.Features.Users.Queries.GetUsersPaginated;
 
 public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQuery, PaginatedDto<UserDto>>
 {
     private readonly IRepository<User> _userRepository;
-    private readonly IMapper _mapper;
+    private readonly IRepository<Role> _roleRepository;
+    private readonly IRepository<UserRole> _userRoleRepository;
 
     public GetUsersPaginatedQueryHandler(
         IRepository<User> userRepository,
-        IMapper mapper)
+        IRepository<Role> roleRepository,
+        IRepository<UserRole> userRoleRepository)
     {
         _userRepository = userRepository;
-        _mapper = mapper;
+        _roleRepository = roleRepository;
+        _userRoleRepository = userRoleRepository;
     }
 
     public async Task<PaginatedDto<UserDto>> Handle(GetUsersPaginatedQuery request, CancellationToken ct)
     {
-        // Build the predicate for filtering
         Expression<Func<User, bool>> predicate = u => true;
 
         if (!string.IsNullOrEmpty(request.Search))
         {
             string search = request.Search;
             Expression<Func<User, bool>> searchPredicate = u =>
-                (u.Name != null && u.Name.Contains(search)) ||
-                (u.Email != null && u.Email.Contains(search)) ||
-                (u.Username != null && u.Username.Contains(search));
+                u.Name != null && u.Name.Contains(search) ||
+                u.Email != null && u.Email.Contains(search) ||
+                u.Username != null && u.Username.Contains(search);
             predicate = predicate.And(searchPredicate);
         }
 
@@ -42,7 +45,6 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
             predicate = predicate.And(u => u.IsSuspended == isSuspended);
         }
 
-        // Determine sort field and direction
         Expression<Func<User, object>> orderBy = request.SortBy?.ToLower() switch
         {
             "email" => u => u.Email ?? string.Empty,
@@ -50,7 +52,7 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
             "issuspended" => u => u.IsSuspended,
             "createdat" => u => u.CreatedAt,
             "updatedat" => u => (object)(u.UpdatedAt == null ? DateTime.MinValue : u.UpdatedAt),
-            _ => u => (object)(u.Name ?? string.Empty) // Default sort by name
+            _ => u => (object)(u.Name ?? string.Empty)
         };
 
         (IEnumerable<User> Items, int TotalCount) result = await _userRepository.GetPaginatedAsync(
@@ -61,12 +63,33 @@ public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQu
             take: request.ValidatedPageSize,
             ct: ct);
 
-        // Mapping should never return null; enforce materialization to satisfy nullable analysis
-        var userDtos = _mapper.Map<IEnumerable<UserDto>>(result.Items) ?? Enumerable.Empty<UserDto>();
+        var userIds = result.Items.Select(u => u.Id).ToList();
+
+        IEnumerable<UserRole> userRoles = await _userRoleRepository
+            .FindAsync(ur => userIds.Contains(ur.UserId), ct);
+
+        IEnumerable<Guid> roleIds = userRoles.Select(ur => ur.RoleId).Distinct();
+        IEnumerable<Role> roles = await _roleRepository
+            .FindAsync(r => roleIds.Contains(r.Id), ct);
+
+        ILookup<Guid, Guid> userRoleLookup = userRoles.ToLookup(ur => ur.UserId, ur => ur.RoleId);
+
+        IEnumerable<RoleDto> roleDto = roles.Adapt<IEnumerable<RoleDto>>();
+        var roleLookup = roleDto.ToDictionary(r => r.Id);
+
+        var userDto = result.Items.Select(user =>
+        {
+            UserDto dto = user.Adapt<UserDto>();
+            IEnumerable<Guid> userRoleIds = userRoleLookup[user.Id];
+            dto.Roles = userRoleIds.Where(roleId => roleLookup.ContainsKey(roleId))
+                                  .Select(roleId => roleLookup[roleId])
+                                  .ToList();
+            return dto;
+        }).ToList();
 
         return new PaginatedDto<UserDto>
         {
-            Items = userDtos.ToList(),
+            Items = userDto,
             Page = request.ValidatedPage,
             PageSize = request.ValidatedPageSize,
             TotalItems = result.TotalCount,

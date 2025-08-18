@@ -18,11 +18,8 @@ public class GetProtocolQueryHandler : IRequestHandler<GetProtocolQuery, Protoco
 
     public async Task<ProtocolDto> Handle(GetProtocolQuery request, CancellationToken ct)
     {
-        Protocol? protocol = await _protocolRepository.GetByIdAsync(request.Id, ct);
-        if (protocol is null)
-        {
+        Protocol? protocol = await _protocolRepository.GetByIdAsync(request.Id, ct) ??
             throw new NotFoundException($"Protocol '{request.Id}' not found");
-        }
         return protocol.Adapt<ProtocolDto>();
     }
 }
