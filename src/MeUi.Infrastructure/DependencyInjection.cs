@@ -36,6 +36,14 @@ public static class DependencyInjection
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped(typeof(IAnalyticsRepository<>), typeof(AnalyticsRepository<>));
         services.AddScoped<IThreatEventAnalyticsRepository, ThreatEventAnalyticsRepository>();
+        services.AddScoped<IThreatIntelligentOverviewRepository, ThreatIntelligentOverviewRepository>();
+        services.AddScoped<IThreatComplianceRepository, ThreatComplianceRepository>();
+        services.AddScoped<IThreatGeographicRepository, ThreatGeographicRepository>();
+        services.AddScoped<IThreatMalwareRepository, ThreatMalwareRepository>();
+        services.AddScoped<IThreatTemporalRepository, ThreatTemporalRepository>();
+        services.AddScoped<IThreatNetworkRepository, ThreatNetworkRepository>();
+        services.AddScoped<IThreatIncidentRepository, ThreatIncidentRepository>();
+        services.AddScoped<IThreatActorsRepository, ThreatActorsRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         // Seeder registrations
         services.AddScoped<LoginMethodSeeder>();
