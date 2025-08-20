@@ -6,18 +6,17 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 )
 
 // GeoLocation represents geographic data for an IP
 type GeoLocation struct {
-	CountryCode string
-	CountryName string
-	Region      string
-	City        string
-	Latitude    float64
-	Longitude   float64
-	ISP         string
+	CountryCode  string
+	CountryName  string
+	Region       string
+	City         string
+	Latitude     float64
+	Longitude    float64
+	ISP          string
 	Organization string
 }
 
@@ -31,7 +30,7 @@ func NewGeoLocationEnricher(csvPath string) (*GeoLocationEnricher, error) {
 	enricher := &GeoLocationEnricher{
 		cityDatabase: make(map[string]GeoLocation),
 	}
-	
+
 	// Load MaxMind GeoLite2 CSV data
 	file, err := os.Open(csvPath)
 	if err != nil {
@@ -50,7 +49,7 @@ func NewGeoLocationEnricher(csvPath string) (*GeoLocationEnricher, error) {
 		if i == 0 {
 			continue // Skip header
 		}
-		
+
 		// MaxMind GeoLite2 City CSV format:
 		// network,geoname_id,registered_country_geoname_id,represented_country_geoname_id,
 		// is_anonymous_proxy,is_satellite_provider,postal_code,latitude,longitude,accuracy_radius
@@ -58,7 +57,7 @@ func NewGeoLocationEnricher(csvPath string) (*GeoLocationEnricher, error) {
 			network := record[0]
 			latitude, _ := strconv.ParseFloat(record[7], 64)
 			longitude, _ := strconv.ParseFloat(record[8], 64)
-			
+
 			enricher.cityDatabase[network] = GeoLocation{
 				Latitude:  latitude,
 				Longitude: longitude,
@@ -83,7 +82,7 @@ func (g *GeoLocationEnricher) EnrichIP(ipAddr string) *GeoLocation {
 		if err != nil {
 			continue
 		}
-		
+
 		if cidr.Contains(ip) {
 			return &location
 		}
@@ -105,7 +104,7 @@ func EnrichThreatEventsWithGeo() {
 	geoData := enricher.EnrichIP(sourceIP)
 	if geoData != nil {
 		fmt.Printf("IP %s located at: %f, %f\n", sourceIP, geoData.Latitude, geoData.Longitude)
-		
+
 		// Update your PostgreSQL with this data
 		updateSQL := `
 			UPDATE "ThreatEvents" 

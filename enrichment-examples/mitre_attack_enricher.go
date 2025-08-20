@@ -14,17 +14,17 @@ type MitreAttackFramework struct {
 }
 
 type MitreObject struct {
-	Type           string            `json:"type"`
-	ID             string            `json:"id"`
-	CreatedByRef   string            `json:"created_by_ref"`
-	Created        string            `json:"created"`
-	Modified       string            `json:"modified"`
-	Name           string            `json:"name"`
-	Description    string            `json:"description"`
-	KillChainPhases []KillChainPhase `json:"kill_chain_phases,omitempty"`
-	ExternalRefs   []ExternalRef     `json:"external_references,omitempty"`
-	XMitreIsSubtechnique bool        `json:"x_mitre_is_subtechnique,omitempty"`
-	XMitrePlatforms     []string     `json:"x_mitre_platforms,omitempty"`
+	Type                 string           `json:"type"`
+	ID                   string           `json:"id"`
+	CreatedByRef         string           `json:"created_by_ref"`
+	Created              string           `json:"created"`
+	Modified             string           `json:"modified"`
+	Name                 string           `json:"name"`
+	Description          string           `json:"description"`
+	KillChainPhases      []KillChainPhase `json:"kill_chain_phases,omitempty"`
+	ExternalRefs         []ExternalRef    `json:"external_references,omitempty"`
+	XMitreIsSubtechnique bool             `json:"x_mitre_is_subtechnique,omitempty"`
+	XMitrePlatforms      []string         `json:"x_mitre_platforms,omitempty"`
 }
 
 type KillChainPhase struct {
@@ -33,10 +33,10 @@ type KillChainPhase struct {
 }
 
 type ExternalRef struct {
-	SourceName   string `json:"source_name"`
-	ExternalID   string `json:"external_id"`
-	URL          string `json:"url"`
-	Description  string `json:"description"`
+	SourceName  string `json:"source_name"`
+	ExternalID  string `json:"external_id"`
+	URL         string `json:"url"`
+	Description string `json:"description"`
 }
 
 // TechniqueMapper maps threat categories to MITRE ATT&CK techniques
@@ -49,15 +49,15 @@ func NewTechniqueMapper() *TechniqueMapper {
 	mapper := &TechniqueMapper{
 		techniques: make(map[string][]string),
 	}
-	
+
 	// Initialize common mappings based on your threat categories
-	mapper.techniques["bot"] = []string{"T1071", "T1090", "T1105"} // Application Layer Protocol, Proxy, Ingress Tool Transfer
-	mapper.techniques["c2"] = []string{"T1071", "T1573", "T1008"}  // Application Layer Protocol, Encrypted Channel, Fallback Channels
+	mapper.techniques["bot"] = []string{"T1071", "T1090", "T1105"}     // Application Layer Protocol, Proxy, Ingress Tool Transfer
+	mapper.techniques["c2"] = []string{"T1071", "T1573", "T1008"}      // Application Layer Protocol, Encrypted Channel, Fallback Channels
 	mapper.techniques["malware"] = []string{"T1203", "T1204", "T1566"} // Exploitation for Client Execution, User Execution, Phishing
 	mapper.techniques["scan"] = []string{"T1046", "T1018", "T1135"}    // Network Service Scanning, Remote System Discovery, Network Share Discovery
 	mapper.techniques["brute"] = []string{"T1110", "T1021", "T1078"}   // Brute Force, Remote Services, Valid Accounts
 	mapper.techniques["exploit"] = []string{"T1190", "T1210", "T1068"} // Exploit Public-Facing Application, Exploitation of Remote Services, Exploitation for Privilege Escalation
-	
+
 	return mapper
 }
 
@@ -65,43 +65,43 @@ func NewTechniqueMapper() *TechniqueMapper {
 func DownloadMitreAttackFramework() (*MitreAttackFramework, error) {
 	// MITRE ATT&CK Enterprise framework (free download)
 	url := "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json"
-	
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download MITRE ATT&CK framework: %v", err)
 	}
 	defer resp.Body.Close()
-	
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
-	
+
 	var framework MitreAttackFramework
 	err = json.Unmarshal(body, &framework)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse MITRE ATT&CK framework: %v", err)
 	}
-	
+
 	return &framework, nil
 }
 
 // MapCategoryToTechniques maps threat event categories to MITRE techniques
 func (tm *TechniqueMapper) MapCategoryToTechniques(category string) []string {
 	category = strings.ToLower(strings.TrimSpace(category))
-	
+
 	// Direct mapping
 	if techniques, exists := tm.techniques[category]; exists {
 		return techniques
 	}
-	
+
 	// Fuzzy matching for partial category names
 	for key, techniques := range tm.techniques {
 		if strings.Contains(category, key) {
 			return techniques
 		}
 	}
-	
+
 	return []string{} // No mapping found
 }
 
@@ -113,9 +113,9 @@ func EnrichThreatEventsWithMitre() {
 		fmt.Printf("Error downloading MITRE framework: %v\n", err)
 		return
 	}
-	
+
 	fmt.Printf("Downloaded MITRE ATT&CK framework with %d objects\n", len(framework.Objects))
-	
+
 	// Create technique lookup
 	techniqueDetails := make(map[string]MitreObject)
 	for _, obj := range framework.Objects {
@@ -127,22 +127,22 @@ func EnrichThreatEventsWithMitre() {
 			}
 		}
 	}
-	
+
 	// Initialize mapper
 	mapper := NewTechniqueMapper()
-	
+
 	// Example: Map your threat categories
 	categories := []string{"bot", "c2", "malware", "scan", "brute", "exploit"}
-	
+
 	for _, category := range categories {
 		techniques := mapper.MapCategoryToTechniques(category)
 		fmt.Printf("\nCategory: %s\n", category)
-		
+
 		for _, techID := range techniques {
 			if detail, exists := techniqueDetails[techID]; exists {
 				fmt.Printf("  - %s: %s\n", techID, detail.Name)
 				fmt.Printf("    Description: %s\n", strings.Split(detail.Description, ".")[0])
-				
+
 				// Here you would update your database with the mapping
 				updateSQL := `
 					INSERT INTO "ThreatEventTechniques" ("ThreatEventId", "TechniqueId", "DetectionConfidence")
@@ -151,7 +151,7 @@ func EnrichThreatEventsWithMitre() {
 					CROSS JOIN "AttackTechniques" at
 					WHERE te."Category" = $1 AND at."MitreId" = $2
 					ON CONFLICT DO NOTHING`
-				
+
 				// Execute: db.Exec(updateSQL, category, techID)
 			}
 		}

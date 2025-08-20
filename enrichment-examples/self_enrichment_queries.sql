@@ -48,53 +48,70 @@ SET "RiskScore" = (
 WHERE "DeletedAt" IS NULL AND "RiskScore" IS NULL;
 
 -- 2. Add Session/Campaign Grouping Based on Temporal Patterns
-WITH event_sequences AS (
-    SELECT 
-        "SourceAddress",
-        "DestinationAddress", 
-        "Timestamp",
-        LAG("Timestamp") OVER (
-            PARTITION BY "SourceAddress", "DestinationAddress" 
-            ORDER BY "Timestamp"
-        ) as prev_timestamp,
-        ROW_NUMBER() OVER (
-            PARTITION BY "SourceAddress", "DestinationAddress" 
-            ORDER BY "Timestamp"
-        ) as seq_num
-    FROM "ThreatEvents"
-    WHERE "DeletedAt" IS NULL
-),
-session_breaks AS (
-    SELECT *,
-        CASE 
-            WHEN prev_timestamp IS NULL OR 
-                 "Timestamp" - prev_timestamp > INTERVAL '1 hour' 
-            THEN 1 
-            ELSE 0 
-        END as is_new_session
-    FROM event_sequences
-),
-sessions AS (
-    SELECT *,
-        SUM(is_new_session) OVER (
-            PARTITION BY "SourceAddress", "DestinationAddress" 
-            ORDER BY "Timestamp" 
-            ROWS UNBOUNDED PRECEDING
-        ) as session_id
-    FROM session_breaks
-)
-UPDATE "ThreatEvents" 
-SET "SessionId" = gen_random_uuid()  -- You'll want to use actual session grouping
-WHERE "SessionId" IS NULL;
+WITH
+    event_sequences AS (
+        SELECT
+            "SourceAddress",
+            "DestinationAddress",
+            "Timestamp",
+            LAG("Timestamp") OVER (
+                PARTITION BY
+                    "SourceAddress",
+                    "DestinationAddress"
+                ORDER BY "Timestamp"
+            ) as prev_timestamp,
+            ROW_NUMBER() OVER (
+                PARTITION BY
+                    "SourceAddress",
+                    "DestinationAddress"
+                ORDER BY "Timestamp"
+            ) as seq_num
+        FROM "ThreatEvents"
+        WHERE
+            "DeletedAt" IS NULL
+    ),
+    session_breaks AS (
+        SELECT
+            *,
+            CASE
+                WHEN prev_timestamp IS NULL
+                OR "Timestamp" - prev_timestamp > INTERVAL '1 hour' THEN 1
+                ELSE 0
+            END as is_new_session
+        FROM event_sequences
+    ),
+    sessions AS (
+        SELECT *, SUM(is_new_session) OVER (
+                PARTITION BY
+                    "SourceAddress", "DestinationAddress"
+                ORDER BY "Timestamp" ROWS UNBOUNDED PRECEDING
+            ) as session_id
+        FROM session_breaks
+    )
+UPDATE "ThreatEvents"
+SET
+    "SessionId" = gen_random_uuid () -- You'll want to use actual session grouping
+WHERE
+    "SessionId" IS NULL;
 
 -- 3. Calculate Behavioral Patterns from Your Data
 -- Add day of week and hour patterns
-UPDATE "ThreatEvents" 
-SET 
-    "DayOfWeek" = EXTRACT(DOW FROM "Timestamp"),
-    "HourOfDay" = EXTRACT(HOUR FROM "Timestamp"),
-    "IsWeekend" = EXTRACT(DOW FROM "Timestamp") IN (0, 6)
-WHERE "DayOfWeek" IS NULL;
+UPDATE "ThreatEvents"
+SET
+    "DayOfWeek" = EXTRACT(
+        DOW
+        FROM "Timestamp"
+    ),
+    "HourOfDay" = EXTRACT(
+        HOUR
+        FROM "Timestamp"
+    ),
+    "IsWeekend" = EXTRACT(
+        DOW
+        FROM "Timestamp"
+    ) IN (0, 6)
+WHERE
+    "DayOfWeek" IS NULL;
 
 -- 4. Identify Anomalous Behavior Patterns
 WITH hourly_baselines AS (

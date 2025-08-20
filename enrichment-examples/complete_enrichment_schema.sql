@@ -2,41 +2,85 @@
 -- This script adds all enrichment capabilities to your existing ThreatEvents table
 
 -- 1. Add enrichment columns to existing ThreatEvents table
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "SourceLatitude" DECIMAL(10,8);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "SourceLongitude" DECIMAL(11,8);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "SourceCity" VARCHAR(100);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "SourceRegion" VARCHAR(100);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "SourceISP" VARCHAR(200);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "SourceOrganization" VARCHAR(200);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "DestinationLatitude" DECIMAL(10,8);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "DestinationLongitude" DECIMAL(11,8);
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "SourceLatitude" DECIMAL(10, 8);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "SourceLongitude" DECIMAL(11, 8);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "SourceCity" VARCHAR(100);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "SourceRegion" VARCHAR(100);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "SourceISP" VARCHAR(200);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "SourceOrganization" VARCHAR(200);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "DestinationLatitude" DECIMAL(10, 8);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "DestinationLongitude" DECIMAL(11, 8);
 
 -- Risk and intelligence scoring
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "RiskScore" DECIMAL(5,2);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "ConfidenceLevel" DECIMAL(3,2);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "SeverityLevel" VARCHAR(20);
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "RiskScore" DECIMAL(5, 2);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "ConfidenceLevel" DECIMAL(3, 2);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "SeverityLevel" VARCHAR(20);
+
 ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "ThreatTags" TEXT[];
 
 -- Temporal behavior patterns
 ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "DayOfWeek" INT;
+
 ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "HourOfDay" INT;
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "IsWeekend" BOOLEAN;
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "IsHoliday" BOOLEAN;
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "TimeZoneOffset" INT;
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "IsWeekend" BOOLEAN;
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "IsHoliday" BOOLEAN;
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "TimeZoneOffset" INT;
 
 -- Network behavior analysis
 ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "SessionId" UUID;
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "BytesTransferred" BIGINT;
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "PacketCount" INT;
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "Duration" INT; -- seconds
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "ConnectionState" VARCHAR(20);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "BytesTransferred" BIGINT;
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "PacketCount" INT;
+
+ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "Duration" INT;
+-- seconds
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "ConnectionState" VARCHAR(20);
 
 -- Machine learning and behavioral analysis
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "AnomalyScore" DECIMAL(5,2);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "ClusterGroup" VARCHAR(50);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "PredictedThreatType" VARCHAR(100);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "MachineLearningModelVersion" VARCHAR(20);
-ALTER TABLE "ThreatEvents" ADD COLUMN IF NOT EXISTS "BehaviorProfile" JSONB;
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "AnomalyScore" DECIMAL(5, 2);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "ClusterGroup" VARCHAR(50);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "PredictedThreatType" VARCHAR(100);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "MachineLearningModelVersion" VARCHAR(20);
+
+ALTER TABLE "ThreatEvents"
+ADD COLUMN IF NOT EXISTS "BehaviorProfile" JSONB;
 
 -- 2. Create Threat Campaigns table for attack sequence tracking
 CREATE TABLE IF NOT EXISTS "ThreatCampaigns" (
@@ -61,18 +105,18 @@ CREATE TABLE IF NOT EXISTS "ThreatEventCampaigns" (
     "Role" VARCHAR(50), -- 'initiator', 'follow-up', 'persistence', 'exfiltration'
     "AssignedAt" TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY ("ThreatEventId", "CampaignId"),
-    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents"("Id"),
-    FOREIGN KEY ("CampaignId") REFERENCES "ThreatCampaigns"("Id")
+    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents" ("Id"),
+    FOREIGN KEY ("CampaignId") REFERENCES "ThreatCampaigns" ("Id")
 );
 
 -- 3. Create Threat Intelligence Feeds integration
 CREATE TABLE IF NOT EXISTS "ThreatIntelFeeds" (
-    "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     "SourceName" VARCHAR(100) NOT NULL,
     "FeedType" VARCHAR(50) NOT NULL, -- 'commercial', 'opensource', 'government'
     "ApiEndpoint" TEXT,
     "LastUpdated" TIMESTAMP,
-    "Reliability" DECIMAL(3,2) DEFAULT 0.5,
+    "Reliability" DECIMAL(3, 2) DEFAULT 0.5,
     "IsActive" BOOLEAN DEFAULT true,
     "RateLimit" INT, -- requests per hour
     "ApiKey" TEXT, -- encrypted
@@ -113,18 +157,21 @@ CREATE TABLE IF NOT EXISTS "AttackTechniques" (
 CREATE TABLE IF NOT EXISTS "ThreatEventTechniques" (
     "ThreatEventId" UUID,
     "TechniqueId" UUID,
-    "DetectionConfidence" DECIMAL(3,2) DEFAULT 0.5,
+    "DetectionConfidence" DECIMAL(3, 2) DEFAULT 0.5,
     "DetectionMethod" VARCHAR(100), -- 'signature', 'behavior', 'anomaly'
     "Evidence" TEXT,
     "DetectedAt" TIMESTAMP DEFAULT NOW(),
-    PRIMARY KEY ("ThreatEventId", "TechniqueId"),
-    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents"("Id"),
-    FOREIGN KEY ("TechniqueId") REFERENCES "AttackTechniques"("Id")
+    PRIMARY KEY (
+        "ThreatEventId",
+        "TechniqueId"
+    ),
+    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents" ("Id"),
+    FOREIGN KEY ("TechniqueId") REFERENCES "AttackTechniques" ("Id")
 );
 
 -- 5. Create Asset and Target context
 CREATE TABLE IF NOT EXISTS "Assets" (
-    "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     "AssetName" VARCHAR(100) NOT NULL,
     "AssetType" VARCHAR(50) NOT NULL, -- 'server', 'workstation', 'iot', 'network'
     "IPAddress" INET,
@@ -135,7 +182,7 @@ CREATE TABLE IF NOT EXISTS "Assets" (
     "Location" VARCHAR(100),
     "OperatingSystem" VARCHAR(100),
     "LastAssessment" TIMESTAMP,
-    "SecurityScore" DECIMAL(5,2),
+    "SecurityScore" DECIMAL(5, 2),
     "CreatedAt" TIMESTAMP DEFAULT NOW(),
     "UpdatedAt" TIMESTAMP DEFAULT NOW()
 );
@@ -147,8 +194,8 @@ CREATE TABLE IF NOT EXISTS "ThreatEventAssets" (
     "ImpactLevel" VARCHAR(20), -- 'none', 'low', 'medium', 'high', 'critical'
     "DetectedAt" TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY ("ThreatEventId", "AssetId"),
-    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents"("Id"),
-    FOREIGN KEY ("AssetId") REFERENCES "Assets"("Id")
+    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents" ("Id"),
+    FOREIGN KEY ("AssetId") REFERENCES "Assets" ("Id")
 );
 
 -- 6. Create Threat Actor attribution
@@ -171,18 +218,18 @@ CREATE TABLE IF NOT EXISTS "ThreatActors" (
 CREATE TABLE IF NOT EXISTS "ThreatEventAttribution" (
     "ThreatEventId" UUID,
     "ActorId" UUID,
-    "AttributionConfidence" DECIMAL(3,2) DEFAULT 0.5,
+    "AttributionConfidence" DECIMAL(3, 2) DEFAULT 0.5,
     "AttributionMethod" VARCHAR(100), -- 'signature', 'behavior', 'infrastructure'
     "Evidence" TEXT,
     "AttributedAt" TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY ("ThreatEventId", "ActorId"),
-    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents"("Id"),
-    FOREIGN KEY ("ActorId") REFERENCES "ThreatActors"("Id")
+    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents" ("Id"),
+    FOREIGN KEY ("ActorId") REFERENCES "ThreatActors" ("Id")
 );
 
 -- 7. Create Incident Response integration
 CREATE TABLE IF NOT EXISTS "Incidents" (
-    "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     "IncidentNumber" VARCHAR(50) UNIQUE NOT NULL,
     "Title" VARCHAR(200) NOT NULL,
     "Description" TEXT,
@@ -193,7 +240,7 @@ CREATE TABLE IF NOT EXISTS "Incidents" (
     "CreatedBy" VARCHAR(100),
     "CreatedAt" TIMESTAMP DEFAULT NOW(),
     "ResolvedAt" TIMESTAMP,
-    "EstimatedImpact" DECIMAL(15,2),
+    "EstimatedImpact" DECIMAL(15, 2),
     "ResponseTimeMinutes" INT,
     "ContainmentTimeMinutes" INT,
     "RecoveryTimeMinutes" INT
@@ -205,23 +252,23 @@ CREATE TABLE IF NOT EXISTS "ThreatEventIncidents" (
     "Role" VARCHAR(50) NOT NULL, -- 'trigger', 'related', 'evidence'
     "AssignedAt" TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY ("ThreatEventId", "IncidentId"),
-    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents"("Id"),
-    FOREIGN KEY ("IncidentId") REFERENCES "Incidents"("Id")
+    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents" ("Id"),
+    FOREIGN KEY ("IncidentId") REFERENCES "Incidents" ("Id")
 );
 
 -- 8. Create Machine Learning predictions and analysis
 CREATE TABLE IF NOT EXISTS "ThreatPredictions" (
-    "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     "ThreatEventId" UUID,
     "PredictionType" VARCHAR(50) NOT NULL, -- 'next_target', 'escalation', 'campaign_evolution'
     "PredictedValue" TEXT NOT NULL,
-    "Confidence" DECIMAL(3,2) NOT NULL,
+    "Confidence" DECIMAL(3, 2) NOT NULL,
     "ModelUsed" VARCHAR(100) NOT NULL,
     "ModelVersion" VARCHAR(20),
     "CreatedAt" TIMESTAMP DEFAULT NOW(),
     "ValidatedAt" TIMESTAMP,
     "IsAccurate" BOOLEAN,
-    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents"("Id")
+    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents" ("Id")
 );
 
 -- 9. Create Protocol-specific metadata
@@ -245,37 +292,54 @@ CREATE TABLE IF NOT EXISTS "ThreatEventMetadata" (
     "CommandLine" TEXT,
     "RegistryKey" TEXT,
     "NetworkProtocol" VARCHAR(20),
-    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents"("Id")
+    FOREIGN KEY ("ThreatEventId") REFERENCES "ThreatEvents" ("Id")
 );
 
 -- 10. Create indexes for performance optimization
-CREATE INDEX IF NOT EXISTS "idx_threatevents_source_lat_lng" ON "ThreatEvents"("SourceLatitude", "SourceLongitude");
-CREATE INDEX IF NOT EXISTS "idx_threatevents_risk_score" ON "ThreatEvents"("RiskScore" DESC);
-CREATE INDEX IF NOT EXISTS "idx_threatevents_anomaly_score" ON "ThreatEvents"("AnomalyScore" DESC);
-CREATE INDEX IF NOT EXISTS "idx_threatevents_cluster_group" ON "ThreatEvents"("ClusterGroup");
-CREATE INDEX IF NOT EXISTS "idx_threatevents_session_id" ON "ThreatEvents"("SessionId");
-CREATE INDEX IF NOT EXISTS "idx_threatevents_day_hour" ON "ThreatEvents"("DayOfWeek", "HourOfDay");
-CREATE INDEX IF NOT EXISTS "idx_threatevents_source_isp" ON "ThreatEvents"("SourceISP");
+CREATE INDEX IF NOT EXISTS "idx_threatevents_source_lat_lng" ON "ThreatEvents" (
+    "SourceLatitude",
+    "SourceLongitude"
+);
+
+CREATE INDEX IF NOT EXISTS "idx_threatevents_risk_score" ON "ThreatEvents" ("RiskScore" DESC);
+
+CREATE INDEX IF NOT EXISTS "idx_threatevents_anomaly_score" ON "ThreatEvents" ("AnomalyScore" DESC);
+
+CREATE INDEX IF NOT EXISTS "idx_threatevents_cluster_group" ON "ThreatEvents" ("ClusterGroup");
+
+CREATE INDEX IF NOT EXISTS "idx_threatevents_session_id" ON "ThreatEvents" ("SessionId");
+
+CREATE INDEX IF NOT EXISTS "idx_threatevents_day_hour" ON "ThreatEvents" ("DayOfWeek", "HourOfDay");
+
+CREATE INDEX IF NOT EXISTS "idx_threatevents_source_isp" ON "ThreatEvents" ("SourceISP");
 
 -- Campaign indexes
-CREATE INDEX IF NOT EXISTS "idx_threatcampaigns_status_level" ON "ThreatCampaigns"("Status", "ThreatLevel");
-CREATE INDEX IF NOT EXISTS "idx_threatcampaigns_timerange" ON "ThreatCampaigns"("FirstSeen", "LastSeen");
+CREATE INDEX IF NOT EXISTS "idx_threatcampaigns_status_level" ON "ThreatCampaigns" ("Status", "ThreatLevel");
+
+CREATE INDEX IF NOT EXISTS "idx_threatcampaigns_timerange" ON "ThreatCampaigns" ("FirstSeen", "LastSeen");
 
 -- Intelligence feed indexes
-CREATE INDEX IF NOT EXISTS "idx_threateventintel_indicator" ON "ThreatEventIntelligence"("IndicatorType", "IndicatorValue");
-CREATE INDEX IF NOT EXISTS "idx_threateventintel_probability" ON "ThreatEventIntelligence"("MaliciousProbability" DESC);
+CREATE INDEX IF NOT EXISTS "idx_threateventintel_indicator" ON "ThreatEventIntelligence" (
+    "IndicatorType",
+    "IndicatorValue"
+);
+
+CREATE INDEX IF NOT EXISTS "idx_threateventintel_probability" ON "ThreatEventIntelligence" ("MaliciousProbability" DESC);
 
 -- MITRE ATT&CK indexes
-CREATE INDEX IF NOT EXISTS "idx_attacktechniques_mitre_tactic" ON "AttackTechniques"("MitreId", "TacticCategory");
-CREATE INDEX IF NOT EXISTS "idx_threateventtechniques_confidence" ON "ThreatEventTechniques"("DetectionConfidence" DESC);
+CREATE INDEX IF NOT EXISTS "idx_attacktechniques_mitre_tactic" ON "AttackTechniques" ("MitreId", "TacticCategory");
+
+CREATE INDEX IF NOT EXISTS "idx_threateventtechniques_confidence" ON "ThreatEventTechniques" ("DetectionConfidence" DESC);
 
 -- Incident response indexes
-CREATE INDEX IF NOT EXISTS "idx_incidents_status_severity" ON "Incidents"("Status", "Severity");
-CREATE INDEX IF NOT EXISTS "idx_incidents_response_time" ON "Incidents"("ResponseTimeMinutes");
+CREATE INDEX IF NOT EXISTS "idx_incidents_status_severity" ON "Incidents" ("Status", "Severity");
+
+CREATE INDEX IF NOT EXISTS "idx_incidents_response_time" ON "Incidents" ("ResponseTimeMinutes");
 
 -- Asset management indexes
-CREATE INDEX IF NOT EXISTS "idx_assets_criticality_type" ON "Assets"("Criticality", "AssetType");
-CREATE INDEX IF NOT EXISTS "idx_assets_ip_address" ON "Assets"("IPAddress");
+CREATE INDEX IF NOT EXISTS "idx_assets_criticality_type" ON "Assets" ("Criticality", "AssetType");
+
+CREATE INDEX IF NOT EXISTS "idx_assets_ip_address" ON "Assets" ("IPAddress");
 
 -- 11. Create materialized views for performance
 CREATE MATERIALIZED VIEW IF NOT EXISTS "mv_threat_actor_intelligence" AS
@@ -367,10 +431,23 @@ $$ LANGUAGE plpgsql;
 -- Schedule regular refresh (requires pg_cron extension)
 -- SELECT cron.schedule('refresh-threat-views', '0 */6 * * *', 'SELECT refresh_threat_intelligence_views();');
 
-COMMENT ON TABLE "ThreatEvents" IS 'Enhanced threat events with comprehensive enrichment data';
-COMMENT ON TABLE "ThreatCampaigns" IS 'Attack campaigns and threat actor operations';
-COMMENT ON TABLE "ThreatIntelFeeds" IS 'External threat intelligence feed sources';
-COMMENT ON TABLE "AttackTechniques" IS 'MITRE ATT&CK framework techniques';
-COMMENT ON TABLE "ThreatActors" IS 'Threat actor profiles and attribution';
-COMMENT ON TABLE "Assets" IS 'Organizational assets and attack targets';
-COMMENT ON TABLE "Incidents" IS 'Security incident management integration';
+COMMENT ON
+TABLE "ThreatEvents" IS 'Enhanced threat events with comprehensive enrichment data';
+
+COMMENT ON
+TABLE "ThreatCampaigns" IS 'Attack campaigns and threat actor operations';
+
+COMMENT ON
+TABLE "ThreatIntelFeeds" IS 'External threat intelligence feed sources';
+
+COMMENT ON
+TABLE "AttackTechniques" IS 'MITRE ATT&CK framework techniques';
+
+COMMENT ON
+TABLE "ThreatActors" IS 'Threat actor profiles and attribution';
+
+COMMENT ON
+TABLE "Assets" IS 'Organizational assets and attack targets';
+
+COMMENT ON
+TABLE "Incidents" IS 'Security incident management integration';
