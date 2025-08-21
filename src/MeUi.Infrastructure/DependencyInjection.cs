@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped(typeof(IAnalyticsRepository<>), typeof(AnalyticsRepository<>));
         services.AddScoped<IThreatEventAnalyticsRepository, ThreatEventAnalyticsRepository>();
         services.AddScoped<IThreatIntelligentOverviewRepository, ThreatIntelligentOverviewRepository>();
+        services.AddScoped<ITenantThreatIntelligentOverviewRepository, TenantThreatIntelligentOverviewRepository>();
         services.AddScoped<IThreatComplianceRepository, ThreatComplianceRepository>();
         services.AddScoped<IThreatGeographicRepository, ThreatGeographicRepository>();
         services.AddScoped<IThreatMalwareRepository, ThreatMalwareRepository>();

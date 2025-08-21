@@ -1,0 +1,495 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["threat-intelligence"],
+      "title": "Threat Intelligence Sections",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 10000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Growth Rate (%)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH monthly_summary AS (\n  SELECT \n    DATE_TRUNC('month', te.\"Timestamp\") as \"Month\",\n    COUNT(*) as \"Total Threats\",\n    COUNT(DISTINCT te.\"SourceAddress\") as \"Unique Sources\",\n    COUNT(DISTINCT te.\"SourceCountryId\") as \"Countries Affected\",\n    COUNT(DISTINCT te.\"Category\") as \"Attack Categories\",\n    COUNT(DISTINCT te.\"DestinationPort\") as \"Ports Targeted\",\n    AVG(CASE WHEN te.\"Category\" LIKE '%critical%' OR te.\"Category\" LIKE '%high%' THEN 10\n             WHEN te.\"Category\" LIKE '%medium%' THEN 5\n             ELSE 1 END) as \"Avg Severity Score\",\n    LAG(COUNT(*)) OVER (ORDER BY DATE_TRUNC('month', te.\"Timestamp\")) as \"Previous Month\"\n  FROM \"ThreatEvents\" te\n  WHERE te.\"DeletedAt\" IS NULL \n    AND te.\"Timestamp\" >= NOW() - INTERVAL '12 months'\n    AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\n  GROUP BY DATE_TRUNC('month', te.\"Timestamp\")\n)\nSELECT \n  TO_CHAR(\"Month\", 'YYYY-MM') as \"Period\",\n  \"Total Threats\",\n  \"Unique Sources\",\n  \"Countries Affected\",\n  \"Attack Categories\",\n  \"Ports Targeted\",\n  ROUND(\"Avg Severity Score\"::numeric, 2) as \"Avg Severity\",\n  CASE \n    WHEN \"Previous Month\" > 0 THEN \n      ROUND(((\"Total Threats\" - \"Previous Month\")::numeric / \"Previous Month\" * 100)::numeric, 2)\n    ELSE 0\n  END as \"Growth Rate (%)\",\n  CASE \n    WHEN \"Total Threats\" > 10000 THEN 'High'\n    WHEN \"Total Threats\" > 5000 THEN 'Medium'\n    ELSE 'Low'\n  END as \"Threat Level\"\nFROM monthly_summary\nWHERE \"Month\" >= NOW() - INTERVAL '12 months'\nORDER BY \"Month\" DESC\nLIMIT 12",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Executive Summary - Monthly Threat Intelligence Report",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  $__timeGroup(te.\"Timestamp\", '1d') as time,\n  'Total Threats' as metric,\n  COUNT(*) as value\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY time\n\nUNION ALL\n\nSELECT \n  $__timeGroup(te.\"Timestamp\", '1d') as time,\n  'Critical Threats' as metric,\n  COUNT(*) as value\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND (te.\"Category\" LIKE '%critical%' OR te.\"Category\" LIKE '%malware%')\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY time\n\nUNION ALL\n\nSELECT \n  $__timeGroup(te.\"Timestamp\", '1d') as time,\n  'Unique Sources' as metric,\n  COUNT(DISTINCT te.\"SourceAddress\") as value\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "📈 KPI Trend Analysis",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH compliance_metrics AS (\n  SELECT \n    COUNT(*) as total_events,\n    COUNT(CASE WHEN te.\"Timestamp\" > NOW() - INTERVAL '24 hours' THEN 1 END) as recent_events,\n    COUNT(DISTINCT te.\"SourceCountryId\") as countries_covered,\n    COUNT(DISTINCT te.\"Category\") as categories_monitored\n  FROM \"ThreatEvents\" te\n  WHERE te.\"DeletedAt\" IS NULL \n    AND $__timeFilter(te.\"Timestamp\")\n    AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\n)\nSELECT \n  CASE \n    WHEN countries_covered >= 50 AND categories_monitored >= 10 AND recent_events > 100 THEN 95\n    WHEN countries_covered >= 30 AND categories_monitored >= 8 AND recent_events > 50 THEN 85\n    WHEN countries_covered >= 20 AND categories_monitored >= 5 AND recent_events > 20 THEN 75\n    ELSE 65\n  END as \"Compliance Score\"\nFROM compliance_metrics",
+          "refId": "A"
+        }
+      ],
+      "title": "📋 Security Compliance Score",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 8
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH risk_calculation AS (\n  SELECT \n    COUNT(*) as total_threats,\n    COUNT(DISTINCT te.\"SourceAddress\") as unique_sources,\n    COUNT(CASE WHEN te.\"Category\" LIKE '%critical%' OR te.\"Category\" LIKE '%malware%' THEN 1 END) as critical_threats\n  FROM \"ThreatEvents\" te\n  WHERE te.\"DeletedAt\" IS NULL \n    AND te.\"Timestamp\" > NOW() - INTERVAL '24 hours'\n    AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\n)\nSELECT \n  CASE \n    WHEN critical_threats > 100 OR unique_sources > 500 THEN 9\n    WHEN critical_threats > 50 OR unique_sources > 250 THEN 7\n    WHEN critical_threats > 20 OR unique_sources > 100 THEN 5\n    WHEN critical_threats > 10 OR unique_sources > 50 THEN 3\n    ELSE 1\n  END as \"Risk Level\"\nFROM risk_calculation",
+          "refId": "A"
+        }
+      ],
+      "title": "⚠️ Current Risk Level",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  c.\"Name\" as \"Top Risk Countries\",\n  COUNT(*) as \"Threat Events\",\n  COUNT(DISTINCT te.\"SourceAddress\") as \"Unique Sources\",\n  COUNT(DISTINCT te.\"Category\") as \"Attack Types\",\n  ROUND((COUNT(*) * COUNT(DISTINCT te.\"SourceAddress\"))::numeric / 1000, 2) as \"Risk Score\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY c.\"Name\"\nORDER BY \"Risk Score\" DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "🌍 Regional Risk Assessment",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 6,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  te.\"Category\" as \"Attack Category\",\n  COUNT(*) as \"Total Events\",\n  COUNT(DISTINCT te.\"SourceAddress\") as \"Unique Sources\",\n  COUNT(DISTINCT te.\"SourceCountryId\") as \"Countries\",\n  ROUND(AVG(EXTRACT(EPOCH FROM (NOW() - te.\"Timestamp\")) / 3600)::numeric, 2) as \"Avg Age (Hours)\",\n  CASE \n    WHEN COUNT(*) > 1000 THEN 'Critical Focus'\n    WHEN COUNT(*) > 500 THEN 'High Priority'\n    WHEN COUNT(*) > 100 THEN 'Monitor'\n    ELSE 'Low Priority'\n  END as \"Recommended Action\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY te.\"Category\"\nORDER BY \"Total Events\" DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "🎯 Attack Category Analysis & Recommendations",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["threat-intelligence", "compliance", "executive", "tenant"],
+  "templating": {
+    "list": [
+      {
+        "name": "tenant",
+        "type": "query",
+        "label": "Tenant",
+        "hide": 0,
+        "query": "SELECT \"Id\"::text AS __value, \"Name\" AS __text FROM \"Tenants\" WHERE \"DeletedAt\" IS NULL ORDER BY \"Name\";",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "fevdgsrkbm8lce"
+        },
+        "multi": false,
+        "includeAll": true,
+        "allValue": "All",
+        "refresh": 1,
+        "sort": 0
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "📊 Threat Intelligence - Compliance & Reporting (Tenant View)",
+  "uid": "threat-intel-compliance-tenant",
+  "version": 0,
+  "weekStart": ""
+}

@@ -1,5 +1,17 @@
 {
   "mcpServers": {
+    "postgres2": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:FazizHomelab4212@100.115.150.144:5432/csrit-2"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "query"
+      ]
+    },
     "postgres": {
       "command": "docker",
       "args": [
@@ -42,7 +54,11 @@
     },
     "playwright": {
       "command": "npx",
-      "args": ["@playwright/mcp@latest"]
+      "args": [
+        "@playwright/mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": []
     }
   }
 }

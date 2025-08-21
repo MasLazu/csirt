@@ -45,12 +45,12 @@ public abstract class BaseTenantAuthorizedEndpointWithoutResponse<TRequest, TPer
         return id;
     }
 
-    private Guid GetTenantIdFromClaim()
+    private Guid? GetTenantIdFromClaim()
     {
         string? claim = User.FindFirst("tenant_id")?.Value;
         if (string.IsNullOrWhiteSpace(claim) || !Guid.TryParse(claim, out Guid id))
         {
-            throw new UnauthorizedException("Tenant is not authenticated");
+            return null;
         }
         return id;
     }

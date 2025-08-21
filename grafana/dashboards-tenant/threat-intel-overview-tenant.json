@@ -1,0 +1,603 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["threat-intelligence", "tenant"],
+      "title": "Threat Intelligence Sections",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  'Total Events' as \"Metric\",\n  COUNT(*) as \"Count\",\n  'All threat events in selected time range' as \"Description\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\n\nUNION ALL\n\nSELECT \n  'Active Categories' as \"Metric\",\n  COUNT(DISTINCT \"Category\") as \"Count\",\n  'Distinct threat categories detected' as \"Description\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\n\nUNION ALL\n\nSELECT \n  'Unique Source IPs' as \"Metric\",\n  COUNT(DISTINCT \"SourceAddress\") as \"Count\",\n  'Distinct attacking IP addresses' as \"Description\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\n\nUNION ALL\n\nSELECT \n  'Countries Involved' as \"Metric\",\n  COUNT(DISTINCT c.\"Name\") as \"Count\",\n  'Countries with threat activity' as \"Description\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\n\nUNION ALL\n\nSELECT \n  'ASN Networks' as \"Metric\",\n  COUNT(DISTINCT ar.\"Number\") as \"Count\",\n  'Autonomous System Networks involved' as \"Description\"\nFROM \"ThreatEvents\" te\nJOIN \"AsnRegistries\" ar ON te.\"AsnRegistryId\" = ar.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\n\nUNION ALL\n\nSELECT \n  'Protocols Used' as \"Metric\",\n  COUNT(DISTINCT p.\"Name\") as \"Count\",\n  'Network protocols in attacks' as \"Description\"\nFROM \"ThreatEvents\" te\nJOIN \"Protocols\" p ON te.\"ProtocolId\" = p.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Executive Summary (Tenant View)",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  $__timeGroup(\"Timestamp\", $__interval) as time,\n  COUNT(*) as \"Threat Events\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "🕐 Threat Activity Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  \"Category\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY \"Category\"\nORDER BY \"Events\" DESC\nLIMIT 5",
+          "refId": "A"
+        }
+      ],
+      "title": "🎯 Top 5 Threat Categories",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 16
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  c.\"Name\" as \"Country\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"Countries\" c ON te.\"SourceCountryId\" = c.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\"::text = ${tenant:singlequote} AND \"DeletedAt\" IS NULL))\nGROUP BY c.\"Name\"\nORDER BY \"Events\" DESC\nLIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "🌍 Top 10 Source Countries",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  p.\"Name\" as \"Protocol\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nJOIN \"Protocols\" p ON te.\"ProtocolId\" = p.\"Id\"\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY p.\"Name\"\nORDER BY \"Events\" DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "🔗 Protocol Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Events"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 6,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  \"SourceAddress\" as \"Source IP\",\n  COUNT(*) as \"Events\",\n  COUNT(DISTINCT \"Category\") as \"Categories\",\n  MAX(\"Timestamp\") as \"Last Seen\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY \"SourceAddress\"\nORDER BY \"Events\" DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "🚨 High-Risk Source IPs",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": true,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  CAST(\"DestinationPort\" as TEXT) as \"Port\",\n  COUNT(*) as \"Events\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND \"DestinationPort\" IS NOT NULL\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY \"DestinationPort\"\nORDER BY \"Events\" DESC\nLIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "🎯 Top Targeted Ports",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fevdgsrkbm8lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 8,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fevdgsrkbm8lce"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  \"Category\",\n  COUNT(*) as \"Total Events\",\n  COUNT(DISTINCT \"SourceAddress\") as \"Unique IPs\",\n  COUNT(DISTINCT te.\"SourceCountryId\") as \"Countries\",\n  MIN(\"Timestamp\") as \"First Seen\",\n  MAX(\"Timestamp\") as \"Last Seen\"\nFROM \"ThreatEvents\" te\nWHERE te.\"DeletedAt\" IS NULL \n  AND $__timeFilter(te.\"Timestamp\")\n  AND ( ${tenant:singlequote} = 'All' OR te.\"AsnRegistryId\" IN (SELECT \"AsnRegistryId\" FROM \"TenantAsnRegistries\" WHERE \"TenantId\" = ${tenant:singlequote}::uuid AND \"DeletedAt\" IS NULL))\nGROUP BY \"Category\"\nORDER BY \"Total Events\" DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "📋 Threat Category Analysis",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["threat-intelligence", "overview", "tenant"],
+  "templating": {
+    "list": [
+      {
+        "name": "tenant",
+        "type": "query",
+        "label": "Tenant",
+        "hide": 0,
+        "query": "SELECT \"Id\"::text AS __value, \"Name\" AS __text FROM \"Tenants\" WHERE \"DeletedAt\" IS NULL ORDER BY \"Name\";",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "fevdgsrkbm8lce"
+        },
+        "multi": false,
+        "includeAll": true,
+        "allValue": "All",
+        "refresh": 1,
+        "sort": 0
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "🔍 Threat Intelligence - Overview (Tenant View)",
+  "uid": "threat-intel-overview-tenant",
+  "version": 0,
+  "weekStart": ""
+}
