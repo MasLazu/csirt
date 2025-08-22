@@ -18,7 +18,7 @@ public abstract class BaseTenantAuthorizedEndpoint<TRequest, TResponse, TPermiss
     {
         Guid userId = GetUserId();
         string permission = TPermissionProvider.TenantPermission;
-        bool allowed = req.TenantId != GetTenantIdFromClaim() && await Mediator.Send(new CheckTenantPermissionQuery(userId, permission, req.TenantId), ct);
+        bool allowed = req.TenantId == GetTenantIdFromClaim() && await Mediator.Send(new CheckTenantPermissionQuery(userId, permission, req.TenantId), ct);
 
         if (!allowed)
         {
@@ -46,12 +46,12 @@ public abstract class BaseTenantAuthorizedEndpoint<TRequest, TResponse, TPermiss
         return id;
     }
 
-    private Guid GetTenantIdFromClaim()
+    private Guid? GetTenantIdFromClaim()
     {
         string? claim = User.ClaimValue("tenant_id");
         if (string.IsNullOrWhiteSpace(claim) || !Guid.TryParse(claim, out Guid id))
         {
-            throw new UnauthorizedException("Tenant is not authenticated");
+            return null;
         }
         return id;
     }

@@ -7,5 +7,4 @@ public record AssignAsnRegistryToTenantCommand : IRequest<Unit>, ITenantRequest
 {
     public Guid TenantId { get; set; }
     public Guid AsnId { get; set; }
-    public Guid AssignedByTenantUserId { get; set; }
 }

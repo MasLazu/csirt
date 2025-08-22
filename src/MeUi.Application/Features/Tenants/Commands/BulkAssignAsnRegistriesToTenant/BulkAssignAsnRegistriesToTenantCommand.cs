@@ -6,5 +6,4 @@ public record BulkAssignAsnRegistriesToTenantCommand : IRequest<Unit>, MeUi.Appl
 {
     public Guid TenantId { get; set; }
     public List<Guid> AsnRegistryIds { get; set; } = new();
-    public Guid AssignedByTenantUserId { get; set; }
 }
