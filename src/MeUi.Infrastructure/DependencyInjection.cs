@@ -38,11 +38,18 @@ public static class DependencyInjection
         services.AddScoped<IThreatEventAnalyticsRepository, ThreatEventAnalyticsRepository>();
         services.AddScoped<IThreatIntelligentOverviewRepository, ThreatIntelligentOverviewRepository>();
         services.AddScoped<ITenantThreatIntelligentOverviewRepository, TenantThreatIntelligentOverviewRepository>();
+        services.AddScoped<ITenantThreatActorsRepository, TenantThreatActorsRepository>();
+        services.AddScoped<ITenantThreatComplianceRepository, TenantThreatComplianceRepository>();
+        services.AddScoped<ITenantThreatGeographicRepository, TenantThreatGeographicRepository>();
+        services.AddScoped<ITenantThreatIncidentRepository, TenantThreatIncidentRepository>();
+        services.AddScoped<ITenantThreatMalwareRepository, TenantThreatMalwareRepository>();
         services.AddScoped<IThreatComplianceRepository, ThreatComplianceRepository>();
         services.AddScoped<IThreatGeographicRepository, ThreatGeographicRepository>();
         services.AddScoped<IThreatMalwareRepository, ThreatMalwareRepository>();
         services.AddScoped<IThreatTemporalRepository, ThreatTemporalRepository>();
+        services.AddScoped<ITenantThreatTemporalRepository, TenantThreatTemporalRepository>();
         services.AddScoped<IThreatNetworkRepository, ThreatNetworkRepository>();
+        services.AddScoped<ITenantThreatNetworkRepository, TenantThreatNetworkRepository>();
         services.AddScoped<IThreatIncidentRepository, ThreatIncidentRepository>();
         services.AddScoped<IThreatActorsRepository, ThreatActorsRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
