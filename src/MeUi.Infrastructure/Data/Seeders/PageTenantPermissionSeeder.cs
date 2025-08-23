@@ -27,11 +27,14 @@ public class PageTenantPermissionSeeder
     {
         var pageTenantPermissionMap = new Dictionary<string, string[]>
         {
-            { "2.1.1", new[] { "READ:THREAT_ANALYTICS" } },
-            { "2.2.1", new[] { "READ:THREAT_ANALYTICS" } },
-            { "2.2.2", new[] { "READ:THREAT_ANALYTICS" } },
-            { "2.2.3", new[] { "READ:THREAT_ANALYTICS" } },
-            { "2.2.4", new[] { "READ:THREAT_ANALYTICS" } },
+            { "2.1.1", new[] { "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW" } },
+            { "2.2.1", new[] { "READ:THREAT_TEMPORAL" } },
+            { "2.2.2", new[] { "READ:THREAT_GEOGRAPHIC" } },
+            { "2.2.3", new[] { "READ:THREAT_ACTORS" } },
+            { "2.2.4", new[] { "READ:THREAT_COMPLIANCE" } },
+            { "2.2.5", new[] { "READ:THREAT_NETWORK" } },
+            { "2.2.6", new[] { "READ:THREAT_INCIDENT" } },
+            { "2.2.7", new[] { "READ:THREAT_MALWARE" } },
             { "2.3.1", new[] { "READ:USER" } },
             { "2.3.2", new[] { "READ:ROLE" } },
             { "2.3.3", new[] { "READ:PERMISSION" } },

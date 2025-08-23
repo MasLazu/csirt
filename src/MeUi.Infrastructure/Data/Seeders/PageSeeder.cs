@@ -42,10 +42,13 @@ public class PageSeeder
             // Global Sidebar (1)
             Page("1.1.1","Overview","/overview","1.1"),
 
-            Page("1.2.1","Timeline & Trends","/threat-intelligence/timeline-trends","1.2"),
-            Page("1.2.2","Geographic Insights","/threat-intelligence/geographic-insights","1.2"),
-            Page("1.2.3","Entity Analytics","/threat-intelligence/entity-analytics","1.2"),
-            Page("1.2.4","Deep Dive","/threat-intelligence/deep-dive","1.2"),
+            Page("1.2.1","Temporal Analysis","/threat-intelligence/temporal-analysis","1.2"),
+            Page("1.2.2","Geographic Intelligence","/threat-intelligence/geographic-intelligence","1.2"),
+            Page("1.2.3","Threat Actors & Attribution","/threat-intelligence/threat-actors-&-attribution","1.2"),
+            Page("1.2.4","Compliance & Reporting","/threat-intelligence/compliance-&-reporting","1.2"),
+            Page("1.2.5","Network Security","/threat-intelligence/network-security","1.2"),
+            Page("1.2.6","Incident Response","/threat-intelligence/incident-response","1.2"),
+            Page("1.2.7","Malware Intelligence","/threat-intelligence/malware-intelligence","1.2"),
 
             Page("1.3.1","Users","/users-&-access/users","1.3"),
             Page("1.3.2","Roles","/users-&-access/roles","1.3"),
@@ -66,10 +69,13 @@ public class PageSeeder
             // Tenant Sidebar (2)
             Page("2.1.1","Overview","/tenant/{tenantId}/overview","2.1"),
 
-            Page("2.2.1","Timeline & Trends","/tenant/{tenantId}/threat-intelligence/timeline-trends","2.2"),
-            Page("2.2.2","Geographic Insights","/tenant/{tenantId}/threat-intelligence/geographic-insights","2.2"),
-            Page("2.2.3","Entity Analytics","/tenant/{tenantId}/threat-intelligence/entity-analytics","2.2"),
-            Page("2.2.4","Deep Dive","/tenant/{tenantId}/threat-intelligence/deep-dive","2.2"),
+            Page("2.2.1","Temporal Analysis","/tenant/{tenantId}/threat-intelligence/temporal-analysis","2.2"),
+            Page("2.2.2","Geographic Intelligence","/tenant/{tenantId}/threat-intelligence/geographic-intelligence","2.2"),
+            Page("2.2.3","Threat Actors & Attribution","/tenant/{tenantId}/threat-intelligence/threat-actors-&-attribution","2.2"),
+            Page("2.2.4","Compliance & Reporting","/tenant/{tenantId}/threat-intelligence/compliance-&-reporting","2.2"),
+            Page("2.2.5","Network Security","/tenant/{tenantId}/threat-intelligence/network-security","2.2"),
+            Page("2.2.6","Incident Response","/tenant/{tenantId}/threat-intelligence/incident-response","2.2"),
+            Page("2.2.7","Malware Intelligence","/tenant/{tenantId}/threat-intelligence/malware-intelligence","2.2"),
 
             Page("2.3.1","Users","/tenant/{tenantId}/users-&-access/users","2.3"),
             Page("2.3.2","Roles","/tenant/{tenantId}/users-&-access/roles","2.3"),

@@ -26,12 +26,15 @@ public class PagePermissionSeeder
     public async Task SeedAsync(CancellationToken ct = default)
     {
         var pagePermissionMap = new Dictionary<string, string[]>
-        {
-            { "1.1.1", new[] { "READ:THREAT_ANALYTICS" } },
-            { "1.2.1", new[] { "READ:THREAT_ANALYTICS" } },
-            { "1.2.2", new[] { "READ:THREAT_ANALYTICS" } },
-            { "1.2.3", new[] { "READ:THREAT_ANALYTICS" } },
-            { "1.2.4", new[] { "READ:THREAT_ANALYTICS" } },
+            {
+            { "1.1.1", new[] { "READ:THREAT_INTELLIGENT_OVERVIEW" } },
+            { "1.2.1", new[] { "READ:THREAT_TEMPORAL" } },
+            { "1.2.2", new[] { "READ:THREAT_GEOGRAPHIC" } },
+            { "1.2.3", new[] { "READ:THREAT_ACTORS" } },
+            { "1.2.4", new[] { "READ:THREAT_COMPLIANCE" } },
+            { "1.2.5", new[] { "READ:THREAT_NETWORK" } },
+            { "1.2.6", new[] { "READ:THREAT_INCIDENT" } },
+            { "1.2.7", new[] { "READ:THREAT_MALWARE" } },
             { "1.3.1", new[] { "READ:USER" } },
             { "1.3.2", new[] { "READ:ROLE" } },
             { "1.3.3", new[] { "READ:PERMISSION" } },

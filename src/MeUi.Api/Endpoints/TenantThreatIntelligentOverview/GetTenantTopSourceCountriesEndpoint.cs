@@ -8,8 +8,8 @@ namespace MeUi.Api.Endpoints.TenantThreatIntelligentOverview;
 
 public class GetTenantTopSourceCountriesEndpoint : BaseTenantAuthorizedEndpoint<GetTenantTopSourceCountriesQuery, List<TopCountryDto>, GetTenantTopSourceCountriesEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string Permission => "READ:THREAT_INTELLIGENT_OVERVIEW";
-    public static string TenantPermission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string Permission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string TenantPermission => "READ:THREAT_INTELLIGENT_OVERVIEW";
 
     public override void ConfigureEndpoint()
     {
@@ -21,7 +21,7 @@ public class GetTenantTopSourceCountriesEndpoint : BaseTenantAuthorizedEndpoint<
 
     protected override async Task HandleAuthorizedAsync(GetTenantTopSourceCountriesQuery req, Guid userId, CancellationToken ct)
     {
-        var countries = await Mediator.Send(req, ct);
+        List<TopCountryDto> countries = await Mediator.Send(req, ct);
         await SendSuccessAsync(countries, $"Retrieved {countries.Count} top source countries for tenant {req.TenantId}", ct);
     }
 }

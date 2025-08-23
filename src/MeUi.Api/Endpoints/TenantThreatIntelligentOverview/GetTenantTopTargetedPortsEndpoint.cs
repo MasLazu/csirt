@@ -8,8 +8,8 @@ namespace MeUi.Api.Endpoints.TenantThreatIntelligentOverview;
 
 public class GetTenantTopTargetedPortsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantTopTargetedPortsQuery, List<TargetedPortDto>, GetTenantTopTargetedPortsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string Permission => "READ:THREAT_INTELLIGENT_OVERVIEW";
-    public static string TenantPermission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string Permission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string TenantPermission => "READ:THREAT_INTELLIGENT_OVERVIEW";
 
     public override void ConfigureEndpoint()
     {
@@ -21,7 +21,7 @@ public class GetTenantTopTargetedPortsEndpoint : BaseTenantAuthorizedEndpoint<Ge
 
     protected override async Task HandleAuthorizedAsync(GetTenantTopTargetedPortsQuery req, Guid userId, CancellationToken ct)
     {
-        var ports = await Mediator.Send(req, ct);
+        List<TargetedPortDto> ports = await Mediator.Send(req, ct);
         await SendSuccessAsync(ports, $"Retrieved {ports.Count} top targeted ports for tenant {req.TenantId}", ct);
     }
 }

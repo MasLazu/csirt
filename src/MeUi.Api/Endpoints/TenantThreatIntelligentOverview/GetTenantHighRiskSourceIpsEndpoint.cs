@@ -8,8 +8,8 @@ namespace MeUi.Api.Endpoints.TenantThreatIntelligentOverview;
 
 public class GetTenantHighRiskSourceIpsEndpoint : BaseTenantAuthorizedEndpoint<GetTenantHighRiskSourceIpsQuery, List<HighRiskSourceIpDto>, GetTenantHighRiskSourceIpsEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string Permission => "READ:THREAT_INTELLIGENT_OVERVIEW";
-    public static string TenantPermission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string Permission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string TenantPermission => "READ:THREAT_INTELLIGENT_OVERVIEW";
 
     public override void ConfigureEndpoint()
     {
@@ -21,7 +21,7 @@ public class GetTenantHighRiskSourceIpsEndpoint : BaseTenantAuthorizedEndpoint<G
 
     protected override async Task HandleAuthorizedAsync(GetTenantHighRiskSourceIpsQuery req, Guid userId, CancellationToken ct)
     {
-        var ips = await Mediator.Send(req, ct);
+        List<HighRiskSourceIpDto> ips = await Mediator.Send(req, ct);
         await SendSuccessAsync(ips, $"Retrieved {ips.Count} high-risk source IPs for tenant {req.TenantId}", ct);
     }
 }

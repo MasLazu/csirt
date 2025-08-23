@@ -8,8 +8,8 @@ namespace MeUi.Api.Endpoints.TenantThreatIntelligentOverview;
 
 public class GetTenantExecutiveSummaryEndpoint : BaseTenantAuthorizedEndpoint<GetTenantExecutiveSummaryQuery, List<ExecutiveSummaryMetricDto>, GetTenantExecutiveSummaryEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string Permission => "READ:THREAT_INTELLIGENT_OVERVIEW";
-    public static string TenantPermission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string Permission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string TenantPermission => "READ:THREAT_INTELLIGENT_OVERVIEW";
 
     public override void ConfigureEndpoint()
     {
@@ -21,7 +21,7 @@ public class GetTenantExecutiveSummaryEndpoint : BaseTenantAuthorizedEndpoint<Ge
 
     protected override async Task HandleAuthorizedAsync(GetTenantExecutiveSummaryQuery req, Guid userId, CancellationToken ct)
     {
-        var summary = await Mediator.Send(req, ct);
+        List<ExecutiveSummaryMetricDto> summary = await Mediator.Send(req, ct);
         await SendSuccessAsync(summary, $"Retrieved {summary.Count} executive summary metrics for tenant {req.TenantId}", ct);
     }
 }

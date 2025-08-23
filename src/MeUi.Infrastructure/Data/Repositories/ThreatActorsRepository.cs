@@ -9,28 +9,28 @@ using MeUi.Application.Models.ThreatActors;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
-namespace MeUi.Infrastructure.Data.Repositories
+namespace MeUi.Infrastructure.Data.Repositories;
+
+public class ThreatActorsRepository : IThreatActorsRepository
 {
-    public class ThreatActorsRepository : IThreatActorsRepository
-    {
-        private readonly string _connectionString;
+  private readonly string _connectionString;
 
-        public ThreatActorsRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("DefaultConnection string is not configured.");
-        }
+  public ThreatActorsRepository(IConfiguration configuration)
+  {
+    _connectionString = configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("DefaultConnection string is not configured.");
+  }
 
-        private IDbConnection CreateConnection()
-        {
-            var connection = new NpgsqlConnection(_connectionString);
-            connection.Open();
-            return connection;
-        }
+  private IDbConnection CreateConnection()
+  {
+    var connection = new NpgsqlConnection(_connectionString);
+    connection.Open();
+    return connection;
+  }
 
-        public async Task<List<ActorProfileDto>> GetActorProfilesAsync(DateTime start, DateTime end, int limit = 30, CancellationToken cancellationToken = default)
-        {
-            var sql = @"
+  public async Task<List<ActorProfileDto>> GetActorProfilesAsync(DateTime start, DateTime end, int limit = 30, CancellationToken cancellationToken = default)
+  {
+    string sql = @"
 WITH actor_profiles AS (
   SELECT 
     ""SourceAddress"",
@@ -69,14 +69,14 @@ FROM actor_profiles
 ORDER BY ""ActorThreatScore"" DESC
 LIMIT @limit";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ActorProfileDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ActorProfileDto> result = await connection.QueryAsync<ActorProfileDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<ActorCountryDistributionDto>> GetActorDistributionByCountryAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
-        {
-            var sql = @"
+  public async Task<List<ActorCountryDistributionDto>> GetActorDistributionByCountryAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
+  {
+    string sql = @"
 WITH actor_countries AS (
   SELECT 
     c.""Name"" as ""Country"",
@@ -93,14 +93,14 @@ FROM actor_countries
 ORDER BY ""UniqueActors"" DESC
 LIMIT @limit";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ActorCountryDistributionDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ActorCountryDistributionDto> result = await connection.QueryAsync<ActorCountryDistributionDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<ActorAsnDto>> GetActorAsnAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
-        {
-            var sql = @"
+  public async Task<List<ActorAsnDto>> GetActorAsnAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
+  {
+    string sql = @"
 WITH actor_asn AS (
   SELECT 
     ar.""Number"" as ""ASN"",
@@ -119,16 +119,16 @@ FROM actor_asn
 ORDER BY ""Actors"" DESC
 LIMIT @limit";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ActorAsnDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ActorAsnDto> result = await connection.QueryAsync<ActorAsnDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<ActorActivityTimelineDto>> GetTopActorsActivityTimelineAsync(DateTime start, DateTime end, TimeSpan interval, int limit = 10, CancellationToken cancellationToken = default)
-        {
-            // match the overview pattern for interval grouping
-            var intervalStr = interval.TotalDays >= 1 ? "day" : interval.TotalHours >= 1 ? "hour" : "minute";
-            var sql = $@"
+  public async Task<List<ActorActivityTimelineDto>> GetTopActorsActivityTimelineAsync(DateTime start, DateTime end, TimeSpan interval, int limit = 10, CancellationToken cancellationToken = default)
+  {
+    // match the overview pattern for interval grouping
+    string intervalStr = interval.TotalDays >= 1 ? "day" : interval.TotalHours >= 1 ? "hour" : "minute";
+    string sql = $@"
 WITH top_actors AS (
   SELECT ""SourceAddress""
   FROM ""ThreatEvents""
@@ -150,14 +150,14 @@ WHERE te.""DeletedAt"" IS NULL
 GROUP BY Time, te.""SourceAddress""
 ORDER BY Time";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ActorActivityTimelineDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ActorActivityTimelineDto> result = await connection.QueryAsync<ActorActivityTimelineDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<ActorTtpDto>> GetActorTtpAnalysisAsync(DateTime start, DateTime end, int limit = 25, CancellationToken cancellationToken = default)
-        {
-            var sql = @"
+  public async Task<List<ActorTtpDto>> GetActorTtpAnalysisAsync(DateTime start, DateTime end, int limit = 25, CancellationToken cancellationToken = default)
+  {
+    string sql = @"
 WITH actor_ttp AS (
   SELECT 
     ""SourceAddress"",
@@ -194,14 +194,14 @@ FROM actor_ttp_profile
 ORDER BY ttp_diversity DESC, total_events DESC
 LIMIT @limit";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ActorTtpDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ActorTtpDto> result = await connection.QueryAsync<ActorTtpDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<ActorSimilarityDto>> GetActorSimilarityAsync(DateTime start, DateTime end, int limit = 25, CancellationToken cancellationToken = default)
-        {
-            var sql = @"
+  public async Task<List<ActorSimilarityDto>> GetActorSimilarityAsync(DateTime start, DateTime end, int limit = 25, CancellationToken cancellationToken = default)
+  {
+    string sql = @"
 WITH actor_profiles AS (
   SELECT 
     te.""SourceAddress"",
@@ -252,14 +252,14 @@ WHERE similarity_score > 2
 ORDER BY similarity_score DESC
 LIMIT @limit";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ActorSimilarityDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ActorSimilarityDto> result = await connection.QueryAsync<ActorSimilarityDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<ActorPersistenceDto>> GetActorPersistenceAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
-        {
-            var sql = @"
+  public async Task<List<ActorPersistenceDto>> GetActorPersistenceAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
+  {
+    string sql = @"
 WITH actor_persistence AS (
   SELECT 
     ""SourceAddress"",
@@ -295,14 +295,14 @@ SELECT
 FROM persistence_categories
 ORDER BY ""Actors"" DESC";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ActorPersistenceDto>(sql, new { start, end }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ActorPersistenceDto> result = await connection.QueryAsync<ActorPersistenceDto>(sql, new { start, end }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<ActorEvolutionDto>> GetActorEvolutionAsync(DateTime start, DateTime end, int limit = 25, CancellationToken cancellationToken = default)
-        {
-            var sql = @"
+  public async Task<List<ActorEvolutionDto>> GetActorEvolutionAsync(DateTime start, DateTime end, int limit = 25, CancellationToken cancellationToken = default)
+  {
+    string sql = @"
 WITH actor_evolution AS (
   SELECT 
     ""SourceAddress"",
@@ -341,9 +341,8 @@ FROM evolution_metrics
 ORDER BY ""PeakEventsPerDay"" DESC
 LIMIT @limit";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ActorEvolutionDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
-    }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ActorEvolutionDto> result = await connection.QueryAsync<ActorEvolutionDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 }
