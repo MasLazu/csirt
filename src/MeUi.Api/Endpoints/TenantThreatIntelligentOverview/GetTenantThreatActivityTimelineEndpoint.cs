@@ -8,8 +8,8 @@ namespace MeUi.Api.Endpoints.TenantThreatIntelligentOverview;
 
 public class GetTenantThreatActivityTimelineEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatActivityTimelineQuery, List<TimelineDataPointDto>, GetTenantThreatActivityTimelineEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string Permission => "READ:THREAT_INTELLIGENT_OVERVIEW";
-    public static string TenantPermission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string Permission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string TenantPermission => "READ:THREAT_INTELLIGENT_OVERVIEW";
 
     public override void ConfigureEndpoint()
     {
@@ -21,7 +21,7 @@ public class GetTenantThreatActivityTimelineEndpoint : BaseTenantAuthorizedEndpo
 
     protected override async Task HandleAuthorizedAsync(GetTenantThreatActivityTimelineQuery req, Guid userId, CancellationToken ct)
     {
-        var timeline = await Mediator.Send(req, ct);
+        List<TimelineDataPointDto> timeline = await Mediator.Send(req, ct);
         await SendSuccessAsync(timeline, $"Retrieved {timeline.Count} timeline data points for tenant {req.TenantId}", ct);
     }
 }

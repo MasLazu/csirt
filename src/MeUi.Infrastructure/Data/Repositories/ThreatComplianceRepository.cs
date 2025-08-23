@@ -5,28 +5,28 @@ using MeUi.Application.Models.ThreatCompliance;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
-namespace MeUi.Infrastructure.Data.Repositories
+namespace MeUi.Infrastructure.Data.Repositories;
+
+public class ThreatComplianceRepository : IThreatComplianceRepository
 {
-    public class ThreatComplianceRepository : IThreatComplianceRepository
-    {
-        private readonly string _connectionString;
+  private readonly string _connectionString;
 
-        public ThreatComplianceRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("DefaultConnection string is not configured.");
-        }
+  public ThreatComplianceRepository(IConfiguration configuration)
+  {
+    _connectionString = configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("DefaultConnection string is not configured.");
+  }
 
-        private IDbConnection CreateConnection()
-        {
-            var connection = new NpgsqlConnection(_connectionString);
-            connection.Open();
-            return connection;
-        }
+  private IDbConnection CreateConnection()
+  {
+    var connection = new NpgsqlConnection(_connectionString);
+    connection.Open();
+    return connection;
+  }
 
-        public async Task<List<ExecutiveSummaryDto>> GetExecutiveSummaryAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
-        {
-            var sql = @"WITH monthly_summary AS (
+  public async Task<List<ExecutiveSummaryDto>> GetExecutiveSummaryAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
+  {
+    string sql = @"WITH monthly_summary AS (
   SELECT 
     DATE_TRUNC('month', te.""Timestamp"") as Month,
     COUNT(*) as TotalThreats,
@@ -65,14 +65,14 @@ WHERE Month >= @start
 ORDER BY Month DESC
 LIMIT 12";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<ExecutiveSummaryDto>(sql, new { start, end }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<ExecutiveSummaryDto> result = await connection.QueryAsync<ExecutiveSummaryDto>(sql, new { start, end }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<KpiTrendPointDto>> GetKpiTrendAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
-        {
-            var sql = @"SELECT 
+  public async Task<List<KpiTrendPointDto>> GetKpiTrendAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
+  {
+    string sql = @"SELECT 
   DATE_TRUNC('day', te.""Timestamp"") as time,
   'Total Threats' as metric,
   COUNT(*) as value
@@ -105,14 +105,14 @@ WHERE te.""DeletedAt"" IS NULL
 GROUP BY time
 ORDER BY time";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<KpiTrendPointDto>(sql, new { start, end }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<KpiTrendPointDto> result = await connection.QueryAsync<KpiTrendPointDto>(sql, new { start, end }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<ComplianceScoreDto> GetComplianceScoreAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
-        {
-            var sql = @"WITH compliance_metrics AS (
+  public async Task<ComplianceScoreDto> GetComplianceScoreAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
+  {
+    string sql = @"WITH compliance_metrics AS (
   SELECT 
     COUNT(*) as total_events,
     COUNT(CASE WHEN te.""Timestamp"" > NOW() - INTERVAL '24 hours' THEN 1 END) as recent_events,
@@ -131,14 +131,14 @@ SELECT
   END as ComplianceScore
 FROM compliance_metrics";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryFirstOrDefaultAsync<ComplianceScoreDto>(sql, new { start, end }, commandTimeout: 300);
-            return result ?? new ComplianceScoreDto { ComplianceScore = 0 };
-        }
+    using IDbConnection connection = CreateConnection();
+    ComplianceScoreDto? result = await connection.QueryFirstOrDefaultAsync<ComplianceScoreDto>(sql, new { start, end }, commandTimeout: 300);
+    return result ?? new ComplianceScoreDto { ComplianceScore = 0 };
+  }
 
-        public async Task<List<RegionalRiskDto>> GetRegionalRiskAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
-        {
-            var sql = @"SELECT 
+  public async Task<List<RegionalRiskDto>> GetRegionalRiskAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
+  {
+    string sql = @"SELECT 
   c.""Name"" as TopRiskCountry,
   COUNT(*) as ThreatEvents,
   COUNT(DISTINCT te.""SourceAddress"") as UniqueSources,
@@ -152,14 +152,14 @@ GROUP BY c.""Name""
 ORDER BY RiskScore DESC
 LIMIT @limit";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<RegionalRiskDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<RegionalRiskDto> result = await connection.QueryAsync<RegionalRiskDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<List<AttackCategoryDto>> GetAttackCategoryAnalysisAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
-        {
-            var sql = @"SELECT 
+  public async Task<List<AttackCategoryDto>> GetAttackCategoryAnalysisAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
+  {
+    string sql = @"SELECT 
   te.""Category"" as AttackCategory,
   COUNT(*) as TotalEvents,
   COUNT(DISTINCT te.""SourceAddress"") as UniqueSources,
@@ -178,14 +178,14 @@ GROUP BY te.""Category""
 ORDER BY TotalEvents DESC
 LIMIT @limit";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryAsync<AttackCategoryDto>(sql, new { start, end, limit }, commandTimeout: 300);
-            return result.AsList();
-        }
+    using IDbConnection connection = CreateConnection();
+    IEnumerable<AttackCategoryDto> result = await connection.QueryAsync<AttackCategoryDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    return result.AsList();
+  }
 
-        public async Task<RiskLevelDto> GetCurrentRiskLevelAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
-        {
-            var sql = @"WITH risk_calculation AS (
+  public async Task<RiskLevelDto> GetCurrentRiskLevelAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
+  {
+    string sql = @"WITH risk_calculation AS (
   SELECT 
     COUNT(*) as total_threats,
     COUNT(DISTINCT te.""SourceAddress"") as unique_sources,
@@ -204,9 +204,8 @@ SELECT
   END as RiskLevel
 FROM risk_calculation";
 
-            using var connection = CreateConnection();
-            var result = await connection.QueryFirstOrDefaultAsync<RiskLevelDto>(sql, new { start, end }, commandTimeout: 300);
-            return result ?? new RiskLevelDto { RiskLevel = 1 };
-        }
-    }
+    using IDbConnection connection = CreateConnection();
+    RiskLevelDto? result = await connection.QueryFirstOrDefaultAsync<RiskLevelDto>(sql, new { start, end }, commandTimeout: 300);
+    return result ?? new RiskLevelDto { RiskLevel = 1 };
+  }
 }

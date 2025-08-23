@@ -8,8 +8,8 @@ namespace MeUi.Api.Endpoints.TenantThreatIntelligentOverview;
 
 public class GetTenantThreatCategoryAnalysisEndpoint : BaseTenantAuthorizedEndpoint<GetTenantThreatCategoryAnalysisQuery, List<ThreatCategoryAnalysisDto>, GetTenantThreatCategoryAnalysisEndpoint>, ITenantPermissionProvider, IPermissionProvider
 {
-    public static string Permission => "READ:THREAT_INTELLIGENT_OVERVIEW";
-    public static string TenantPermission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string Permission => "READ:TENANT_THREAT_INTELLIGENT_OVERVIEW";
+    public static string TenantPermission => "READ:THREAT_INTELLIGENT_OVERVIEW";
 
     public override void ConfigureEndpoint()
     {
@@ -21,7 +21,7 @@ public class GetTenantThreatCategoryAnalysisEndpoint : BaseTenantAuthorizedEndpo
 
     protected override async Task HandleAuthorizedAsync(GetTenantThreatCategoryAnalysisQuery req, Guid userId, CancellationToken ct)
     {
-        var analysis = await Mediator.Send(req, ct);
+        List<ThreatCategoryAnalysisDto> analysis = await Mediator.Send(req, ct);
         await SendSuccessAsync(analysis, $"Retrieved {analysis.Count} threat category analysis entries for tenant {req.TenantId}", ct);
     }
 }
