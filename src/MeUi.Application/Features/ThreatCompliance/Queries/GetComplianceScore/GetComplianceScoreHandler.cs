@@ -4,20 +4,19 @@ using MediatR;
 using MeUi.Application.Interfaces;
 using MeUi.Application.Models.ThreatCompliance;
 
-namespace MeUi.Application.Features.ThreatCompliance.Queries.GetComplianceScore
+namespace MeUi.Application.Features.ThreatCompliance.Queries.GetComplianceScore;
+
+public class GetComplianceScoreHandler : IRequestHandler<GetComplianceScoreQuery, ComplianceScoreDto>
 {
-    public class GetComplianceScoreHandler : IRequestHandler<GetComplianceScoreQuery, ComplianceScoreDto>
+    private readonly IThreatComplianceRepository _repo;
+
+    public GetComplianceScoreHandler(IThreatComplianceRepository repo)
     {
-        private readonly IThreatComplianceRepository _repo;
+        _repo = repo;
+    }
 
-        public GetComplianceScoreHandler(IThreatComplianceRepository repo)
-        {
-            _repo = repo;
-        }
-
-        public async Task<ComplianceScoreDto> Handle(GetComplianceScoreQuery request, CancellationToken cancellationToken)
-        {
-            return await _repo.GetComplianceScoreAsync(request.Start, request.End, cancellationToken);
-        }
+    public async Task<ComplianceScoreDto> Handle(GetComplianceScoreQuery request, CancellationToken cancellationToken)
+    {
+        return await _repo.GetComplianceScoreAsync(request.Start, request.End, cancellationToken);
     }
 }

@@ -26,7 +26,7 @@ public class ThreatIncidentRepository : IThreatIncidentRepository
 
     public async Task<List<IncidentSummaryDto>> GetActiveIncidentsAsync(DateTime start, DateTime end, int limit = 30, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT 
+        string sql = @"SELECT 
   te.""SourceAddress""::text as ""SourceIP"",
   c.""Name"" as ""SourceCountry"",
   te.""Category"" as ""IncidentType"",
@@ -55,14 +55,14 @@ HAVING COUNT(*) > 5
 ORDER BY ""Priority"" DESC, ""LastActivity"" DESC
 LIMIT @limit";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<IncidentSummaryDto>(sql, new { start, end, limit }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<IncidentSummaryDto> result = await connection.QueryAsync<IncidentSummaryDto>(sql, new { start, end, limit }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<SeverityDistributionDto>> GetSeverityDistributionAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"WITH severity_counts AS (
+        string sql = @"WITH severity_counts AS (
   SELECT 
     te.""SourceAddress"",
     COUNT(*) as event_count,
@@ -91,14 +91,14 @@ ORDER BY
     WHEN 'Low' THEN 4
   END";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<SeverityDistributionDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<SeverityDistributionDto> result = await connection.QueryAsync<SeverityDistributionDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<ResponseTimeMetricDto>> GetResponseTimeMetricsAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT 
+        string sql = @"SELECT 
   DATE_TRUNC('day', te.""Timestamp"") as time,
   'Detection to Initial Response' as metric,
   AVG(EXTRACT(EPOCH FROM (te.""Timestamp"" + INTERVAL '2 hours' - te.""Timestamp"")) / 3600) as ""Hours""
@@ -119,8 +119,8 @@ WHERE te.""DeletedAt"" IS NULL
 GROUP BY time
 ORDER BY time";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<ResponseTimeMetricDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<ResponseTimeMetricDto> result = await connection.QueryAsync<ResponseTimeMetricDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 }

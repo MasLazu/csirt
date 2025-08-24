@@ -19,7 +19,7 @@ public class GetExecutiveSummaryEndpoint : BaseAuthorizedEndpoint<GetExecutiveSu
 
     public override async Task HandleAuthorizedAsync(GetExecutiveSummaryQuery req, Guid userId, CancellationToken ct)
     {
-        var summary = await Mediator.Send(req, ct);
+        List<ExecutiveSummaryMetricDto> summary = await Mediator.Send(req, ct);
         await SendSuccessAsync(summary, $"Retrieved {summary.Count} executive summary metrics", ct);
     }
 }

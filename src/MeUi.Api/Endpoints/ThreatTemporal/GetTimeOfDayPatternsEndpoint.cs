@@ -17,7 +17,7 @@ public class GetTimeOfDayPatternsEndpoint : BaseAuthorizedEndpoint<GetTimeOfDayP
 
     public override async Task HandleAuthorizedAsync(GetTimeOfDayPatternsQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<TimePeriodSeriesDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} series", ct);
     }
 }

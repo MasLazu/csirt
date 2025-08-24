@@ -17,7 +17,7 @@ public class GetTargetedInfrastructureEndpoint : BaseAuthorizedEndpoint<GetTarge
 
     public override async Task HandleAuthorizedAsync(GetTargetedInfrastructureQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<TargetedInfrastructureDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} targets", ct);
     }
 }

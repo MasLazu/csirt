@@ -17,7 +17,7 @@ public class GetActorProfilesEndpoint : BaseAuthorizedEndpoint<GetActorProfilesQ
 
     public override async Task HandleAuthorizedAsync(GetActorProfilesQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        List<ActorProfileDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Count} actor profiles", ct);
     }
 }

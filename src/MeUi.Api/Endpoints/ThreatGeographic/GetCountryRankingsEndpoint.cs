@@ -19,7 +19,7 @@ public class GetCountryRankingsEndpoint : BaseAuthorizedEndpoint<GetCountryRanki
 
     public override async Task HandleAuthorizedAsync(GetCountryRankingsQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<CountryAttackRankingDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} countries", ct);
     }
 }

@@ -19,7 +19,7 @@ public class GetComplianceScoreEndpoint : BaseAuthorizedEndpoint<GetComplianceSc
 
     public override async Task HandleAuthorizedAsync(GetComplianceScoreQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        ComplianceScoreDto resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, "Retrieved compliance score", ct);
     }
 }

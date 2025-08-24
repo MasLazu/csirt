@@ -26,7 +26,7 @@ public class ThreatNetworkRepository : IThreatNetworkRepository
 
   public async Task<List<TargetedPortDto>> GetMostTargetedPortsAsync(DateTime start, DateTime end, int limit = 15, CancellationToken cancellationToken = default)
   {
-    var sql = @"SELECT 
+        string sql = @"SELECT 
   CAST(""DestinationPort"" as TEXT) as ""Port"",
   COUNT(*) as ""Attacks"",
   COUNT(DISTINCT ""SourceAddress"") as ""UniqueSources""
@@ -38,14 +38,14 @@ GROUP BY ""DestinationPort""
 ORDER BY ""Attacks"" DESC
 LIMIT @limit";
 
-    using var connection = CreateConnection();
-    var result = await connection.QueryAsync<TargetedPortDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    using IDbConnection connection = CreateConnection();
+        IEnumerable<TargetedPortDto> result = await connection.QueryAsync<TargetedPortDto>(sql, new { start, end, limit }, commandTimeout: 300);
     return result.AsList();
   }
 
   public async Task<List<ProtocolDistributionDto>> GetProtocolDistributionAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
   {
-    var sql = @"SELECT 
+        string sql = @"SELECT 
   p.""Name"" as ""Protocol"",
   COUNT(*) as ""Events""
 FROM ""ThreatEvents"" te
@@ -55,14 +55,14 @@ WHERE te.""DeletedAt"" IS NULL
 GROUP BY p.""Name""
 ORDER BY ""Events"" DESC";
 
-    using var connection = CreateConnection();
-    var result = await connection.QueryAsync<ProtocolDistributionDto>(sql, new { start, end }, commandTimeout: 300);
+    using IDbConnection connection = CreateConnection();
+        IEnumerable<ProtocolDistributionDto> result = await connection.QueryAsync<ProtocolDistributionDto>(sql, new { start, end }, commandTimeout: 300);
     return result.AsList();
   }
 
   public async Task<List<HighRiskIpDto>> GetHighRiskIpReputationAsync(DateTime start, DateTime end, int limit = 20, CancellationToken cancellationToken = default)
   {
-    var sql = @"SELECT 
+        string sql = @"SELECT 
   te.""SourceAddress""::text as ""IpAddress"",
   COUNT(*) as ""TotalAttacks"",
   COUNT(DISTINCT te.""DestinationPort"") as ""PortsTargeted"",
@@ -79,14 +79,14 @@ GROUP BY te.""SourceAddress""
 ORDER BY ""AttackScore"" DESC
 LIMIT @limit";
 
-    using var connection = CreateConnection();
-    var result = await connection.QueryAsync<HighRiskIpDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    using IDbConnection connection = CreateConnection();
+        IEnumerable<HighRiskIpDto> result = await connection.QueryAsync<HighRiskIpDto>(sql, new { start, end, limit }, commandTimeout: 300);
     return result.AsList();
   }
 
   public async Task<List<AsnNetworkDto>> GetAsnNetworkAnalysisAsync(DateTime start, DateTime end, int limit = 20, CancellationToken cancellationToken = default)
   {
-    var sql = @"SELECT 
+        string sql = @"SELECT 
   ar.""Number"" as ""ASN"",
   ar.""Description"" as ""Organization"",
   COUNT(*) as ""Events"",
@@ -101,14 +101,14 @@ GROUP BY ar.""Number"", ar.""Description""
 ORDER BY ""Events"" DESC
 LIMIT @limit";
 
-    using var connection = CreateConnection();
-    var result = await connection.QueryAsync<AsnNetworkDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    using IDbConnection connection = CreateConnection();
+        IEnumerable<AsnNetworkDto> result = await connection.QueryAsync<AsnNetworkDto>(sql, new { start, end, limit }, commandTimeout: 300);
     return result.AsList();
   }
 
   public async Task<List<CriticalPortTimePointDto>> GetCriticalPortTimelineAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
   {
-    var sql = @"SELECT 
+        string sql = @"SELECT 
   DATE_TRUNC('hour', ""Timestamp"") as ""Time"",
   CAST(""DestinationPort"" as TEXT) as ""Port"",
   COUNT(*) as ""Attacks""
@@ -119,14 +119,14 @@ WHERE ""DeletedAt"" IS NULL
 GROUP BY ""Time"", ""DestinationPort""
 ORDER BY ""Time""";
 
-    using var connection = CreateConnection();
-    var result = await connection.QueryAsync<CriticalPortTimePointDto>(sql, new { start, end }, commandTimeout: 300);
+    using IDbConnection connection = CreateConnection();
+        IEnumerable<CriticalPortTimePointDto> result = await connection.QueryAsync<CriticalPortTimePointDto>(sql, new { start, end }, commandTimeout: 300);
     return result.AsList();
   }
 
   public async Task<List<TargetedInfrastructureDto>> GetMostTargetedInfrastructureAsync(DateTime start, DateTime end, int limit = 20, CancellationToken cancellationToken = default)
   {
-    var sql = @"SELECT 
+        string sql = @"SELECT 
   te.""DestinationAddress""::text as ""TargetIp"",
   COUNT(*) as ""AttacksReceived"",
   COUNT(DISTINCT te.""SourceAddress""::text) as ""UniqueAttackers"",
@@ -142,14 +142,14 @@ GROUP BY te.""DestinationAddress""::text
 ORDER BY ""AttacksReceived"" DESC
 LIMIT @limit";
 
-    using var connection = CreateConnection();
-    var result = await connection.QueryAsync<TargetedInfrastructureDto>(sql, new { start, end, limit }, commandTimeout: 300);
+    using IDbConnection connection = CreateConnection();
+        IEnumerable<TargetedInfrastructureDto> result = await connection.QueryAsync<TargetedInfrastructureDto>(sql, new { start, end, limit }, commandTimeout: 300);
     return result.AsList();
   }
 
   public async Task<List<ProtocolTrendDto>> GetProtocolTrendsAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
   {
-    var sql = @"SELECT 
+        string sql = @"SELECT 
   DATE_TRUNC('hour', te.""Timestamp"") as time,
   p.""Name"" as ""Protocol"",
   COUNT(*) as ""Events""
@@ -160,8 +160,8 @@ WHERE te.""DeletedAt"" IS NULL
 GROUP BY time, p.""Name""
 ORDER BY time";
 
-    using var connection = CreateConnection();
-    var result = await connection.QueryAsync<ProtocolTrendDto>(sql, new { start, end }, commandTimeout: 300);
+    using IDbConnection connection = CreateConnection();
+        IEnumerable<ProtocolTrendDto> result = await connection.QueryAsync<ProtocolTrendDto>(sql, new { start, end }, commandTimeout: 300);
     return result.AsList();
   }
 }

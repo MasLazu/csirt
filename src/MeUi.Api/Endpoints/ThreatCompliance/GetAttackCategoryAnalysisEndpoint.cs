@@ -19,7 +19,7 @@ public class GetAttackCategoryAnalysisEndpoint : BaseAuthorizedEndpoint<GetAttac
 
     public override async Task HandleAuthorizedAsync(GetAttackCategoryAnalysisQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<AttackCategoryDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} attack categories", ct);
     }
 }

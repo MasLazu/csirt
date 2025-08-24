@@ -18,7 +18,7 @@ public class GetActorDistributionByCountryQueryHandler : IRequestHandler<GetActo
 
     public async Task<List<ActorCountryDistributionDto>> Handle(GetActorDistributionByCountryQuery request, CancellationToken cancellationToken)
     {
-        var result = await _repository.GetActorDistributionByCountryAsync(request.Start, request.End, request.Limit, cancellationToken);
+        List<ActorCountryDistributionDto> result = await _repository.GetActorDistributionByCountryAsync(request.Start, request.End, request.Limit, cancellationToken);
         return result;
     }
 }

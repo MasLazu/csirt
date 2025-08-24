@@ -17,7 +17,7 @@ public class GetHighRiskIpsEndpoint : BaseAuthorizedEndpoint<GetHighRiskIpsQuery
 
     public override async Task HandleAuthorizedAsync(GetHighRiskIpsQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<HighRiskIpDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} IPs", ct);
     }
 }

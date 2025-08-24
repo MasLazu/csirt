@@ -20,7 +20,7 @@ public class GetTopThreatCategoriesEndpoint : BaseAuthorizedEndpoint<GetTopThrea
 
     public override async Task HandleAuthorizedAsync(GetTopThreatCategoriesQuery req, Guid userId, CancellationToken ct)
     {
-        var categories = await Mediator.Send(req, ct);
+        List<TopCategoryDto> categories = await Mediator.Send(req, ct);
         await SendSuccessAsync(categories, $"Retrieved {categories.Count} top threat categories", ct);
     }
 }

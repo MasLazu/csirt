@@ -60,7 +60,7 @@ public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUser
             take: request.ValidatedPageSize,
             ct: ct);
 
-        var tenantUserDtos = tenantUsers.Adapt<IEnumerable<TenantUserDto>>() ?? Enumerable.Empty<TenantUserDto>();
+        IEnumerable<TenantUserDto> tenantUserDtos = tenantUsers.Adapt<IEnumerable<TenantUserDto>>() ?? Enumerable.Empty<TenantUserDto>();
 
         return new PaginatedDto<TenantUserDto>
         {

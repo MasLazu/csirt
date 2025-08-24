@@ -19,7 +19,7 @@ public class GetCurrentRiskLevelEndpoint : BaseAuthorizedEndpoint<GetCurrentRisk
 
     public override async Task HandleAuthorizedAsync(GetCurrentRiskLevelQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        RiskLevelDto resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, "Retrieved current risk level", ct);
     }
 }

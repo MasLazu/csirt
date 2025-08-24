@@ -19,7 +19,7 @@ public class GetCountryAsnCorrelationEndpoint : BaseAuthorizedEndpoint<GetCountr
 
     public override async Task HandleAuthorizedAsync(GetCountryAsnCorrelationQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<CountryAsnCorrelationDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} rows", ct);
     }
 }

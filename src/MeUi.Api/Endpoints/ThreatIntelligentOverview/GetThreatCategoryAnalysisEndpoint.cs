@@ -20,7 +20,7 @@ public class GetThreatCategoryAnalysisEndpoint : BaseAuthorizedEndpoint<GetThrea
 
     public override async Task HandleAuthorizedAsync(GetThreatCategoryAnalysisQuery req, Guid userId, CancellationToken ct)
     {
-        var analysis = await Mediator.Send(req, ct);
+        List<ThreatCategoryAnalysisDto> analysis = await Mediator.Send(req, ct);
         await SendSuccessAsync(analysis, $"Retrieved {analysis.Count} threat category analysis records", ct);
     }
 }

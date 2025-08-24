@@ -18,7 +18,7 @@ public class GetActorSimilarityQueryHandler : IRequestHandler<GetActorSimilarity
 
     public async Task<List<ActorSimilarityDto>> Handle(GetActorSimilarityQuery request, CancellationToken cancellationToken)
     {
-        var res = await _repository.GetActorSimilarityAsync(request.Start, request.End, request.Limit, cancellationToken);
+        List<ActorSimilarityDto> res = await _repository.GetActorSimilarityAsync(request.Start, request.End, request.Limit, cancellationToken);
         return res;
     }
 }

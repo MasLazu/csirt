@@ -20,7 +20,7 @@ public class GetTopSourceCountriesEndpoint : BaseAuthorizedEndpoint<GetTopSource
 
     public override async Task HandleAuthorizedAsync(GetTopSourceCountriesQuery req, Guid userId, CancellationToken ct)
     {
-        var countries = await Mediator.Send(req, ct);
+        List<TopCountryDto> countries = await Mediator.Send(req, ct);
         await SendSuccessAsync(countries, $"Retrieved {countries.Count} top source countries", ct);
     }
 }

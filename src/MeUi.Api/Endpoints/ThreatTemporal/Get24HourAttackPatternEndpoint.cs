@@ -17,7 +17,7 @@ public class Get24HourAttackPatternEndpoint : BaseAuthorizedEndpoint<Get24HourAt
 
     public override async Task HandleAuthorizedAsync(Get24HourAttackPatternQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<TimeSeriesPointDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} points", ct);
     }
 }

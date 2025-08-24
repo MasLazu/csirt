@@ -20,7 +20,7 @@ public class GetProtocolDistributionEndpoint : BaseAuthorizedEndpoint<GetProtoco
 
     public override async Task HandleAuthorizedAsync(GetProtocolDistributionQuery req, Guid userId, CancellationToken ct)
     {
-        var protocols = await Mediator.Send(req, ct);
+        List<ProtocolDistributionDto> protocols = await Mediator.Send(req, ct);
         await SendSuccessAsync(protocols, $"Retrieved {protocols.Count} protocol distributions", ct);
     }
 }

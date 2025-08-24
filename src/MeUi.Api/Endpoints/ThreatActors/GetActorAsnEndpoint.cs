@@ -17,7 +17,7 @@ public class GetActorAsnEndpoint : BaseAuthorizedEndpoint<GetActorAsnQuery, List
 
     public override async Task HandleAuthorizedAsync(GetActorAsnQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        List<ActorAsnDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Count} ASN buckets", ct);
     }
 }

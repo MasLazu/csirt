@@ -17,7 +17,7 @@ public class GetActorDistributionByCountryEndpoint : BaseAuthorizedEndpoint<GetA
 
     public override async Task HandleAuthorizedAsync(GetActorDistributionByCountryQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        List<ActorCountryDistributionDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Count} country buckets", ct);
     }
 }

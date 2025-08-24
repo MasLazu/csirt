@@ -20,7 +20,7 @@ public class GetThreatActivityTimelineEndpoint : BaseAuthorizedEndpoint<GetThrea
 
     public override async Task HandleAuthorizedAsync(GetThreatActivityTimelineQuery req, Guid userId, CancellationToken ct)
     {
-        var timeline = await Mediator.Send(req, ct);
+        List<TimelineDataPointDto> timeline = await Mediator.Send(req, ct);
         await SendSuccessAsync(timeline, $"Retrieved {timeline.Count} timeline data points", ct);
     }
 }

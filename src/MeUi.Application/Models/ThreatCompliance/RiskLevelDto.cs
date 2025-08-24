@@ -1,7 +1,6 @@
-namespace MeUi.Application.Models.ThreatCompliance
+namespace MeUi.Application.Models.ThreatCompliance;
+
+public class RiskLevelDto
 {
-    public class RiskLevelDto
-    {
-        public int RiskLevel { get; set; }
-    }
+    public int RiskLevel { get; set; }
 }

@@ -19,7 +19,7 @@ public class GetResponseTimeMetricsEndpoint : BaseAuthorizedEndpoint<GetResponse
 
     public override async Task HandleAuthorizedAsync(GetResponseTimeMetricsQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<ResponseTimeMetricDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} metric points", ct);
     }
 }

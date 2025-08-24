@@ -19,7 +19,7 @@ public class GetActiveIncidentsEndpoint : BaseAuthorizedEndpoint<GetActiveIncide
 
     public override async Task HandleAuthorizedAsync(GetActiveIncidentsQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<IncidentSummaryDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} incidents", ct);
     }
 }

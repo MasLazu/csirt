@@ -17,7 +17,7 @@ public class GetPeakActivityEndpoint : BaseAuthorizedEndpoint<GetPeakActivityQue
 
     public override async Task HandleAuthorizedAsync(GetPeakActivityQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<PeakActivityDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} rows", ct);
     }
 }

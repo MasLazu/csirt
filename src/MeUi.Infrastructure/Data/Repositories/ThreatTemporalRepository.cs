@@ -26,7 +26,7 @@ public class ThreatTemporalRepository : IThreatTemporalRepository
 
     public async Task<List<TimeSeriesPointDto>> Get24HourAttackPatternAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT
+        string sql = @"SELECT
   DATE_TRUNC('hour', ""Timestamp"") as ""Time"",
   COUNT(*) as ""Events""
 FROM ""ThreatEvents""
@@ -35,14 +35,14 @@ WHERE ""DeletedAt"" IS NULL
 GROUP BY ""Time""
 ORDER BY ""Time""";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<TimeSeriesPointDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<TimeSeriesPointDto> result = await connection.QueryAsync<TimeSeriesPointDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<DayOfWeekDto>> GetWeeklyAttackDistributionAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT
+        string sql = @"SELECT
       TO_CHAR(""Timestamp"", 'FMDay') as ""DayOfWeek"",
   COUNT(*) as ""Events""
 FROM ""ThreatEvents""
@@ -51,14 +51,14 @@ WHERE ""DeletedAt"" IS NULL
      GROUP BY TO_CHAR(""Timestamp"", 'FMDay')
 ORDER BY MIN(""Timestamp"")";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<DayOfWeekDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<DayOfWeekDto> result = await connection.QueryAsync<DayOfWeekDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<HourDayHeatmapDto>> GetHourDayHeatmapAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT
+        string sql = @"SELECT
   EXTRACT(HOUR FROM ""Timestamp"")::int as ""Hour"",
   TO_CHAR(""Timestamp"", 'FMDay') as ""DayOfWeek"",
   COUNT(*) as ""Events""
@@ -68,14 +68,14 @@ WHERE ""DeletedAt"" IS NULL
 GROUP BY 1, 2
 ORDER BY 1, 2";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<HourDayHeatmapDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<HourDayHeatmapDto> result = await connection.QueryAsync<HourDayHeatmapDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<PeakActivityDto>> GetPeakActivityByCategoryAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT
+        string sql = @"SELECT
   EXTRACT(HOUR FROM ""Timestamp"")::int as ""Hour"",
   ""Category"" as ""AttackCategory"",
   COUNT(*) as ""TotalEvents"",
@@ -88,14 +88,14 @@ WHERE ""DeletedAt"" IS NULL
 GROUP BY EXTRACT(HOUR FROM ""Timestamp""), ""Category""
 ORDER BY ""TotalEvents"" DESC";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<PeakActivityDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<PeakActivityDto> result = await connection.QueryAsync<PeakActivityDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<TimePeriodSeriesDto>> GetAttackPatternsByTimeOfDayAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT
+        string sql = @"SELECT
   DATE_TRUNC('hour', ""Timestamp"") as ""Time"",
   CASE
     WHEN EXTRACT(HOUR FROM ""Timestamp"") BETWEEN 0 AND 5 THEN 'Late Night'
@@ -110,14 +110,14 @@ WHERE ""DeletedAt"" IS NULL
 GROUP BY ""TimePeriod"", DATE_TRUNC('hour', ""Timestamp"")
 ORDER BY ""Time""";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<TimePeriodSeriesDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<TimePeriodSeriesDto> result = await connection.QueryAsync<TimePeriodSeriesDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<TimeSeriesPointDto>> GetWeekdayWeekendTrendsAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT
+        string sql = @"SELECT
   DATE_TRUNC('day', ""Timestamp"") as ""Time"",
   CASE WHEN EXTRACT(DOW FROM ""Timestamp"") IN (0,6) THEN 'Weekend' ELSE 'Weekday' END as ""TimePeriod"",
   COUNT(*) as ""Events""
@@ -127,14 +127,14 @@ WHERE ""DeletedAt"" IS NULL
 GROUP BY DATE_TRUNC('day', ""Timestamp""), CASE WHEN EXTRACT(DOW FROM ""Timestamp"") IN (0,6) THEN 'Weekend' ELSE 'Weekday' END
 ORDER BY ""Time""";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<TimeSeriesPointDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<TimeSeriesPointDto> result = await connection.QueryAsync<TimeSeriesPointDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<CampaignDurationDto>> GetAttackCampaignDurationAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT
+        string sql = @"SELECT
   te.""SourceAddress""::text as ""SourceIp"",
              coalesce(c.""Name"", '') as ""Country"",
   COUNT(*) as ""TotalEvents"",
@@ -150,14 +150,14 @@ GROUP BY te.""SourceAddress""::text, c.""Name""
 ORDER BY ""TotalEvents"" DESC
 LIMIT 50";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<CampaignDurationDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<CampaignDurationDto> result = await connection.QueryAsync<CampaignDurationDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<MonthlyGrowthDto>> GetMonthlyGrowthRateAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"WITH month_data AS (
+        string sql = @"WITH month_data AS (
   SELECT DATE_TRUNC('month', ""Timestamp"") as ""MonthStart"",
     ""Category"" as ""AttackCategory"",
     COUNT(*) as ""Events""
@@ -178,8 +178,8 @@ FROM month_data m
 LEFT JOIN month_data p ON p.""MonthStart"" = m.""MonthStart"" - INTERVAL '1 month' AND p.""AttackCategory"" = m.""AttackCategory""
 ORDER BY m.""MonthStart"" DESC";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<MonthlyGrowthDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<MonthlyGrowthDto> result = await connection.QueryAsync<MonthlyGrowthDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 }

@@ -18,7 +18,7 @@ public class GetActorProfilesQueryHandler : IRequestHandler<GetActorProfilesQuer
 
     public async Task<List<ActorProfileDto>> Handle(GetActorProfilesQuery request, CancellationToken cancellationToken)
     {
-        var result = await _repository.GetActorProfilesAsync(request.Start, request.End, request.Limit, cancellationToken);
+        List<ActorProfileDto> result = await _repository.GetActorProfilesAsync(request.Start, request.End, request.Limit, cancellationToken);
         return result;
     }
 }

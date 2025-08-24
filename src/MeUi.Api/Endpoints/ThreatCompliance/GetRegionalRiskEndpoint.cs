@@ -19,7 +19,7 @@ public class GetRegionalRiskEndpoint : BaseAuthorizedEndpoint<GetRegionalRiskQue
 
     public override async Task HandleAuthorizedAsync(GetRegionalRiskQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<RegionalRiskDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} regions", ct);
     }
 }

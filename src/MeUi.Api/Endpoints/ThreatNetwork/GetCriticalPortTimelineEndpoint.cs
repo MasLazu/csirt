@@ -17,7 +17,7 @@ public class GetCriticalPortTimelineEndpoint : BaseAuthorizedEndpoint<GetCritica
 
     public override async Task HandleAuthorizedAsync(GetCriticalPortTimelineQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<CriticalPortTimePointDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} time points", ct);
     }
 }

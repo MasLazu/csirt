@@ -18,7 +18,7 @@ public class GetActorPersistenceQueryHandler : IRequestHandler<GetActorPersisten
 
     public async Task<List<ActorPersistenceDto>> Handle(GetActorPersistenceQuery request, CancellationToken cancellationToken)
     {
-        var res = await _repository.GetActorPersistenceAsync(request.Start, request.End, cancellationToken);
+        List<ActorPersistenceDto> res = await _repository.GetActorPersistenceAsync(request.Start, request.End, cancellationToken);
         return res;
     }
 }

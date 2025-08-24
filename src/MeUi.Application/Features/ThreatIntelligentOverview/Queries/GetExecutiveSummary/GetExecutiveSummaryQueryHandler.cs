@@ -19,7 +19,7 @@ public class GetExecutiveSummaryQueryHandler : IRequestHandler<GetExecutiveSumma
 
     public async Task<List<ExecutiveSummaryMetricDto>> Handle(GetExecutiveSummaryQuery request, CancellationToken cancellationToken)
     {
-        var metrics = await _repository.GetExecutiveSummaryAsync(request.StartTime, request.EndTime, cancellationToken);
+        List<ExecutiveSummaryMetricDto> metrics = await _repository.GetExecutiveSummaryAsync(request.StartTime, request.EndTime, cancellationToken);
         return metrics;
     }
 }

@@ -18,7 +18,7 @@ public class GetTopActorsActivityTimelineQueryHandler : IRequestHandler<GetTopAc
 
     public async Task<List<ActorActivityTimelineDto>> Handle(GetTopActorsActivityTimelineQuery request, CancellationToken cancellationToken)
     {
-        var res = await _repository.GetTopActorsActivityTimelineAsync(request.Start, request.End, request.Interval, request.Limit, cancellationToken);
+        List<ActorActivityTimelineDto> res = await _repository.GetTopActorsActivityTimelineAsync(request.Start, request.End, request.Interval, request.Limit, cancellationToken);
         return res;
     }
 }

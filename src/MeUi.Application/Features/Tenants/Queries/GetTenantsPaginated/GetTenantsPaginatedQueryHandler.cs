@@ -56,7 +56,7 @@ public class GetTenantsPaginatedQueryHandler : IRequestHandler<GetTenantsPaginat
             take: request.ValidatedPageSize,
             ct: ct);
 
-        var tenantDtos = items.Adapt<IEnumerable<TenantDto>>() ?? Enumerable.Empty<TenantDto>();
+        IEnumerable<TenantDto> tenantDtos = items.Adapt<IEnumerable<TenantDto>>() ?? Enumerable.Empty<TenantDto>();
         return new PaginatedDto<TenantDto>
         {
             Items = tenantDtos.ToList(),

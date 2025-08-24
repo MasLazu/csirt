@@ -20,7 +20,7 @@ public class GetHighRiskSourceIpsEndpoint : BaseAuthorizedEndpoint<GetHighRiskSo
 
     public override async Task HandleAuthorizedAsync(GetHighRiskSourceIpsQuery req, Guid userId, CancellationToken ct)
     {
-        var ips = await Mediator.Send(req, ct);
+        List<HighRiskSourceIpDto> ips = await Mediator.Send(req, ct);
         await SendSuccessAsync(ips, $"Retrieved {ips.Count} high-risk source IPs", ct);
     }
 }

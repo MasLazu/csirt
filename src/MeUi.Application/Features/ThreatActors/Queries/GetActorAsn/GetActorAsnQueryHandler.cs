@@ -18,7 +18,7 @@ public class GetActorAsnQueryHandler : IRequestHandler<GetActorAsnQuery, List<Ac
 
     public async Task<List<ActorAsnDto>> Handle(GetActorAsnQuery request, CancellationToken cancellationToken)
     {
-        var result = await _repository.GetActorAsnAsync(request.Start, request.End, request.Limit, cancellationToken);
+        List<ActorAsnDto> result = await _repository.GetActorAsnAsync(request.Start, request.End, request.Limit, cancellationToken);
         return result;
     }
 }

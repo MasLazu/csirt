@@ -17,7 +17,7 @@ public class GetActorTtpEndpoint : BaseAuthorizedEndpoint<GetActorTtpQuery, List
 
     public override async Task HandleAuthorizedAsync(GetActorTtpQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        List<ActorTtpDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Count} TTP profiles", ct);
     }
 }

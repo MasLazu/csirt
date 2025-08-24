@@ -17,7 +17,7 @@ public class GetHourDayHeatmapEndpoint : BaseAuthorizedEndpoint<GetHourDayHeatma
 
     public override async Task HandleAuthorizedAsync(GetHourDayHeatmapQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<HourDayHeatmapDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} points", ct);
     }
 }

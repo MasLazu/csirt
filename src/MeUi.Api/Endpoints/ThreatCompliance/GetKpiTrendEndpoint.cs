@@ -19,7 +19,7 @@ public class GetKpiTrendEndpoint : BaseAuthorizedEndpoint<GetKpiTrendQuery, List
 
     public override async Task HandleAuthorizedAsync(GetKpiTrendQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<KpiTrendPointDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} KPI points", ct);
     }
 }

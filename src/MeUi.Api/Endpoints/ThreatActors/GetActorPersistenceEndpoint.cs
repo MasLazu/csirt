@@ -17,7 +17,7 @@ public class GetActorPersistenceEndpoint : BaseAuthorizedEndpoint<GetActorPersis
 
     public override async Task HandleAuthorizedAsync(GetActorPersistenceQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        List<ActorPersistenceDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Count} persistence buckets", ct);
     }
 }

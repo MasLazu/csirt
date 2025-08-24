@@ -20,7 +20,7 @@ public class GetTopTargetedPortsEndpoint : BaseAuthorizedEndpoint<GetTopTargeted
 
     public override async Task HandleAuthorizedAsync(GetTopTargetedPortsQuery req, Guid userId, CancellationToken ct)
     {
-        var ports = await Mediator.Send(req, ct);
+        List<TargetedPortDto> ports = await Mediator.Send(req, ct);
         await SendSuccessAsync(ports, $"Retrieved {ports.Count} top targeted ports", ct);
     }
 }

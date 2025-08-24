@@ -17,7 +17,7 @@ public class GetMonthlyGrowthEndpoint : BaseAuthorizedEndpoint<GetMonthlyGrowthQ
 
     public override async Task HandleAuthorizedAsync(GetMonthlyGrowthQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<MonthlyGrowthDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} rows", ct);
     }
 }

@@ -17,7 +17,7 @@ public class GetWeekdayWeekendEndpoint : BaseAuthorizedEndpoint<GetWeekdayWeeken
 
     public override async Task HandleAuthorizedAsync(GetWeekdayWeekendQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<TimeSeriesPointDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} points", ct);
     }
 }

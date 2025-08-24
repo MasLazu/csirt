@@ -26,7 +26,7 @@ public class ThreatGeographicRepository : IThreatGeographicRepository
 
     public async Task<List<CountryAttackTrendPointDto>> GetCountryAttackTrendsAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT 
+        string sql = @"SELECT 
   DATE_TRUNC('day', te.""Timestamp"") as time,
   c.""Name"" as ""Country"",
   COUNT(*) as ""Events""
@@ -38,14 +38,14 @@ GROUP BY time, c.""Name""
 HAVING COUNT(*) > 5
 ORDER BY time";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<CountryAttackTrendPointDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<CountryAttackTrendPointDto> result = await connection.QueryAsync<CountryAttackTrendPointDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<CountryAttackRankingDto>> GetCountryRankingsAsync(DateTime start, DateTime end, int limit = 20, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT 
+        string sql = @"SELECT 
   c.""Name"" as ""Country"",
   COUNT(*) as ""Events""
 FROM ""ThreatEvents"" te
@@ -56,14 +56,14 @@ GROUP BY c.""Name""
 ORDER BY ""Events"" DESC
 LIMIT @limit";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<CountryAttackRankingDto>(sql, new { start, end, limit }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<CountryAttackRankingDto> result = await connection.QueryAsync<CountryAttackRankingDto>(sql, new { start, end, limit }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<CountryAsnCorrelationDto>> GetCountryAsnCorrelationAsync(DateTime start, DateTime end, int limit = 25, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT 
+        string sql = @"SELECT 
   c.""Name"" as ""Country"",
   ar.""Number"" as ""ASN"",
   ar.""Description"" as ""ASNDescription"",
@@ -79,14 +79,14 @@ GROUP BY c.""Name"", ar.""Number"", ar.""Description""
 ORDER BY ""Events"" DESC
 LIMIT @limit";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<CountryAsnCorrelationDto>(sql, new { start, end, limit }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<CountryAsnCorrelationDto> result = await connection.QueryAsync<CountryAsnCorrelationDto>(sql, new { start, end, limit }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<RegionalTimeBucketDto>> GetRegionalTimeActivityAsync(DateTime start, DateTime end, int limit = 40, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT 
+        string sql = @"SELECT 
   CASE 
     WHEN EXTRACT(HOUR FROM ""Timestamp"") BETWEEN 0 AND 5 THEN 'Night Hours (00-05 UTC)'
     WHEN EXTRACT(HOUR FROM ""Timestamp"") BETWEEN 6 AND 11 THEN 'Morning Hours (06-11 UTC)'
@@ -110,14 +110,14 @@ HAVING COUNT(*) > 10
 ORDER BY ""Events"" DESC
 LIMIT @limit";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<RegionalTimeBucketDto>(sql, new { start, end, limit }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<RegionalTimeBucketDto> result = await connection.QueryAsync<RegionalTimeBucketDto>(sql, new { start, end, limit }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<CrossBorderFlowDto>> GetCrossBorderFlowsAsync(DateTime start, DateTime end, int limit = 30, CancellationToken cancellationToken = default)
     {
-        var sql = @"WITH country_category AS (
+        string sql = @"WITH country_category AS (
   SELECT 
     c.""Name"" as ""SourceCountry"",
     dc.""Name"" as ""DestinationCountry"",
@@ -141,14 +141,14 @@ FROM country_category
 ORDER BY ""Events"" DESC
 LIMIT @limit";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<CrossBorderFlowDto>(sql, new { start, end, limit }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<CrossBorderFlowDto> result = await connection.QueryAsync<CrossBorderFlowDto>(sql, new { start, end, limit }, commandTimeout: 300);
         return result.AsList();
     }
 
     public async Task<List<CategoryCountryTrendPointDto>> GetCategoryCountryTrendAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
     {
-        var sql = @"SELECT 
+        string sql = @"SELECT 
   DATE_TRUNC('day', te.""Timestamp"") as time,
   ""Category"",
   c.""Name"" as ""Country"",
@@ -170,8 +170,8 @@ WHERE te.""DeletedAt"" IS NULL
 GROUP BY time, ""Category"", c.""Name""
 ORDER BY time";
 
-        using var connection = CreateConnection();
-        var result = await connection.QueryAsync<CategoryCountryTrendPointDto>(sql, new { start, end }, commandTimeout: 300);
+        using IDbConnection connection = CreateConnection();
+        IEnumerable<CategoryCountryTrendPointDto> result = await connection.QueryAsync<CategoryCountryTrendPointDto>(sql, new { start, end }, commandTimeout: 300);
         return result.AsList();
     }
 }

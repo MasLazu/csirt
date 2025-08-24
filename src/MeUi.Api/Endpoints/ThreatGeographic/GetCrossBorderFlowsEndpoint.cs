@@ -19,7 +19,7 @@ public class GetCrossBorderFlowsEndpoint : BaseAuthorizedEndpoint<GetCrossBorder
 
     public override async Task HandleAuthorizedAsync(GetCrossBorderFlowsQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<CrossBorderFlowDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} flows", ct);
     }
 }

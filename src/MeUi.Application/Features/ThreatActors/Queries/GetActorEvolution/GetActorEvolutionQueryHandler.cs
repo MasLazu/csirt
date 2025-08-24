@@ -18,7 +18,7 @@ public class GetActorEvolutionQueryHandler : IRequestHandler<GetActorEvolutionQu
 
     public async Task<List<ActorEvolutionDto>> Handle(GetActorEvolutionQuery request, CancellationToken cancellationToken)
     {
-        var res = await _repository.GetActorEvolutionAsync(request.Start, request.End, request.Limit, cancellationToken);
+        List<ActorEvolutionDto> res = await _repository.GetActorEvolutionAsync(request.Start, request.End, request.Limit, cancellationToken);
         return res;
     }
 }

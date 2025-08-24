@@ -17,7 +17,7 @@ public class GetActorSimilarityEndpoint : BaseAuthorizedEndpoint<GetActorSimilar
 
     public override async Task HandleAuthorizedAsync(GetActorSimilarityQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        List<ActorSimilarityDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Count} similarity rows", ct);
     }
 }

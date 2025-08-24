@@ -18,7 +18,7 @@ public class GetActorTtpQueryHandler : IRequestHandler<GetActorTtpQuery, List<Ac
 
     public async Task<List<ActorTtpDto>> Handle(GetActorTtpQuery request, CancellationToken cancellationToken)
     {
-        var res = await _repository.GetActorTtpAnalysisAsync(request.Start, request.End, request.Limit, cancellationToken);
+        List<ActorTtpDto> res = await _repository.GetActorTtpAnalysisAsync(request.Start, request.End, request.Limit, cancellationToken);
         return res;
     }
 }

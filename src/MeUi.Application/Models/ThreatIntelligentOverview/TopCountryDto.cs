@@ -1,8 +1,7 @@
-namespace MeUi.Application.Models.ThreatIntelligentOverview
+namespace MeUi.Application.Models.ThreatIntelligentOverview;
+
+public class TopCountryDto
 {
-    public class TopCountryDto
-    {
-        public string Country { get; set; } = string.Empty;
-        public int Events { get; set; }
-    }
+    public string Country { get; set; } = string.Empty;
+    public int Events { get; set; }
 }

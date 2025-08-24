@@ -1,8 +1,7 @@
-namespace MeUi.Application.Models.ThreatIntelligentOverview
+namespace MeUi.Application.Models.ThreatIntelligentOverview;
+
+public class TimelineDataPointDto
 {
-    public class TimelineDataPointDto
-    {
-        public DateTime Time { get; set; }
-        public int ThreatEvents { get; set; }
-    }
+    public DateTime Time { get; set; }
+    public int ThreatEvents { get; set; }
 }

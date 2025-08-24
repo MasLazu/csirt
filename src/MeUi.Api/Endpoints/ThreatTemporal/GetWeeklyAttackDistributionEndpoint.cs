@@ -17,7 +17,7 @@ public class GetWeeklyAttackDistributionEndpoint : BaseAuthorizedEndpoint<GetWee
 
     public override async Task HandleAuthorizedAsync(GetWeeklyAttackDistributionQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<DayOfWeekDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} days", ct);
     }
 }

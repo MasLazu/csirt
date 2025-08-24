@@ -17,7 +17,7 @@ public class GetAsnNetworkEndpoint : BaseAuthorizedEndpoint<GetAsnNetworkQuery, 
 
     public override async Task HandleAuthorizedAsync(GetAsnNetworkQuery req, Guid userId, CancellationToken ct)
     {
-        var resp = await Mediator.Send(req, ct);
+        List<AsnNetworkDto> resp = await Mediator.Send(req, ct);
         await SendSuccessAsync(resp, $"Retrieved {resp?.Count ?? 0} ASNs", ct);
     }
 }

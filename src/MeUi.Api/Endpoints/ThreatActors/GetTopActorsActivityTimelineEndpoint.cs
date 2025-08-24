@@ -17,7 +17,7 @@ public class GetTopActorsActivityTimelineEndpoint : BaseAuthorizedEndpoint<GetTo
 
     public override async Task HandleAuthorizedAsync(GetTopActorsActivityTimelineQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        List<ActorActivityTimelineDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Count} timeline buckets", ct);
     }
 }

@@ -17,7 +17,7 @@ public class GetActorEvolutionEndpoint : BaseAuthorizedEndpoint<GetActorEvolutio
 
     public override async Task HandleAuthorizedAsync(GetActorEvolutionQuery req, Guid userId, CancellationToken ct)
     {
-        var result = await Mediator.Send(req, ct);
+        List<ActorEvolutionDto> result = await Mediator.Send(req, ct);
         await SendSuccessAsync(result, $"Retrieved {result.Count} evolution rows", ct);
     }
 }
