@@ -11,6 +11,10 @@ public class CreateTenantUserCommandHandler : IRequestHandler<CreateTenantUserCo
     private readonly IRepository<TenantUser> _tenantUserRepository;
     private readonly IRepository<TenantRole> _tenantRoleRepository;
     private readonly IRepository<TenantUserRole> _tenantUserRoleRepository;
+    private readonly IRepository<Password> _passwordRepository;
+    private readonly IRepository<TenantUserPassword> _tenantUserPasswordRepository;
+    private readonly IRepository<TenantUserLoginMethod> _tenantUserLoginMethodRepository;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateTenantUserCommandHandler(
@@ -18,12 +22,20 @@ public class CreateTenantUserCommandHandler : IRequestHandler<CreateTenantUserCo
         IRepository<TenantUser> tenantUserRepository,
         IRepository<TenantRole> tenantRoleRepository,
         IRepository<TenantUserRole> tenantUserRoleRepository,
+        IRepository<Password> passwordRepository,
+        IRepository<TenantUserPassword> tenantUserPasswordRepository,
+        IRepository<TenantUserLoginMethod> tenantUserLoginMethodRepository,
+        IPasswordHasher passwordHasher,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _tenantRoleRepository = tenantRoleRepository;
         _tenantUserRoleRepository = tenantUserRoleRepository;
         _tenantUserRepository = tenantUserRepository;
+        _passwordRepository = passwordRepository;
+        _tenantUserPasswordRepository = tenantUserPasswordRepository;
+        _tenantUserLoginMethodRepository = tenantUserLoginMethodRepository;
+        _passwordHasher = passwordHasher;
         _unitOfWork = unitOfWork;
     }
 
@@ -52,6 +64,23 @@ public class CreateTenantUserCommandHandler : IRequestHandler<CreateTenantUserCo
             Name = request.Name,
         };
 
+        var password = new Password
+        {
+            PasswordHash = _passwordHasher.HashPassword(request.Password)
+        };
+
+        var tenantUserLoginMethod = new TenantUserLoginMethod
+        {
+            TenantUserId = tenantUser.Id,
+            LoginMethodCode = "PASSWORD"
+        };
+
+        var tenantUserPassword = new TenantUserPassword
+        {
+            TenantUserLoginMethodId = tenantUserLoginMethod.Id,
+            PasswordId = password.Id
+        };
+
         var tenantUserROle = request.RoleIds.Select(roleId => new TenantUserRole
         {
             TenantUserId = tenantUser.Id,
@@ -60,6 +89,9 @@ public class CreateTenantUserCommandHandler : IRequestHandler<CreateTenantUserCo
 
         await _tenantUserRepository.AddAsync(tenantUser, ct);
         await _tenantUserRoleRepository.AddRangeAsync(tenantUserROle, ct);
+        await _passwordRepository.AddAsync(password, ct);
+        await _tenantUserLoginMethodRepository.AddAsync(tenantUserLoginMethod, ct);
+        await _tenantUserPasswordRepository.AddAsync(tenantUserPassword, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
         return tenantUser.Id;

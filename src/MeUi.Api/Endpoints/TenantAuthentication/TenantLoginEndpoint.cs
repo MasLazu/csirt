@@ -4,7 +4,7 @@ using MeUi.Application.Features.TenantAuthentication.Commands.TenantLogin;
 
 namespace MeUi.Api.Endpoints.TenantAuthentication;
 
-public class TenantLoginEndpoint : BaseEndpoint<TenantLoginCommand, AccessTokenResponseData>
+public class TenantLoginEndpoint : BaseEndpoint<TenantLoginCommand, TenantAccessTokenResponse>
 {
     public override void ConfigureEndpoint()
     {
@@ -25,10 +25,11 @@ public class TenantLoginEndpoint : BaseEndpoint<TenantLoginCommand, AccessTokenR
             Expires = DateTimeOffset.UtcNow.AddDays(30)
         });
 
-        await SendSuccessAsync(new AccessTokenResponseData()
+        await SendSuccessAsync(new TenantAccessTokenResponse()
         {
             AccessToken = tokenResponse.AccessToken,
-            ExpiresAt = tokenResponse.ExpiresAt
+            ExpiresAt = tokenResponse.ExpiresAt,
+            TenantId = tokenResponse.TenantId,
         }, "Tenant login successful", ct);
     }
 }

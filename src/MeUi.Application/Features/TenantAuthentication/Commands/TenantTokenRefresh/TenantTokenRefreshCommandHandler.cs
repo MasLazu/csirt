@@ -82,6 +82,7 @@ public class TenantTokenRefreshCommandHandler : IRequestHandler<TenantTokenRefre
         {
             AccessToken = accessToken,
             RefreshToken = newRefreshToken,
+            TenantId = tenantUser.TenantId,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15),
         };
     }

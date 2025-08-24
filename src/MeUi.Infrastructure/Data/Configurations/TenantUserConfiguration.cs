@@ -14,8 +14,8 @@ public class TenantUserConfiguration : IEntityTypeConfiguration<TenantUser>
         builder.Property(x => x.Email).IsRequired().HasMaxLength(255);
         builder.Property(x => x.Name).IsRequired().HasMaxLength(255);
 
-        builder.HasIndex(x => new { x.Username, x.TenantId }).IsUnique();
-        builder.HasIndex(x => new { x.Email, x.TenantId }).IsUnique();
+        builder.HasIndex(x => x.Username).IsUnique().HasFilter("\"DeletedAt\" IS NULL");
+        builder.HasIndex(x => x.Email).IsUnique().HasFilter("\"DeletedAt\" IS NULL");
         builder.HasIndex(x => x.TenantId);
         builder.HasIndex(x => x.DeletedAt);
 

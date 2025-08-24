@@ -13,6 +13,7 @@ public record TenantLoginResponse
 {
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
+    public Guid TenantId { get; set; }
     public DateTime ExpiresAt { get; set; }
     public TenantUserInfo User { get; set; } = new();
 }

@@ -107,6 +107,7 @@ public class TenantLoginCommandHandler : IRequestHandler<TenantLoginCommand, Ten
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
+            TenantId = tenantUser.TenantId,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15),
             User = userInfo
         };

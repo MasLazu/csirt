@@ -5,7 +5,7 @@ using MeUi.Application.Features.TenantAuthentication.Commands.TenantTokenRefresh
 
 namespace MeUi.Api.Endpoints.TenantAuthentication;
 
-public class TenantRefreshTokenEndpoint : BaseEndpointWithoutRequest<AccessTokenResponseData>
+public class TenantRefreshTokenEndpoint : BaseEndpointWithoutRequest<TenantAccessTokenResponse>
 {
     public override void ConfigureEndpoint()
     {
@@ -16,7 +16,7 @@ public class TenantRefreshTokenEndpoint : BaseEndpointWithoutRequest<AccessToken
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        string? refreshToken = HttpContext.Request.Cookies["refreshToken"];
+        string? refreshToken = HttpContext.Request.Cookies["tenantRefreshToken"];
 
         if (string.IsNullOrEmpty(refreshToken))
         {
@@ -38,10 +38,11 @@ public class TenantRefreshTokenEndpoint : BaseEndpointWithoutRequest<AccessToken
             Expires = DateTimeOffset.UtcNow.AddDays(30)
         });
 
-        await SendSuccessAsync(new AccessTokenResponseData()
+        await SendSuccessAsync(new TenantAccessTokenResponse
         {
             AccessToken = tokenResponse.AccessToken,
-            ExpiresAt = tokenResponse.ExpiresAt
+            ExpiresAt = tokenResponse.ExpiresAt,
+            TenantId = tokenResponse.TenantId,
         }, "Token refreshed successfully", ct);
     }
 }
