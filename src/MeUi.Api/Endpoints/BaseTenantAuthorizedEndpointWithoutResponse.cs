@@ -17,7 +17,7 @@ public abstract class BaseTenantAuthorizedEndpointWithoutResponse<TRequest, TPer
     {
         Guid userId = GetUserId();
         string permission = TPermissionProvider.TenantPermission;
-        bool allowed = req.TenantId != GetTenantIdFromClaim() && await Mediator.Send(new CheckTenantPermissionQuery(userId, permission, req.TenantId), ct);
+        bool allowed = req.TenantId == GetTenantIdFromClaim() && await Mediator.Send(new CheckTenantPermissionQuery(userId, permission, req.TenantId), ct);
 
         if (!allowed)
         {

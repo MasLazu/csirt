@@ -12,7 +12,7 @@ public class GetTenantAsnRegistriesEndpoint : BaseTenantAuthorizedEndpoint<GetTe
 
     public override void ConfigureEndpoint()
     {
-        Get("api/v1/tenants/{tenantId}/asn-registries");
+        Get("api/v1/tenant/{tenantId}/asn-registries");
         Description(x => x.WithTags("Tenant ASN Management")
             .WithSummary("Get tenant's assigned ASN registries")
             .WithDescription("Retrieves a paginated list of ASN registries assigned to the specified tenant. Global admins can access any tenant's ASN registries with READ:TENANT_ASN permission. Tenant users can only access their own tenant's ASN registries with READ:ASN_REGISTRY permission."));

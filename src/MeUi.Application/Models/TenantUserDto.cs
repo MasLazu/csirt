@@ -7,4 +7,5 @@ public class TenantUserDto : BaseDto
     public string Name { get; set; } = string.Empty;
     public bool IsSuspended { get; set; }
     public Guid TenantId { get; set; }
+    public IEnumerable<TenantRoleDto> Roles { get; set; } = [];
 }

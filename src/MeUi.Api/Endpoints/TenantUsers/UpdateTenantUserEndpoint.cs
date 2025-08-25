@@ -1,23 +1,23 @@
-using MeUi.Api.Endpoints;
-using MeUi.Application.Features.TenantUsers.Commands.UpdateTenantUser;
-using MeUi.Application.Interfaces;
+// using MeUi.Api.Endpoints;
+// using MeUi.Application.Features.TenantUsers.Commands.UpdateTenantUser;
+// using MeUi.Application.Interfaces;
 
-namespace MeUi.Api.Endpoints.TenantUsers;
+// namespace MeUi.Api.Endpoints.TenantUsers;
 
-public class UpdateTenantUserEndpoint : BaseTenantAuthorizedEndpointWithoutResponse<UpdateTenantUserCommand, UpdateTenantUserEndpoint>, ITenantPermissionProvider, IPermissionProvider
-{
-    public static string TenantPermission => "UPDATE:USER";
-    public static string Permission => "UPDATE:TENANT_USER";
+// public class UpdateTenantUserEndpoint : BaseTenantAuthorizedEndpointWithoutResponse<UpdateTenantUserCommand, UpdateTenantUserEndpoint>, ITenantPermissionProvider, IPermissionProvider
+// {
+//     public static string TenantPermission => "UPDATE:USER";
+//     public static string Permission => "UPDATE:TENANT_USER";
 
-    public override void ConfigureEndpoint()
-    {
-        Put("api/v1/tenants/{tenantId}/users/{userId}");
-        Description(x => x.WithTags("Tenant User Management").WithSummary("Update a tenant user"));
-    }
+//     public override void ConfigureEndpoint()
+//     {
+//         Put("api/v1/tenants/{tenantId}/users/{userId}");
+//         Description(x => x.WithTags("Tenant User Management").WithSummary("Update a tenant user"));
+//     }
 
-    protected override async Task HandleAuthorizedAsync(UpdateTenantUserCommand req, Guid userId, CancellationToken ct)
-    {
-        await Mediator.Send(req, ct);
-        await SendSuccessAsync("Tenant user updated successfully", ct);
-    }
-}
+//     protected override async Task HandleAuthorizedAsync(UpdateTenantUserCommand req, Guid userId, CancellationToken ct)
+//     {
+//         await Mediator.Send(req, ct);
+//         await SendSuccessAsync("Tenant user updated successfully", ct);
+//     }
+// }

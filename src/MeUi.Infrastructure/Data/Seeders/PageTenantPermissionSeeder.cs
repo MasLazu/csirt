@@ -38,15 +38,12 @@ public class PageTenantPermissionSeeder
             { "2.3.1", new[] { "READ:USER" } },
             { "2.3.2", new[] { "READ:ROLE" } },
             { "2.3.3", new[] { "READ:PERMISSION" } },
-            { "2.4.1", new[] { "READ:TENANT" } },
-            { "2.4.2", new[] { "READ:TENANT_ROLE" } },
-            { "2.4.3", new[] { "READ:TENANT_USER" } },
-            { "2.4.4", new[] { "READ:COUNTRY" } },
-            { "2.5.1", new[] { "READ:PROTOCOL" } },
-            { "2.5.2", new[] { "READ:ASN_REGISTRY" } },
-            { "2.5.3", new[] { "READ:MALWARE_FAMILY" } },
-            { "2.5.4", new[] { "READ:LOGIN_METHOD" } },
-            { "2.5.5", new[] { "READ:PAGES" } },
+            { "2.4.1", new[] { "READ:COUNTRY" } },
+            { "2.4.2", new[] { "READ:PROTOCOL" } },
+            { "2.4.3", new[] { "READ:ASN_REGISTRY" } },
+            { "2.4.4", new[] { "READ:MALWARE_FAMILY" } },
+            { "2.5.1", new[] { "READ:LOGIN_METHOD" } },
+            { "2.5.2", new[] { "READ:PAGES" } },
         };
 
         var pages = (await _pageRepo.GetAllAsync(ct)).ToDictionary(p => p.Code, p => p.Id);

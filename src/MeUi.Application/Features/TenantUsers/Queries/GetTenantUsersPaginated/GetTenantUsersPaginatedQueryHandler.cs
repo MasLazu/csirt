@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Mapster;
+using MeUi.Application.Utilities;
 using MediatR;
 using MeUi.Application.Interfaces;
 using MeUi.Application.Models;
@@ -10,10 +11,17 @@ namespace MeUi.Application.Features.TenantUsers.Queries.GetTenantUsersPaginated;
 public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUsersPaginatedQuery, PaginatedDto<TenantUserDto>>
 {
     private readonly IRepository<TenantUser> _tenantUserRepository;
+    private readonly IRepository<TenantRole> _tenantRoleRepository;
+    private readonly IRepository<TenantUserRole> _tenantUserRoleRepository;
 
-    public GetTenantUsersPaginatedQueryHandler(IRepository<TenantUser> tenantUserRepository)
+    public GetTenantUsersPaginatedQueryHandler(
+        IRepository<TenantUser> tenantUserRepository,
+        IRepository<TenantRole> tenantRoleRepository,
+        IRepository<TenantUserRole> tenantUserRoleRepository)
     {
         _tenantUserRepository = tenantUserRepository;
+        _tenantRoleRepository = tenantRoleRepository;
+        _tenantUserRoleRepository = tenantUserRoleRepository;
     }
 
     public async Task<PaginatedDto<TenantUserDto>> Handle(GetTenantUsersPaginatedQuery request, CancellationToken ct)
@@ -23,21 +31,19 @@ public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUser
 
         if (!string.IsNullOrEmpty(request.Search))
         {
-            predicate = tu => tu.TenantId == request.TenantId &&
-                             (tu.Name != null && tu.Name.Contains(request.Search) ||
-                              tu.Email != null && tu.Email.Contains(request.Search) ||
-                              tu.Username != null && tu.Username.Contains(request.Search));
+            string search = request.Search;
+            Expression<Func<TenantUser, bool>> searchPredicate = tu =>
+                tu.TenantId == request.TenantId &&
+                (tu.Name != null && tu.Name.Contains(search) ||
+                 tu.Email != null && tu.Email.Contains(search) ||
+                 tu.Username != null && tu.Username.Contains(search));
+            predicate = predicate.And(searchPredicate);
         }
 
         if (request.IsSuspended.HasValue)
         {
             bool isSuspended = request.IsSuspended.Value;
-            predicate = tu => tu.TenantId == request.TenantId &&
-                             tu.IsSuspended == isSuspended &&
-                             (!string.IsNullOrEmpty(request.Search) ?
-                                (tu.Name != null && tu.Name.Contains(request.Search) ||
-                                 tu.Email != null && tu.Email.Contains(request.Search) ||
-                                 tu.Username != null && tu.Username.Contains(request.Search)) : true);
+            predicate = predicate.And(tu => tu.TenantId == request.TenantId && tu.IsSuspended == isSuspended);
         }
 
         // Determine sort field and direction
@@ -60,11 +66,29 @@ public class GetTenantUsersPaginatedQueryHandler : IRequestHandler<GetTenantUser
             take: request.ValidatedPageSize,
             ct: ct);
 
-        IEnumerable<TenantUserDto> tenantUserDtos = tenantUsers.Adapt<IEnumerable<TenantUserDto>>() ?? Enumerable.Empty<TenantUserDto>();
+        var tenantUserList = tenantUsers.ToList();
+        var tenantUserIds = tenantUserList.Select(tu => tu.Id).ToList();
+
+        IEnumerable<TenantUserRole> userRoles = await _tenantUserRoleRepository.FindAsync(tur => tenantUserIds.Contains(tur.TenantUserId), ct);
+        IEnumerable<Guid> roleIds = userRoles.Select(ur => ur.TenantRoleId).Distinct();
+        IEnumerable<TenantRole> roles = await _tenantRoleRepository.FindAsync(r => roleIds.Contains(r.Id) && r.TenantId == request.TenantId, ct);
+
+        ILookup<Guid, Guid> userRoleLookup = userRoles.ToLookup(ur => ur.TenantUserId, ur => ur.TenantRoleId);
+
+        IEnumerable<TenantRoleDto> roleDtos = roles.Adapt<IEnumerable<TenantRoleDto>>();
+        var roleLookup = roleDtos.ToDictionary(r => r.Id);
+
+        var items = tenantUserList.Select(tu =>
+        {
+            TenantUserDto dto = tu.Adapt<TenantUserDto>();
+            IEnumerable<Guid> assignedRoleIds = userRoleLookup[tu.Id];
+            dto.Roles = assignedRoleIds.Where(rid => roleLookup.ContainsKey(rid)).Select(rid => roleLookup[rid]).ToList();
+            return dto;
+        }).ToList();
 
         return new PaginatedDto<TenantUserDto>
         {
-            Items = tenantUserDtos.ToList(),
+            Items = items,
             TotalItems = totalItems,
             Page = request.ValidatedPage,
             PageSize = request.ValidatedPageSize,

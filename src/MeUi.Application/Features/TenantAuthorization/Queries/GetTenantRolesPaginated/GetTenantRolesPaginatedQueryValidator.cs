@@ -8,7 +8,7 @@ public class GetTenantRolesPaginatedQueryValidator : AbstractValidator<GetTenant
     public GetTenantRolesPaginatedQueryValidator()
     {
         // Include base validation rules
-        Include(new BasePaginatedQueryValidator<RoleDto>());
+        Include(new BasePaginatedQueryValidator<TenantRoleDto>());
 
         // Add specific validation for this query
         RuleFor(x => x.TenantId)
