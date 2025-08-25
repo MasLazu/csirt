@@ -18,6 +18,6 @@ public class GetTenantCountryCategoryTimelineQueryHandler : IRequestHandler<GetT
 
     public async Task<List<CountryCategoryTimelineDto>> Handle(GetTenantCountryCategoryTimelineQuery request, CancellationToken cancellationToken)
     {
-        return await _repository.GetCountryCategoryTimelineAsync(request.TenantId, request.Start, request.End, request.Interval, request.TopCountries, cancellationToken);
+        return await _repository.GetCountryCategoryTimelineAsync(request.TenantId, request.Start, request.End, request.Interval, request.Limit, cancellationToken);
     }
 }

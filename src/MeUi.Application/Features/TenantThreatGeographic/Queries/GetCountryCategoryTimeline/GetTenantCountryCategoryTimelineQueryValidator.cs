@@ -18,9 +18,9 @@ public class GetTenantCountryCategoryTimelineQueryValidator : AbstractValidator<
             .GreaterThan(TimeSpan.Zero)
             .WithMessage("Interval must be greater than zero.");
 
-        RuleFor(x => x.TopCountries)
+        RuleFor(x => x.Limit)
             .GreaterThan(0)
             .LessThanOrEqualTo(20)
-            .WithMessage("TopCountries must be between 1 and 20.");
+            .WithMessage("Limit must be between 1 and 20.");
     }
 }

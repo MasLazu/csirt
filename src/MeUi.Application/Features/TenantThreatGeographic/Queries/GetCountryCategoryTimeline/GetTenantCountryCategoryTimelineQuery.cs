@@ -12,16 +12,16 @@ public class GetTenantCountryCategoryTimelineQuery : IRequest<List<CountryCatego
     public DateTime Start { get; set; }
     public DateTime End { get; set; }
     public TimeSpan Interval { get; set; } = TimeSpan.FromHours(1);
-    public int TopCountries { get; set; } = 5;
+    public int Limit { get; set; } = 5;
 
     public GetTenantCountryCategoryTimelineQuery() { }
 
-    public GetTenantCountryCategoryTimelineQuery(Guid tenantId, DateTime start, DateTime end, TimeSpan interval, int topCountries = 5)
+    public GetTenantCountryCategoryTimelineQuery(Guid tenantId, DateTime start, DateTime end, TimeSpan interval, int limit = 5)
     {
         TenantId = tenantId;
         Start = start;
         End = end;
         Interval = interval;
-        TopCountries = topCountries;
+        Limit = limit;
     }
 }
